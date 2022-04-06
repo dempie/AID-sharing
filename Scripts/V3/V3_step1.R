@@ -1,0 +1,453 @@
+#  LD score regression on auotoimmunity GWAS
+## Version3  will be a replication of the version 2 that might be wrong in the 
+## allele orientation 
+
+#The tutorial and info on the package and how to run the code are here:  
+# https://github.com/GenomicSEM/GenomicSEM/wiki/3.-Models-without-Individual-SNP-effects
+
+#--- Load the libraries--------------------------------------
+library(data.table)
+library(GenomicSEM)
+library(tidyr)
+library(dplyr)
+library(corrplot)
+
+# Since the dataset are quite heavy in terms of memory I perform the preparation
+# of them in groups of 5 GWAS
+
+#---- Group 1 Load the datasets -----------------------------------
+
+ms <- fread('Summary_Stats/andlauer-2011_ms_build37_imsgc_2011_21833088_ms_efo0003885_1_gwas.sumstats.tsv.gz', data.table = F)
+sle <- fread('Summary_Stats/bentham-2015_sle_build37_26502338_sle_efo0002690_1_gwas.sumstats.tsv.gz', data.table=F)
+pbc <- fread('Summary_Stats/cordell-2015_pbc_build37_26394269_pbc_efo1001486_1_gwas.sumstats.tsv.gz', data.table = F)
+crohn <- fread('Summary_Stats/delange-2017_cd_build37_40266_20161107.txt', data.table = F)
+uc <- fread('Summary_Stats/delange-2017_uc_build37_45975_20161107.txt', data.table = F)
+armfat <- fread('Summary_Stats/continuous-23123-both_sexes-irnt.tsv.gz', data.table = F)
+
+
+
+#---- Create a function to prepare the summary stats ---------------------------
+## create a function to prepare the GWAS for the munging depends on dplyr and data.table
+##the function changes the name of the columns as required by the genomicSEM package
+#and saves the files in the provided path (if the path is provided)
+
+prepare_munge_2 <- function(sum_stats, rsID, effect_allele, non_effect_allele, pvalue, effect_size, to_remove=NA, path = NA){
+  #an error if arguments are not provided 
+  if (missing(sum_stats) | missing(rsID) | missing(effect_allele) | missing(non_effect_allele) |missing(pvalue) | missing(effect_size) ) {
+    stop( 'At least one argument is missing')
+    
+  } else {
+    
+    require(dplyr)
+    require(data.table)
+    sum_stats <- sum_stats  %>% rename(c(SNP = rsID, A1 = effect_allele, A2 = non_effect_allele, p = pvalue, effect = effect_size))
+    #conditional remove
+    if(is.na(to_remove[1])){
+      #do nothing 
+    } else {
+      sum_stats <- select(sum_stats,-(to_remove))
+    }
+    
+    #save the file if a path is provided
+    if(is.na(path)){
+      return(sum_stats)
+    } else {
+      fwrite(sum_stats, path, sep = '\t', col.names = T, row.names = F, quote = F)
+      return(sum_stats)
+    }
+  }
+}
+
+
+#------end of function ---------------------------------------------------------
+
+#----- ms GWAS -----------------------------------------------------------------
+
+head(ms)
+dim(ms) # 472086     11
+ms <- prepare_munge_2(ms,  
+                    rsID = 'rsid' , 
+                    effect_allele = 'effect_allele' , 
+                    non_effect_allele = 'other_allele', 
+                    pvalue = 'p',
+                    effect_size = 'OR' , 
+                    to_remove = c('beta', 'se' ),
+                    path = 'Outputs/Version3/Sumstats_ready_for_munge/ms_andlauer-2011.txt'
+                    )
+                    
+head(ms)
+dim(ms) #472086      8
+
+#---- sle GWAS -----------------------------------------------------------------
+head(sle)
+dim(sle) #7915251      11
+sle <- prepare_munge_2(sle,
+                     rsID = 'rsid', 
+                     effect_allele = 'effect_allele', 
+                     non_effect_allele = 'other_allele', 
+                     pvalue = 'p',
+                     effect_size = 'OR', 
+                     to_remove = c('beta', 'se'),
+                     path = 'Outputs/Version3/Sumstats_ready_for_munge/sle_bentham-2015.txt') 
+
+head(sle)
+dim(sle) #7915251       8
+
+
+#---- pbc GWAS -----------------------------------------------------------------
+head(pbc)
+dim(pbc) #1134141      11
+
+pbc <- prepare_munge_2(pbc,
+                     rsID = 'rsid',
+                     effect_allele = 'effect_allele',
+                     non_effect_allele = 'other_allele', 
+                     pvalue = 'p', 
+                     effect_size = 'OR',
+                     to_remove = c('se', 'beta'), 
+                     path = 'Outputs/Version3/Sumstats_ready_for_munge/pbc_cordell-2015.txt')
+
+head(pbc)
+dim(pbc) #1134141       8
+
+
+#---- crohn GWAS----------------------------------------------------------------
+head(crohn)
+dim(crohn) # 9570787      15
+
+#crohn requires to add the rsIDs
+#load the file with the reference SNP and prepare it for merging
+referenceSNP <- fread('SNP/reference.1000G.maf.0.005.txt.gz')
+referenceSNP <- referenceSNP %>% unite(CHR, BP, sep= ':', na.rm = F, remove = T, col = 'chrPosition' ) %>% select(-c(MAF, A1,A2))
+
+#prepare crohn for merging 
+crohn <- crohn %>% separate(col = 'MarkerName', sep = '_|_', remove = T, convert = F, extra = 'warn', into = c('SNP', 'Extra1', 'Extra2') ) %>% select(-c(Extra1, Extra2))  
+crohn <- merge.data.table(crohn, referenceSNP, 
+                          by.x = 'SNP', by.y = 'chrPosition', 
+                          all.x = T, all.y = F, sort = T)
+dim(crohn) #9570787      16
+colnames(crohn)[1] <- 'Variant_rsID'
+
+#prepare function
+
+crohn <- prepare_munge_2(crohn, 
+                       rsID = 'SNP.y',
+                       effect_allele = 'Allele1', 
+                       non_effect_allele = 'Allele2', 
+                       pvalue = 'P.value',
+                       effect_size = 'Effect',
+                       to_remove = c('Variant_rsID', 'Min_single_cohort_pval', 'Pval_GWAS3', 'Pval_IIBDGC', 'Pval_IBDseq', 'HetPVal', 'HetDf', 'HetChiSq', 'HetISq'  ),
+                       path = 'Outputs/Version3/Sumstats_ready_for_munge/crohn_delange-2017.txt')
+head(crohn)
+dim(crohn) #9570787       7
+
+
+#---- uc GWAS-------------------------------------------------------------------
+
+head(uc)
+dim(uc) # 9570787      15
+
+#prepare uc for merging 
+uc <- uc %>% separate(col = 'MarkerName', sep = '_|_', remove = T, convert = F, extra = 'warn', into = c('Variant_rsID', 'Extra1', 'Extra2') ) %>% select(-c(Extra1, Extra2))  
+uc <- merge.data.table(uc, referenceSNP, 
+                          by.x = 'Variant_rsID', by.y = 'chrPosition', 
+                          all.x = T, all.y = F, sort = F )
+dim(uc) # 9570787      16
+
+#prepare function
+uc <- prepare_munge_2(uc, 
+                       rsID = 'SNP',
+                       effect_allele = 'Allele1', 
+                       non_effect_allele = 'Allele2', 
+                       pvalue = 'P.value',
+                       effect_size = 'Effect',
+                       to_remove = c('Variant_rsID', 'Min_single_cohort_pval', 'Pval_GWAS3', 'Pval_IIBDGC', 'Pval_IBDseq', 'HetPVal', 'HetDf', 'HetChiSq', 'HetISq'  ),
+                       path = 'Outputs/Version3/Sumstats_ready_for_munge/uc_delange-2017.txt')
+head(uc)
+
+
+#---- armfat GWAS --------------------------------------------------------------
+head(armfat)
+
+armfat <- armfat %>% unite(chr, pos, sep = ':', remove = T, col = 'chrPosition') 
+armfat <- merge.data.table(armfat, referenceSNP, 
+                           by.x = 'chrPosition', by.y = 'chrPosition', 
+                           all.x = T, all.y = F, sort = F )
+
+#eliminate the snp without rsID otherwise the file is quite big
+armfat <- armfat[ (!is.na(armfat$SNP)),]
+#prepare_function
+
+armfat <- prepare_munge_2(armfat, 
+              rsID = 'SNP',
+              effect_allele = 'alt', #readme file said alt is the effect one
+              non_effect_allele = 'ref',
+              pvalue = 'pval_meta', 
+              effect_size = 'beta_meta',
+              path = 'Outputs/Version3/Sumstats_ready_for_munge/armfat.txt'
+              )
+
+
+#---- Group 1 munge function  --------------------------------------------------
+
+
+vector_files <- c('Outputs/Version3/Sumstats_ready_for_munge/ms_andlauer-2011.txt',
+                  'Outputs/Version3/Sumstats_ready_for_munge/sle_bentham-2015.txt',
+                  'Outputs/Version3/Sumstats_ready_for_munge/pbc_cordell-2015.txt',
+                  'Outputs/Version3/Sumstats_ready_for_munge/crohn_delange-2017.txt', 
+                  'Outputs/Version3/Sumstats_ready_for_munge/uc_delange-2017.txt',
+                  'Outputs/Version3/Sumstats_ready_for_munge/armfat.txt')
+
+munge(vector_files, 
+      trait.names = c('ms', 'sle', 'pbc', 'crohn', 'uc', 'armfat'), 
+      hm3 = 'SNP/w_hm3.snplist', 
+      N = c(26621, 14257, 13239, 40266, 45975, 492874))
+
+#---- END of Group1 ------------------------------------------------------------
+
+#---- Group 2 Load the datasets ------------------------------------------------
+
+asthma_demeanis <- fread('Summary_Stats/demeanis-2017_asthma_build37_TAGC_Multiancestry_and_European-Ancestry_Meta-analyses_Results.tsv', data.table = F)
+asthma_han <- fread('Summary_Stats/han-2020_asthma_build7_HanY_prePMID_asthma_UKBB.txt.gz', data.table = F)
+celiac <- fread('Summary_Stats/dubois-2010_celiac_build37_20190752_cel_efo0001060_1_gwas.sumstats.tsv.gz', data.table = F)
+allergies <- fread('Summary_Stats/ferreira-2017_allergies_build37_SHARE-without23andMe.LDSCORE-GC.SE-META.v0', data.table = F)
+psc <- fread('Summary_Stats/ji-2016_psc_build37_ipscsg2016.result.combined.full.with_header.txt', data.table = F)
+
+#---- asthma_demeanis GWAS------------------------------------------------------
+
+head(asthma_demeanis)
+dim(asthma_demeanis) #2001280      23
+
+asthma_demeanis <- prepare_munge(asthma_demeanis,
+              rsID = 'rsid',
+              effect_allele = 'alternate_allele',
+              non_effect_allele = 'reference_allele',
+              pvalue = 'European_ancestry_pval_fix',
+              effect_size = 'European_ancestry_beta_fix',
+              to_remove = c("Multiancestry_beta_fix","Multiancestry_se_fix","Multiancestry_pval_fix" ,"Multiancestry_beta_rand" ,
+                             "Multiancestry_se_rand","Multiancestry_pval_rand","Multiancestry_HetQtest","Multiancestry_df_HetQtest",
+                             "Multiancestry_pval_HetQtest","European_ancestry_beta_rand","European_ancestry_se_rand",
+                             "European_ancestry_pval_rand","European_ancestry_HetQtest","European_ancestry_df_HetQtest",
+                             "European_ancestry_pval_HetQtest"),
+              path = 'Outputs/Version3/Sumstats_ready_for_munge/asthma_demeanis-2018.txt')
+
+head(asthma_demeanis)
+dim(asthma_demeanis) #2001280       8
+
+#---- asthma_han GWAS -----------------------------------------------------------
+head(asthma_han)
+dim(asthma_han) #9572556      12
+
+asthma_han <- prepare_munge_2(asthma_han, 
+                            rsID = 'SNP',
+                            effect_allele = 'EA',
+                            non_effect_allele = 'NEA',
+                            pvalue = 'P',
+                            effect_size = 'OR',
+                            path = 'Outputs/Version3/Sumstats_ready_for_munge/asthma_ban-2020.txt'
+                            )
+head(asthma_han)
+dim(asthma_han) #9572556      12
+
+#-----celiac GWAS---------------------------------------------------------------
+
+head(celiac)
+dim(celiac) #523398     11
+
+celiac <- prepare_munge_2(celiac,
+                          rsID = 'rsid', 
+                          effect_allele = 'effect_allele',
+                          non_effect_allele = 'other_allele',
+                          pvalue = 'p',
+                          effect_size = 'beta', 
+                          to_remove = c('OR','OR_lower', 'OR_upper'),
+                          path = 'Outputs/Version3/Sumstats_ready_for_munge/celiac_dubois-2020.txt'
+                          )
+head(celiac)
+dim(celiac) #523398      8
+
+#---- allergies GWAS -----------------------------------------------------------
+
+head(allergies)
+dim(allergies) #8307659      13
+
+#renmae the SNP column in order not to have the same name with the SNP. 
+colnames(allergies)[1] <- 'position'
+allergies <- prepare_munge_2(allergies, 
+                           rsID = 'RS_ID',
+                           effect_allele = 'EFFECT_ALLELE', 
+                           non_effect_allele = 'OTHER_ALLELE',
+                           pvalue = 'PVALUE',
+                           effect_size = 'BETA',
+                           path = 'Outputs/Version3/Sumstats_ready_for_munge/allergies_ferreira-2017.txt' )
+head(allergies)
+dim(allergies) #8307659      13
+
+#----- psc GWAS ----------------------------------------------------------------
+
+#psc columns are not read by munge function
+head(psc)
+dim(psc) #7891602      13
+
+
+psc_ok <- data.frame( 'SNP' = psc$SNP , 
+                      'A2' = psc$allele_0  , 
+                      'A1' = psc$allele_1 , 
+                      'Pos' = psc$pos, 
+                      'Effect' = psc$or , 
+                      'SE' = psc$se ,
+                      'P' = psc$p )
+
+fwrite(psc_ok, file='Outputs/Version3/Sumstats_ready_for_munge/psc_ji-2016.txt',
+       col.names = T, row.names = F, sep = '\t', quote = F)
+
+
+#---- Group2 munge function ----------------------------------------------------
+
+vector_files <- c('Outputs/Version3/Sumstats_ready_for_munge/asthma_demeanis-2018.txt',
+                  'Outputs/Version3/Sumstats_ready_for_munge/asthma_ban-2020.txt',
+                  'Outputs/Version3/Sumstats_ready_for_munge/celiac_dubois-2020.txt',
+                  'Outputs/Version3/Sumstats_ready_for_munge/allergies_ferreira-2017.txt', 
+                  'Outputs/Version3/Sumstats_ready_for_munge/psc_ji-2016.txt')
+
+munge(vector_files, 
+      trait.names = c('asthma_1', 'asthma_2', 'celiac', 'allergies', 'psc'), 
+      hm3 = 'SNP/w_hm3.snplist', 
+      N = c(127669, 303859, 15283, 360838, 14890 ))
+
+#---- END of Group2 ------------------------------------------------------------
+
+
+#---- Group 3 Load the datasets ------------------------------------------------
+
+alzh_kunkle <- fread('Summary_Stats/kunkle-2019_alzheimer_build37_Kunkle_etal_Stage1_results.txt', data.table = F)
+jia <- fread('Summary_Stats/lopezisac-2020_jia_build37_GCST90010715_buildGRCh37.tsv', data.table = F)
+ra <- fread('Summary_Stats/okada-2014_RA_build37_RA_GWASmeta_TransEthnic_v2.txt.gz.gz', data.table = F)
+thyro <- fread('Summary_Stats/saevarsdottir_auto-thyroid_build37_AITD2020', data.table = F)
+alzh_wightman <- fread('Summary_Stats/wightman-2021_alzheimer_build37_PGCALZ2sumstatsExcluding23andMe.txt.gz', data.table = F)
+
+
+#---- alzheimer_kunkle GWAS-----------------------------------------------------
+
+head(alzh_kunkle)
+dim(alzh_kunkle) #11480632        8
+
+alzh_kunkle <- prepare_munge_2(alzh_kunkle,
+                               rsID = 'MarkerName',
+                               effect_allele = 'Effect_allele', 
+                               non_effect_allele = 'Non_Effect_allele', 
+                               effect_size = 'Beta', 
+                               pvalue = 'Pvalue',
+                               path = 'Outputs/Version3/Sumstats_ready_for_munge/alzheimer_kunkle-2019.txt')
+head(alzh_kunkle)
+dim(alzh_kunkle) #11480632        8
+
+#---- jia GWAS -----------------------------------------------------------------
+
+head(jia)
+dim(jia) #7461261      13
+#no information about the effect or non-effect allele
+#so I checked some rsID as they were reported risk/nonrisk in the paper and on GWAS catalog
+
+jia[ grep('rs4869314', jia$variant_id),] # G listed as rtisk allele in GWAS catalog and in the paper
+jia[ grep('rs6434390', jia$variant_id),] # G listed as rtisk allele in GWAS catalog and in the paper
+#allela A interpreted as the effect allele I think
+
+jia <- prepare_munge_2(jia, 
+                       rsID = 'variant_id',
+                       effect_allele = 'alleleA',
+                       non_effect_allele = 'alleleB',
+                       pvalue = 'p_value', 
+                       effect_size = 'all_OR' , 
+                       path= 'Outputs/Version3/Sumstats_ready_for_munge/jia_lopezisac-2020.txt')
+
+head(jia)
+dim(jia) #7461261      13
+
+#---- ra GWAS ------------------------------------------------------------------
+
+head(ra)
+dim(ra) #9739303       8
+
+ra <- prepare_munge_2(ra,
+                      rsID = 'SNPID', 
+                      effect_allele = 'A1',
+                      non_effect_allele = 'A2' ,
+                      effect_size = 'OR(A1)',
+                      pvalue = 'P-val', 
+                      path= 'Outputs/Version3/Sumstats_ready_for_munge/ra_okada-2014.txt',
+                      )
+head(ra)
+dim(ra) #9739303       8
+
+#---- thyro GWAS ---------------------------------------------------------------
+
+head(thyro)
+#thyro columns are not read by munge function
+thyro_ok <- data.frame('SNP'= thyro$rsID, 
+                            'A1' = thyro$A1, 
+                            'A2'= thyro$A0, 
+                            'P' = thyro$P, 
+                            'effect' = thyro$`OR-A1`, 
+                            'pos' = thyro$Pos)
+
+#the file is big, remove the rows without rsID
+thyro_ok <- thyro_ok[(!is.na(thyro_ok$SNP)),]
+
+fwrite(thyro_ok, file='Outputs/Version3/Sumstats_ready_for_munge/thyro_saevarsdottir-2020.txt',
+       col.names = T, row.names = F, sep = '\t', quote = F)
+
+#---- alzheimer wightman GWAS --------------------------------------------------
+
+head(alzh_wightman)
+dim(alzh_wightman)
+
+#add rsID
+
+##load the file with the reference SNP and prepare it for merging
+#referenceSNP <- fread('SNP/reference.1000G.maf.0.005.txt.gz')
+#referenceSNP <- referenceSNP %>% unite(CHR, BP, sep= ':', na.rm = F, remove = T, col = 'chrPosition' ) %>% select(-c(MAF, A1,A2))
+
+alzh_wightman <- unite(alzh_wightman, chr, PosGRCh37, sep = ':', col = 'chrPosition', remove = T, na.rm = F)
+alzh_wightman <- merge.data.table(alzh_wightman, referenceSNP,
+                                  by.x = 'chrPosition', by.y = 'chrPosition', 
+                                  all.x = T, all.y = F, sort = F)
+
+length(grep('rs',alzh_wightman$SNP)) #9103904 SNPs with an rsID now
+
+alzh_wightman <- prepare_munge_2(alzh_wightman, 
+                                 rsID = 'SNP', 
+                                 effect_allele = 'testedAllele',
+                                 non_effect_allele = 'otherAllele', 
+                                 pvalue = 'p',
+                                 effect_size = 'z',
+                                 path = 'Outputs/Version3/Sumstats_ready_for_munge/alzh_wightman-2021.txt')
+head(alzh_wightman)
+
+#---- Group 3 munge ------------------------------------------------------------
+
+vector_files <- c('Outputs/Version3/Sumstats_ready_for_munge/alzheimer_kunkle-2019.txt',
+                  'Outputs/Version3/Sumstats_ready_for_munge/jia_lopezisac-2020.txt',
+                  'Outputs/Version3/Sumstats_ready_for_munge/ra_okada-2014.txt',
+                  'Outputs/Version3/Sumstats_ready_for_munge/thyro_saevarsdottir-2020.txt', 
+                  'Outputs/Version3/Sumstats_ready_for_munge/alzh_wightman-2021.txt')
+
+munge(vector_files, 
+      trait.names = c('alzheimer_1', 'jia', 'ra', 'thyro', 'alzheimer_2'), 
+      hm3 = 'SNP/w_hm3.snplist', 
+      N = c(63926, 12501, 103638, 755406, 763017 ))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
