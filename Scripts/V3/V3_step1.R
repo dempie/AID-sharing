@@ -237,7 +237,7 @@ dim(asthma_demeanis) #2001280      23
 
 asthma_demeanis <- prepare_munge(asthma_demeanis,
               rsID = 'rsid',
-              effect_allele = 'alternate_allele',
+              effect_allele = 'alternate_allele', #manually checked fron the paper
               non_effect_allele = 'reference_allele',
               pvalue = 'European_ancestry_pval_fix',
               effect_size = 'European_ancestry_beta_fix',
@@ -257,7 +257,7 @@ dim(asthma_han) #9572556      12
 
 asthma_han <- prepare_munge(asthma_han, 
                             rsID = 'SNP',
-                            effect_allele = 'EA',
+                            effect_allele = 'EA', #manually checked from the paper seemed to correspond (when it did not correspond the effect was in the opposite direction
                             non_effect_allele = 'NEA',
                             pvalue = 'P',
                             effect_size = 'OR',
@@ -273,7 +273,7 @@ dim(celiac) #523398     11
 
 celiac <- prepare_munge(celiac,
                          rsID = 'rsid', 
-                          effect_allele = 'effect_allele',
+                          effect_allele = 'effect_allele', #manually checked from the paper seemed to correspond
                           non_effect_allele = 'other_allele',
                           pvalue = 'p',
                           effect_size = 'beta', 
@@ -290,26 +290,22 @@ dim(allergies) #8307659      13
 
 #renmae the SNP column in order not to have the same name with the SNP. 
 colnames(allergies)[1] <- 'position'
-allergies <- prepare_munge(allergies, 
-                           rsID = 'RS_ID',
-                           effect_allele = 'EFFECT_ALLELE', 
-                           non_effect_allele = 'OTHER_ALLELE',
-                           pvalue = 'PVALUE',
-                           effect_size = 'BETA',
-                           path = 'Outputs/Version3/Sumstats_ready_for_munge/allergies_ferreira-2017.txt' )
-head(allergies)
-dim(allergies) #8307659      13
+colnames(allergies)[10] <- 'rsID'
+
+fwrite(allergies, 'Outputs/Version3/Sumstats_ready_for_munge/allergies_ferreira-2017.txt',
+       col.names = T, row.names = F, sep = '\t', quote = F)
+
 
 #----- psc GWAS ----------------------------------------------------------------
 
-#psc columns are not read by munge function
+
 head(psc)
 dim(psc) #7891602      13
 
-
+#psc columns are not read by munge function, so I create a new dataframe 
 psc_ok <- data.frame( 'SNP' = psc$SNP , 
                       'A2' = psc$allele_0  , 
-                      'A1' = psc$allele_1 , 
+                      'A1' = psc$allele_1 , #manually checked on the paper
                       'Pos' = psc$pos, 
                       'Effect' = psc$or , 
                       'SE' = psc$se ,
