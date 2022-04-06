@@ -1,0 +1,254 @@
+---
+title: "V1 LD score regression on immune mediated GWAS"
+output: html_notebook
+---
+
+# LD score regression on auotoimmunity GWAS
+## Step 1: prepare the datasets
+
+The tutorial and info on the package and how to run the code are here:  
+https://github.com/GenomicSEM/GenomicSEM/wiki/3.-Models-without-Individual-SNP-effects
+
+```{r Libraries}
+library(GenomicSEM)
+library(data.table)
+library(pheatmap)
+library(R.utils)
+library(stringr)
+library(tidyr)
+library(dplyr)
+library(corrplot)
+```
+
+
+```{r Load the files}
+crohn_delange <- fread('Summary_Stats/delange-2017_cd_build37_40266_20161107.txt', 
+                       data.table = F)
+ulccol_delange <- fread('Summary_Stats/delange-2017_uc_build37_45975_20161107.txt', 
+                        data.table = F)
+allergies_ferreira <- fread('Summary_Stats/ferreira-2017_allergies_build37_SHARE-without23andMe.LDSCORE-GC.SE-META.v0', 
+                            data.table = F)
+alzheimer_kunkle <- fread('Summary_Stats/kunkle-2019_alzheimer_build37_Kunkle_etal_Stage1_results.txt',
+                          data.table = F)
+ssc_lopez <- fread('Summary_Stats/lopez-2019_ssc_build37_Lopez-Isac_prePMID_META_GWAS_SSc.meta.txt',
+                   data.table = F)
+ra_okada <- fread('Summary_Stats/okada-2014_RA_build37_RA_GWASmeta_TransEthnic_v2.txt.gz.gz', 
+                  data.table = F)
+asthma_demeanis <- fread('Summary_Stats/demeanis-2017_asthma_build37_TAGC_Multiancestry_and_European-Ancestry_Meta-analyses_Results.tsv',
+                         data.table = F)
+alzheimer_wightman <- fread('Summary_Stats/wightman-2021_alzheimer_build37_PGCALZ2sumstatsExcluding23andMe.txt.gz',
+                            data.table = F)
+```
+
+### Add rsID
+
+Load the reference SNP to add the rsIDs to the GWAS that do not have them.
+```{r}
+referenceSNP <- fread('SNP/reference.1000G.maf.0.005.txt.gz', data.table = F)
+```
+
+For munging, all the Sum stats must have the rsIDs, all have rsID exept delange (2) GWAS.
+
+Split the MarkerName column in ulccol_delange and crohn_delange into three different columns
+```{r}
+ulccol_delange <- separate(ulccol_delange, 'MarkerName', 
+         sep= '_|_', 
+         remove = T, 
+         convert = F, 
+         extra = 'warn', 
+         into= c('chrPosition', 'Extra_1', 'Extra_2'))
+
+crohn_delange <- separate(crohn_delange, 'MarkerName', 
+         sep= '_|_', 
+         remove = T, 
+         convert = F, 
+         extra = 'warn', 
+         into= c('chrPosition', 'Extra_1', 'Extra_2'))
+```
+
+```{r inspect}
+head(ulccol_delange)
+head(crohn_delange)
+```
+
+
+```{r inspect}
+dim(ulccol_delange) # 9588016      17
+dim(crohn_delange) #9570787      17
+```
+
+Add the chrPosition to the reference dataset
+```{r inspect}
+head(referenceSNP)
+dim(referenceSNP) # 9667224       6
+```
+
+Add the column 
+```{r}
+referenceSNP <- unite(referenceSNP, CHR, BP, remove = T, sep= ':', na.rm= F, col='chrPosition')
+```
+
+```{r inspect after insertion}
+dim(referenceSNP) # 9667224       3
+head(referenceSNP)
+```
+
+Create a reference file with only the columns of interest
+```{r}
+referenceSNP_short <- select(referenceSNP, SNP, A1, A2, chrPosition)
+dim(referenceSNP_short) # 9667224       4
+```
+
+Match the columns with the reference and show the number of unmatched
+```{r}
+crohn_delange_rsID <- base::merge( x=crohn_delange, 
+                             y=referenceSNP_short,
+                             by.x= 'chrPosition',
+                             by.y= 'chrPosition',
+                             all.x= T,
+                             all.y=F, 
+                             sort=T,
+                             )
+sum(is.na(crohn_delange_rsID$SNP)) #
+```
+
+1 209 146 over 9 million of unmatched. 
+The check if some NA SNPs are in the reference
+
+```{r}
+which(referenceSNP$`chrPosition` == '1:100000989') #should not be there and it is not there
+which(referenceSNP$`chrPosition` == '1:569933') #should be there and it is there
+```
+
+
+Store the ones 
+#crohn_delange_rsID_NA <- crohn_delange_rsID[is.na(crohn_delange_rsID$SNP) ,]
+ulccol_delange_rsID <- base::merge( x=ulccol_delange, 
+                                   y=referenceSNP_short,
+                                   by.x= 'chrPosition',
+                                   by.y= 'chrPosition',
+                                   all.x= T,
+                                   all.y=F, 
+                                   sort=T
+                                   )
+
+#number of unmatched
+sum(is.na(ulccol_delange_rsID$SNP)) #1 212 146
+
+
+### match the columns with the reference for wightman
+alzheimer_wightman <-unite(alzheimer_wightman, 
+                           chr, PosGRCh37 ,
+                           remove = F, 
+                           sep= ':', 
+                           na.rm= F, 
+                           col='chrPosition')
+
+
+alzheimer_wightman_rsID <- base::merge(x=alzheimer_wightman,
+                                       y=referenceSNP_short, 
+                                       by.x='chrPosition',
+                                       by.y= 'chrPosition',
+                                       all.x= T,
+                                       all.y=F, 
+                                       sort=T)
+  
+dim(alzheimer_wightman) # 12.688.339      8     
+sum(is.na(alzheimer_wightman_rsID$SNP)) #3.584.435
+
+
+### what happened to the ones without rsID
+length(grep('rs', referenceSNP$SNP))
+length(referenceSNP$SNP)
+ulcolNA <- ulccol_delange_rsID[ which(is.na(ulccol_delange_rsID$SNP)), ]
+head(ulccol_delange_rsID)
+which(referenceSNP$`chr:Position` == '1:100000989')
+
+
+#remove the NA columns from
+crohn_delange_rsID_noNA <- crohn_delange_rsID[which(!is.na(crohn_delange_rsID$SNP)), ]
+ulccol_delange_rsID_noNA <- ulccol_delange_rsID[which(!is.na(ulccol_delange_rsID$SNP)), ]
+alzheimer_wightman_rsID_noNA <- alzheimer_wightman_rsID[ which(!is.na( alzheimer_wightman_rsID$SNP )), ] 
+
+
+#create a fucntion that shows the p-values reported and calculated to see if is SE of logistic beta
+is_se_logB <- function(BETA,SE, PVALUE) {
+  p_calculated <- 2*pnorm((abs(BETA) / SE),lower.tail = F)
+  p_reported <- PVALUE
+  data.frame(p_calculated, p_reported)
+}
+#crohn_delange_rsID_noNA #std error of a logistic beta 
+head(crohn_delange_rsID_noNA)                       
+is_se_logB(crohn_delange_rsID_noNA$Effect, 
+           crohn_delange_rsID_noNA$StdErr, 
+           crohn_delange_rsID_noNA$P.value) #std error of a logistic beta 
+
+
+#ulccol_delange_rsID_noNA std error of a logistic beta
+is_se_logB(ulccol_delange_rsID_noNA$Effect,
+           ulccol_delange_rsID_noNA$StdErr, 
+           ulccol_delange_rsID_noNA$P.value ) #std error of a logistic beta
+
+#alzheimer_kunkle_rsID
+is_se_logB(alzheimer_kunkle_rsID$Beta,
+           alzheimer_kunkle_rsID$SE, 
+           alzheimer_kunkle_rsID$Pvalue) #std error of a logistic beta
+
+#ra_okada confidence interval and not SE
+#calculate the SE from confidence interval #SE = (upper limit – lower limit) / 3.92.
+ra_okada_rsID <- separate(ra_okada_rsID,
+                               'OR_95%CIup-OR_95%CIlow',
+                               into = c('R_95%CIup', 'R_95%CIlow'), 
+                               sep = '-', 
+                               remove = F,
+                               convert = T, 
+                               extra = 'warn'
+                                ) 
+
+#asthma_demeanis_rsID
+is_se_logB(asthma_demeanis_rsID$Multiancestry_beta_fix, 
+           asthma_demeanis_rsID$Multiancestry_se_fix, 
+           asthma_demeanis_rsID$Multiancestry_pval_fix) #standard error of logistic beta
+
+#allergies_ferreira_rsID
+is_se_logB(allergies_ferreira_rsID$BETA, 
+           allergies_ferreira_rsID$SE, 
+           allergies_ferreira_rsID$PVALUE) #standard error of logistic beta
+
+
+#save the txt
+write.table(crohn_delange_rsID_noNA, file = 'Outputs/Version1/V1_step1/crohn_delange_rsID_noNA.txt',
+            sep = "\t", quote = F, row.names = F, col.names=T )
+write.table(ulccol_delange_rsID_noNA, file = 'Outputs/Version1/V1_step1/ulccol_delange_rsID_noNA.txt',
+            sep = "\t", quote = F, row.names = F, col.names=T )
+write.table(allergies_ferreira, file ='Outputs/Version1/V1_step1/allergies_ferreira_rsID.txt',
+            sep = "\t", quote = F, row.names = F, col.names=T )
+write.table(alzheimer_kunkle, file = 'Outputs/Version1/V1_step1/alzheimer_kunkle_rsID.txt',
+            sep = "\t", quote = F, row.names = F, col.names=T )
+write.table(ssc_lopez, file= 'Outputs/Version1/V1_step1/ssc_lopez_rsID.txt',
+            sep = "\t", quote = F, row.names = F, col.names=T )
+write.table(ra_okada, file = 'Outputs/Version1/V1_step1/ra_okada_rsID.txt',
+            sep = "\t", quote = F, row.names = F, col.names=T )
+write.table(asthma_demeanis, file= 'Outputs/Version1/V1_step1/asthma_demeanis_rsID.txt',
+            sep = "\t", quote = F, row.names = F, col.names=T )
+write.table(alzheimer_wightman_rsID_noNA, file='Outputs/Version1/V1_step1/alzheimer_wightman_rsID_noNA.txt',
+            sep = "\t", quote = F, row.names = F, col.names=T )
+
+#save the original with also the Non assigned rsiDs (NA)
+write.table(crohn_delange_rsID, file = 'Outputs/Version1/V1_step1/crohn_delange_rsID.txt',
+            sep = "\t", quote = F, row.names = F, col.names=T )
+write.table(ulccol_delange_rsID, file = 'Outputs/Version1/V1_step1/ulccol_delange_rsID.txt',
+            sep = "\t", quote = F, row.names = F, col.names=T )
+write.table(alzheimer_wightman_rsID, file='Outputs/Version1/V1_step1/alzheimer_wightman_rsID.txt',
+            sep = "\t", quote = F, row.names = F, col.names=T )
+
+
+
+
+
+
+
+
+
+
+
