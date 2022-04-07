@@ -15,7 +15,7 @@ library(corrplot)
 
 #---- LD score regression function----------------------------------------------
 
-traits <- c(  
+traits <- c( 'Outputs/Version3/Munged-Sumstats/ms_2.sumstats.gz' ,
             'Outputs/Version3/Munged-Sumstats/alzheimer_1.sumstats.gz',
             'Outputs/Version3/Munged-Sumstats/alzheimer_2.sumstats.gz',
             'Outputs/Version3/Munged-Sumstats/armfat.sumstats.gz',
@@ -25,7 +25,7 @@ traits <- c(
             'Outputs/Version3/Munged-Sumstats/celiac.sumstats.gz',
             'Outputs/Version3/Munged-Sumstats/crohn.sumstats.gz',
             'Outputs/Version3/Munged-Sumstats/jia.sumstats.gz',
-            'Outputs/Version3/Munged-Sumstats/ms.sumstats.gz',
+            'Outputs/Version3/Munged-Sumstats/ms_1.sumstats.gz',
             'Outputs/Version3/Munged-Sumstats/pbc.sumstats.gz',
             
             'Outputs/Version3/Munged-Sumstats/psc.sumstats.gz', 
@@ -35,14 +35,14 @@ traits <- c(
             'Outputs/Version3/Munged-Sumstats/uc.sumstats.gz'
             ) 
 
-trait.names <- c('alzheimer_1', 'alzheimer_2', 'armfat', 'asthma_1', 'asthma_2', 
-                 'celiac', 'crohn', 'jia', 'ms', 'pbc', 
+trait.names <- c('ms_2','alzheimer_1', 'alzheimer_2', 'armfat', 'asthma_1', 'asthma_2', 
+                 'celiac', 'crohn', 'jia', 'ms_1', 'pbc', 
                  'psc', 'ra', 'sle', 'thyro', 'uc')
-sample.prev <- round(c((21982/41944), (86531/676486), (NA), (19954/107715), (64538/239321), 
+sample.prev <- round(c((4888/10395),(21982/41944), (86531/676486), (NA), (19954/107715), (64538/239321), 
                        (4533/10750), (12194/28072), (3305/9196), (9772/16849), (2764/10475),
                        (2871/12019), (19234/61565), (5201/9066), (30324/725172), (12366/33609)
                        ),2)
-population.prev <-  round(c((0.058), (0.058), (NA), (0.0357), (0.0357), 
+population.prev <-  round(c((35.9/100000), (0.058), (0.058), (NA), (0.0357), (0.0357), 
                             (0.014), (100/100000), (44.7/100000), (35.9/100000), (10/100000),
                             (5/100000), (460/100000), (50/100000), (0.05), (30/100000)
                             ),5)
