@@ -12,6 +12,7 @@ library(GenomicSEM)
 library(tidyr)
 library(dplyr)
 library(corrplot)
+library(qgraph)
 
 #---- LD score regression function----------------------------------------------
 
@@ -54,28 +55,40 @@ wld <- "ldscores/eur_w_ld_chr"
 LDS_output <- ldsc(traits, sample.prev, population.prev, ld, wld, trait.names, stand = T)
 
 #save the output 
-saveRDS(LDS_output, file = 'Outputs/Version3/LDS_output')
-output2 <- readRDS('Outputs/Version3/LDS_output')
+saveRDS(LDS_output, file = 'Outputs/Version3/Graphs/LDS_output_final')
+output2 <- readRDS('Outputs/Version3/Graphs/LDS_output_final')
 
-diag(output2$S)
+#plot the final matrix
 rownames(output2$S_Stand) <- colnames(output2$S_Stand)
 
-pdf('test.2.pdf', height = 14, width = 14)
-corrplot(output2$S_Stand, order = 'hclust', addCoef.col = 'black', is.corr = F)
-mtext('Non harmonized Summary Statistics', at=5, line=3, cex=1)
 
+pdf(file = 'Outputs/Version3/Graphs/Correlation-matrix_complete.pdf', height = 14, width = 14 )
+corrplot(output2$S_Stand, order = 'hclust', addCoef.col = 'black', is.corr = F)
 dev.off()
 
-install.packages('qgraph')
-library(qgraph)
 
 
 qgraph(output2$S_Stand,threshold=0.5,layout="spring")
 
-summary(lm(iris$Sepal.Length~iris$Petal.Length))
+#---- heritability -------------------------------------------------------------
+cbind(colnames(output2$S_Stand), (diag(output2$S)) )
 
 
+#---- remnove m1 that is interacting with everything because of the low h2
+
+t1<- output2$S_Stand[-10, -10]
+
+pdf(file = 'Outputs/Version3/Graphs/Correlation-matrix_noMS_1.pdf', height = 14, width = 14 )
+corrplot(t1, order = 'hclust', addCoef.col = 'black', is.corr = F)
+dev.off()
 
 
+#remove autocrrealtion for qraph
+?qgraph
+t_no_auto <- t1
+diag(t_no_auto) <- rep(0, 15)
 
+pdf(file = 'Outputs/Version3/Graphs/Network_noMS_1.pdf', height = 14, width = 14 )
+qgraph(t_no_auto,threshold=0.4,layout="spring")
+dev.off()
 
