@@ -10,7 +10,6 @@ library(data.table)
 library(GenomicSEM)
 library(tidyr)
 library(dplyr)
-library(corrplot)
 
 # Since the dataset are quite heavy in terms of memory I perform the preparation
 # of them in groups of 5 GWAS
@@ -32,21 +31,21 @@ armfat <- fread('Summary_Stats/continuous-23123-both_sexes-irnt.tsv.gz', data.ta
 ##the function changes the name of the columns as required by the genomicSEM package
 #and saves the files in the provided path (if the path is provided)
 
-prepare_munge<- function(sum_stats, rsID, effect_allele, non_effect_allele, pvalue, effect_size, to_remove=NA, path = NA){
+prepare_munge<- function(sum_stats, rsID, the_effect_allele, the_non_effect_allele, pvalue, effect_size, to_remove=NA, path = NA){
   #an error if arguments are not provided 
-  if (missing(sum_stats) | missing(rsID) | missing(effect_allele) | missing(non_effect_allele) |missing(pvalue) | missing(effect_size) ) {
+  if (missing(sum_stats) | missing(rsID) | missing(the_effect_allele) | missing(the_non_effect_allele) |missing(pvalue) | missing(effect_size) ) {
     stop( 'At least one argument is missing')
     
   } else {
     
     require(dplyr)
     require(data.table)
-    sum_stats <- sum_stats  %>% rename(c(SNP = rsID, A1 = effect_allele, A2 = non_effect_allele, p = pvalue, effect = effect_size))
+    sum_stats <- sum_stats  %>% rename(c(SNP = rsID, A1 = all_of(the_effect_allele), A2 = all_of(the_non_effect_allele), p = all_of(pvalue), effect = all_of(effect_size)))
     #conditional remove
     if(is.na(to_remove[1])){
       #do nothing 
     } else {
-      sum_stats <- select(sum_stats,-(to_remove))
+      sum_stats <- select(sum_stats,-(all_of(to_remove)))
     }
     
     #save the file if a path is provided
@@ -68,8 +67,8 @@ head(ms_1)
 dim(ms_1) # 472086     11
 ms <- prepare_munge(ms_1,  
                     rsID = 'rsid' , 
-                    effect_allele = 'effect_allele' , ##manually checked from the paper seemed to correspond (when it did not correspond the effect was in the opposite direction)   
-                    non_effect_allele = 'other_allele', 
+                    the_effect_allele = 'effect_allele' , ##manually checked from the paper seemed to correspond (when it did not correspond the effect was in the opposite direction)   
+                    the_non_effect_allele = 'other_allele', 
                     pvalue = 'p',
                     effect_size = 'OR' , 
                     to_remove = c('beta', 'se' ),
@@ -83,23 +82,23 @@ dim(ms_1) #472086      8
 
 head(ms_2)
 dim(ms_2) # 7968107       9
-prepare_munge(ms_2,  
+ms_x<- prepare_munge(ms_2,  
                     rsID = 'variant_id' , 
-                    effect_allele = 'effect_allele' , 
-                    non_effect_allele = 'other_allele', 
+                    the_effect_allele = 'other_allele' , #I believe they misreported the alleles, they seem flipped comparing the effect direction with GWAS catalog and the paper 
+                    the_non_effect_allele = 'effect_allele', 
                     pvalue = 'p_value',
                     effect_size = 'beta' , 
                     path = 'Outputs/Version3/Sumstats_ready_for_munge/ms_andlauer-2016.txt'
                     )
-
+head(ms_x)
 #---- sle GWAS -----------------------------------------------------------------
 
 head(sle)
 dim(sle) #7915251      11
 sle <- prepare_munge(sle,
                      rsID = 'rsid', 
-                     effect_allele = 'effect_allele', #manually confirmed on the paper 
-                     non_effect_allele = 'other_allele', 
+                     the_effect_allele = 'effect_allele', #manually confirmed on the paper 
+                     the_non_effect_allele = 'other_allele', 
                      pvalue = 'p',
                      effect_size = 'OR', 
                      to_remove = c('beta', 'se'),
@@ -115,8 +114,8 @@ dim(pbc) #1134141      11
 
 pbc <- prepare_munge(pbc,
                      rsID = 'rsid',
-                     effect_allele = 'effect_allele', #manually checked from the paper seemed to correspond (when it did not correspond the effect was in the opposite direction) 
-                     non_effect_allele = 'other_allele', 
+                     the_effect_allele = 'effect_allele', #manually checked from the paper seemed to correspond (when it did not correspond the effect was in the opposite direction) 
+                     the_non_effect_allele = 'other_allele', 
                      pvalue = 'p', 
                      effect_size = 'OR',
                      to_remove = c('se', 'beta'), 
@@ -148,8 +147,8 @@ colnames(crohn)[1] <- 'Variant_rsID'
 
 crohn <- prepare_munge(crohn, 
                        rsID = 'SNP.y',
-                       effect_allele = 'Allele2',    #manually checked on the paper for Risk allele
-                       non_effect_allele = 'Allele1', 
+                       the_effect_allele = 'Allele2',    #manually checked on the paper for Risk allele
+                       the_non_effect_allele = 'Allele1', 
                        pvalue = 'P.value',
                        effect_size = 'Effect',
                        to_remove = c('Variant_rsID', 'Min_single_cohort_pval', 'Pval_GWAS3', 'Pval_IIBDGC', 'Pval_IBDseq', 'HetPVal', 'HetDf', 'HetChiSq', 'HetISq'  ),
@@ -173,8 +172,8 @@ dim(uc) # 9570787      16
 #prepare function
 uc <- prepare_munge(uc, 
                        rsID = 'SNP',
-                       effect_allele = 'Allele2', # the manual check seemed to indicate Allele 2 as risk, but not 100% sure
-                       non_effect_allele = 'Allele1', 
+                       the_effect_allele = 'Allele2', # the manual check seemed to indicate Allele 2 as risk, but not 100% sure
+                       the_non_effect_allele = 'Allele1', 
                        pvalue = 'P.value',
                        effect_size = 'Effect',
                        to_remove = c('Variant_rsID', 'Min_single_cohort_pval', 'Pval_GWAS3', 'Pval_IIBDGC', 'Pval_IBDseq', 'HetPVal', 'HetDf', 'HetChiSq', 'HetISq'  ),
@@ -196,8 +195,8 @@ armfat <- armfat[ (!is.na(armfat$SNP)),]
 
 armfat <- prepare_munge(armfat, 
               rsID = 'SNP',
-              effect_allele = 'alt', #readme file said alt is the effect one
-              non_effect_allele = 'ref',
+              the_effect_allele = 'alt', #readme file said alt is the effect one
+              the_non_effect_allele = 'ref',
               pvalue = 'pval_meta', 
               effect_size = 'beta_meta',
               path = 'Outputs/Version3/Sumstats_ready_for_munge/armfat.txt'
@@ -237,8 +236,8 @@ dim(asthma_demeanis) #2001280      23
 
 asthma_demeanis <- prepare_munge(asthma_demeanis,
               rsID = 'rsid',
-              effect_allele = 'alternate_allele', #manually checked fron the paper
-              non_effect_allele = 'reference_allele',
+              the_effect_allele = 'alternate_allele', #manually checked fron the paper
+              the_non_effect_allele = 'reference_allele',
               pvalue = 'European_ancestry_pval_fix',
               effect_size = 'European_ancestry_beta_fix',
               to_remove = c("Multiancestry_beta_fix","Multiancestry_se_fix","Multiancestry_pval_fix" ,"Multiancestry_beta_rand" ,
@@ -257,8 +256,8 @@ dim(asthma_han) #9572556      12
 
 asthma_han <- prepare_munge(asthma_han, 
                             rsID = 'SNP',
-                            effect_allele = 'EA', #manually checked from the paper seemed to correspond (when it did not correspond the effect was in the opposite direction
-                            non_effect_allele = 'NEA',
+                            the_effect_allele = 'EA', #manually checked from the paper seemed to correspond (when it did not correspond the effect was in the opposite direction
+                            the_non_effect_allele = 'NEA',
                             pvalue = 'P',
                             effect_size = 'OR',
                             path = 'Outputs/Version3/Sumstats_ready_for_munge/asthma_ban-2020.txt'
@@ -273,8 +272,8 @@ dim(celiac) #523398     11
 
 celiac <- prepare_munge(celiac,
                          rsID = 'rsid', 
-                          effect_allele = 'effect_allele', #manually checked from the paper seemed to correspond
-                          non_effect_allele = 'other_allele',
+                          the_effect_allele = 'effect_allele', #manually checked from the paper seemed to correspond
+                          the_non_effect_allele = 'other_allele',
                           pvalue = 'p',
                           effect_size = 'beta', 
                           to_remove = c('OR','OR_lower', 'OR_upper'),
@@ -347,8 +346,8 @@ dim(alzh_kunkle) #11480632        8
 
 alzh_kunkle <- prepare_munge(alzh_kunkle,
                                rsID = 'MarkerName',
-                               effect_allele = 'Effect_allele',  #checked in the paper and also in the readme file
-                               non_effect_allele = 'Non_Effect_allele', 
+                               the_effect_allele = 'Effect_allele',  #checked in the paper and also in the readme file
+                               the_non_effect_allele = 'Non_Effect_allele', 
                                effect_size = 'Beta', 
                                pvalue = 'Pvalue',
                                path = 'Outputs/Version3/Sumstats_ready_for_munge/alzheimer_kunkle-2019.txt')
@@ -368,8 +367,8 @@ jia[ grep('rs7731626', jia$variant_id),] # G listed as risk allele in GWAS catal
 
 jia <- prepare_munge(jia, 
                        rsID = 'variant_id',
-                       effect_allele = 'alleleB', #checked on the paper (when it did not correspond the effect was in the opposite direction)
-                       non_effect_allele = 'alleleA',
+                       the_effect_allele = 'alleleB', #checked on the paper (when it did not correspond the effect was in the opposite direction)
+                       the_non_effect_allele = 'alleleA',
                        pvalue = 'p_value', 
                        effect_size = 'all_OR' , 
                        path= 'Outputs/Version3/Sumstats_ready_for_munge/jia_lopezisac-2020.txt')
@@ -384,8 +383,8 @@ dim(ra) #9739303       8
 
 ra <- prepare_munge(ra,
                       rsID = 'SNPID', 
-                      effect_allele = 'A1', #checked on the paper (when it did not correspond the effect was in the opposite direction)
-                      non_effect_allele = 'A2' ,
+                      the_effect_allele = 'A1', #checked on the paper (when it did not correspond the effect was in the opposite direction)
+                      the_non_effect_allele = 'A2' ,
                       effect_size = 'OR(A1)',
                       pvalue = 'P-val', 
                       path= 'Outputs/Version3/Sumstats_ready_for_munge/ra_okada-2014.txt',
@@ -430,8 +429,8 @@ length(grep('rs',alzh_wightman$SNP)) #9103904 SNPs with an rsID now
 
 alzh_wightman <- prepare_munge(alzh_wightman, 
                                  rsID = 'SNP', 
-                                 effect_allele = 'testedAllele', #still I am not convinced that this is the effect
-                                 non_effect_allele = 'otherAllele', 
+                                 the_effect_allele = 'testedAllele', #still I am not convinced that this is the effect
+                                 the_non_effect_allele = 'otherAllele', 
                                  pvalue = 'p',
                                  effect_size = 'z',
                                  path = 'Outputs/Version3/Sumstats_ready_for_munge/alzh_wightman-2021.txt')
