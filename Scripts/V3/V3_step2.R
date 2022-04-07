@@ -58,20 +58,19 @@ LDS_output <- ldsc(traits, sample.prev, population.prev, ld, wld, trait.names, s
 saveRDS(LDS_output, file = 'Outputs/Version3/Graphs/LDS_output_final')
 output2 <- readRDS('Outputs/Version3/Graphs/LDS_output_final')
 
-#plot the final matrix
-rownames(output2$S_Stand) <- colnames(output2$S_Stand)
+#---- heritability -------------------------------------------------------------
+cbind(colnames(output2$S_Stand), (diag(output2$S)) )
 
+#-----plot the final matrix
+
+rownames(output2$S_Stand) <- colnames(output2$S_Stand)
 
 pdf(file = 'Outputs/Version3/Graphs/Correlation-matrix_complete.pdf', height = 14, width = 14 )
 corrplot(output2$S_Stand, order = 'hclust', addCoef.col = 'black', is.corr = F)
 dev.off()
 
-
-
 qgraph(output2$S_Stand,threshold=0.5,layout="spring")
 
-#---- heritability -------------------------------------------------------------
-cbind(colnames(output2$S_Stand), (diag(output2$S)) )
 
 
 #---- remnove m1 that is interacting with everything because of the low h2
