@@ -56,7 +56,7 @@ LDS_output <- ldsc(traits, sample.prev, population.prev, ld, wld, trait.names, s
 
 #save the output 
 saveRDS(LDS_output, file = 'Outputs/Version3/Graphs/LDS_output_final')
-output2 <- readRDS('Outputs/Version3/Graphs/LDS_output_final')
+output2 <- readRDS('Outputs/Version3/LDS_output_final')
 
 #---- heritability -------------------------------------------------------------
 cbind(colnames(output2$S_Stand), (diag(output2$S)) )
@@ -65,7 +65,7 @@ cbind(colnames(output2$S_Stand), (diag(output2$S)) )
 
 rownames(output2$S_Stand) <- colnames(output2$S_Stand)
 
-pdf(file = 'Outputs/Version3/Graphs/Correlation-matrix_complete.pdf', height = 14, width = 14 )
+pdf(file = 'Graphs/V3/Correlation-matrix_complete.pdf', height = 14, width = 14 )
 corrplot(output2$S_Stand, order = 'hclust', addCoef.col = 'black', is.corr = F)
 dev.off()
 
@@ -77,7 +77,7 @@ qgraph(output2$S_Stand,threshold=0.5,layout="spring")
 
 t1<- output2$S_Stand[-10, -10]
 
-pdf(file = 'Outputs/Version3/Graphs/Correlation-matrix_noMS_1.pdf', height = 14, width = 14 )
+pdf(file = 'Graphs/V3/Correlation-matrix_noMS_1.pdf', height = 14, width = 14 )
 corrplot(t1, order = 'hclust', addCoef.col = 'black', is.corr = F)
 dev.off()
 
@@ -87,7 +87,7 @@ dev.off()
 t_no_auto <- t1
 diag(t_no_auto) <- rep(0, 15)
 
-pdf(file = 'Outputs/Version3/Graphs/Network_noMS_1.pdf', height = 14, width = 14 )
+pdf(file = 'Graphs/V3/Network_noMS_1.pdf', height = 14, width = 14 )
 qgraph(t_no_auto,threshold=0.4,layout="spring")
 dev.off()
 
