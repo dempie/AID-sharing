@@ -236,7 +236,7 @@ dim(asthma_demeanis) #2001280      23
 
 asthma_demeanis <- prepare_munge(asthma_demeanis,
               rsID = 'rsid',
-              the_effect_allele = 'alternate_allele', #manually checked fron the paper
+              the_effect_allele = 'alternate_allele', #manually checked on the paper
               the_non_effect_allele = 'reference_allele',
               pvalue = 'European_ancestry_pval_fix',
               effect_size = 'European_ancestry_beta_fix',
