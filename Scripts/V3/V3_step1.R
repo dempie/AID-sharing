@@ -347,7 +347,7 @@ dim(alzh_kunkle) #11480632        8
 
 alzh_kunkle <- prepare_munge(alzh_kunkle,
                                rsID = 'MarkerName',
-                               effect_allele = 'Effect_allele', 
+                               effect_allele = 'Effect_allele',  #checked in the paper and also in the readme file
                                non_effect_allele = 'Non_Effect_allele', 
                                effect_size = 'Beta', 
                                pvalue = 'Pvalue',
@@ -362,14 +362,14 @@ dim(jia) #7461261      13
 #no information about the effect or non-effect allele
 #so I checked some rsID as they were reported risk/nonrisk in the paper and on GWAS catalog
 
-jia[ grep('rs4869314', jia$variant_id),] # G listed as rtisk allele in GWAS catalog and in the paper
-jia[ grep('rs6434390', jia$variant_id),] # G listed as rtisk allele in GWAS catalog and in the paper
+jia[ grep('rs6679677', jia$variant_id),] # A listed as risk allele in GWAS catalog and in the paper
+jia[ grep('rs7731626', jia$variant_id),] # G listed as risk allele in GWAS catalog and in the paper but with opposite effect
 #allela A interpreted as the effect allele I think
 
 jia <- prepare_munge(jia, 
                        rsID = 'variant_id',
-                       effect_allele = 'alleleA',
-                       non_effect_allele = 'alleleB',
+                       effect_allele = 'alleleB', #checked on the paper (when it did not correspond the effect was in the opposite direction)
+                       non_effect_allele = 'alleleA',
                        pvalue = 'p_value', 
                        effect_size = 'all_OR' , 
                        path= 'Outputs/Version3/Sumstats_ready_for_munge/jia_lopezisac-2020.txt')
@@ -384,7 +384,7 @@ dim(ra) #9739303       8
 
 ra <- prepare_munge(ra,
                       rsID = 'SNPID', 
-                      effect_allele = 'A1',
+                      effect_allele = 'A1', #checked on the paper (when it did not correspond the effect was in the opposite direction)
                       non_effect_allele = 'A2' ,
                       effect_size = 'OR(A1)',
                       pvalue = 'P-val', 
@@ -398,7 +398,7 @@ dim(ra) #9739303       8
 head(thyro)
 #thyro columns are not read by munge function
 thyro_ok <- data.frame('SNP'= thyro$rsID, 
-                            'A1' = thyro$A1, 
+                            'A1' = thyro$A1,  #checked on the paper 
                             'A2'= thyro$A0, 
                             'P' = thyro$P, 
                             'effect' = thyro$`OR-A1`, 
@@ -430,7 +430,7 @@ length(grep('rs',alzh_wightman$SNP)) #9103904 SNPs with an rsID now
 
 alzh_wightman <- prepare_munge(alzh_wightman, 
                                  rsID = 'SNP', 
-                                 effect_allele = 'testedAllele',
+                                 effect_allele = 'testedAllele', #still I am not convinced that this is the effect
                                  non_effect_allele = 'otherAllele', 
                                  pvalue = 'p',
                                  effect_size = 'z',
