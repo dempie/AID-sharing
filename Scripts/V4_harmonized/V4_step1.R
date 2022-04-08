@@ -1,5 +1,5 @@
 #  LD score regression on auotoimmunity GWAS
-## Version4  will be a replication of the version 3 with harmonized GWAS summary stats
+## Version4  will be a replication and comparison of the version 3 with harmonized GWAS summary stats
 
 
 #The tutorial and info on the package and how to run the code are here:  
@@ -232,7 +232,26 @@ munge(vector_files,
 
 #------ run LDSR---------------------------------------------------------------
 
-traits <- c( 'Outputs/V4_harmonized/Munged/crohn.sumstats.gz', 
+traits <- c(  'Outputs/Version3/Munged-Sumstats/ms_2.sumstats.gz' ,
+              'Outputs/Version3/Munged-Sumstats/alzheimer_1.sumstats.gz',
+              'Outputs/Version3/Munged-Sumstats/alzheimer_2.sumstats.gz',
+              'Outputs/Version3/Munged-Sumstats/armfat.sumstats.gz',
+              'Outputs/Version3/Munged-Sumstats/asthma_1.sumstats.gz',
+              'Outputs/Version3/Munged-Sumstats/asthma_2.sumstats.gz',
+              
+              'Outputs/Version3/Munged-Sumstats/celiac.sumstats.gz',
+              'Outputs/Version3/Munged-Sumstats/crohn.sumstats.gz',
+              'Outputs/Version3/Munged-Sumstats/jia.sumstats.gz',
+              'Outputs/Version3/Munged-Sumstats/ms_1.sumstats.gz',
+              'Outputs/Version3/Munged-Sumstats/pbc.sumstats.gz',
+              
+              'Outputs/Version3/Munged-Sumstats/psc.sumstats.gz', 
+              'Outputs/Version3/Munged-Sumstats/ra.sumstats.gz',
+              'Outputs/Version3/Munged-Sumstats/sle.sumstats.gz', 
+              'Outputs/Version3/Munged-Sumstats/thyro.sumstats.gz',
+              'Outputs/Version3/Munged-Sumstats/uc.sumstats.gz',
+  
+              'Outputs/V4_harmonized/Munged/crohn.sumstats.gz', 
              'Outputs/V4_harmonized/Munged/uc.sumstats.gz', 
               
              'Outputs/V4_harmonized/Munged/asthma.sumstats.gz', 
@@ -245,16 +264,24 @@ traits <- c( 'Outputs/V4_harmonized/Munged/crohn.sumstats.gz',
              'Outputs/V4_harmonized/Munged/sle.sumstats.gz'
              ) 
 
-trait.names <- c('crohn', 'uc', 'asthma', 'celiac',
-                 'ms', 'pbc', 'psc', 'ra', 'sle' )
+trait.names <- c('ms_2','alzheimer_1', 'alzheimer_2', 'armfat', 'asthma_1', 'asthma_2', 
+                 'celiac', 'crohn', 'jia', 'ms_1', 'pbc', 
+                 'psc', 'ra', 'sle', 'thyro', 'uc','crohn_harmo', 'uc_harmo', 'asthma_harmo', 'celiac_harmo',
+                 'ms_harmo', 'pbc_harmo', 'psc_harmo', 'ra_harmo', 'sle_harmo' )
 
-sample.prev <- round(c( (12194/28072),(12366/33609), (19954/107715), (4533/10750),
+sample.prev <- round(c( (4888/10395),(21982/41944), (86531/676486), (NA), (19954/107715), (64538/239321), 
+                        (4533/10750), (12194/28072), (3305/9196), (9772/16849), (2764/10475),
+                        (2871/12019), (19234/61565), (5201/9066), (30324/725172), (12366/33609),
+                        (12194/28072),(12366/33609), (19954/107715), (4533/10750),
                        (9772/16849), (2764/10475), (2871/12019), (19234/61565), (5201/9066) )
                        ,2)
 #
 
 
-population.prev <-  round(c( (100/100000), (30/100000), (0.0357), (0.014), 
+population.prev <-  round(c((35.9/100000), (0.058), (0.058), (NA), (0.0357), (0.0357), 
+                            (0.014), (100/100000), (44.7/100000), (35.9/100000), (10/100000),
+                            (5/100000), (460/100000), (50/100000), (0.05), (30/100000) 
+                            ,(100/100000), (30/100000), (0.0357), (0.014), 
                              (35.9/100000), (10/100000), (5/100000), (460/100000), (50/100000) )
                           ,5)
 
@@ -262,17 +289,16 @@ ld <- "ldscores/eur_w_ld_chr"
 wld <- "ldscores/eur_w_ld_chr"
 
 # run the ld function
-LDS_output <- ldsc(traits, sample.prev, population.prev, ld, wld, trait.names, stand = T)
+LDS_output_harmo_nonharmo <- ldsc(traits, sample.prev, population.prev, ld, wld, trait.names, stand = T)
 
 #save the output 
-saveRDS(LDS_output, file = 'Outputs/V4_harmonized/LDS_output')
-output <- readRDS('Outputs/V4_harmonized/LDS_output')
+saveRDS(LDS_output_harmo_nonharmo, file = 'Outputs/V4_harmonized/LDS_output_harmo_nonharmo')
+output <- readRDS('Outputs/V4_harmonized/LDS_output_harmo_nonharmo')
 
 diag(output$S)
 rownames(output$S_Stand) <- colnames(output$S_Stand)
-pdf('test.pdf', height = 14, width = 14)
+pdf('Graphs/V4_harmonized/Total_correlation_matrix.pdf', height = 14, width = 14)
 corrplot(output$S_Stand, order = 'hclust', addCoef.col = 'black', is.corr = F) 
-mtext('Harmonized Summary Statistics', at=5, line=3, cex=1)
 dev.off()
 #----- plotting ----------------------------------------------------------------
 

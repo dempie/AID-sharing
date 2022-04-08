@@ -78,7 +78,7 @@ qgraph(output2$S_Stand,threshold=0.5,layout="spring")
 t1<- output2$S_Stand[-10, -10]
 
 pdf(file = 'Graphs/V3/Correlation-matrix_noMS_1.pdf', height = 14, width = 14 )
-corrplot(t1, order = 'hclust', addCoef.col = 'black', is.corr = F)
+corrplot(t1, order = 'hclust', addCoef.col = 'black')
 dev.off()
 
 
