@@ -237,23 +237,27 @@ sle_p <- calculate_prevalence('Prevalences/CSV_prevalences/sle_benthman-2015.csv
 pbc_p <- calculate_prevalence('Prevalences/CSV_prevalences/pbc_cordell-2015.csv')
 crohn_p <- calculate_prevalence('Prevalences/CSV_prevalences/crohn_delange-2017.csv')
 uc_p <- calculate_prevalence('Prevalences/CSV_prevalences/uc_delange-2017.csv')
-armfat_p <- NA
+
 
 #---- Group 1 munge function  --------------------------------------------------
 
-Prevalences <- c(ms_1_p, ms_2_p, sle_p, pbc_p, crohn_p, uc_p, armfat_p)
+Prevalences <- c(ms_1_p, ms_2_p, sle_p, pbc_p, crohn_p, uc_p)
 vector_files <- c('Outputs/Version3/Sumstats_ready_for_munge/ms_imsgc-2011.txt',
                   'Outputs/Version3/Sumstats_ready_for_munge/ms_andlauer-2016.txt',
                   'Outputs/Version3/Sumstats_ready_for_munge/sle_bentham-2015.txt',
                   'Outputs/Version3/Sumstats_ready_for_munge/pbc_cordell-2015.txt',
                   'Outputs/Version3/Sumstats_ready_for_munge/crohn_delange-2017.txt', 
-                  'Outputs/Version3/Sumstats_ready_for_munge/uc_delange-2017.txt',
-                  'Outputs/Version3/Sumstats_ready_for_munge/armfat.txt')
+                  'Outputs/Version3/Sumstats_ready_for_munge/uc_delange-2017.txt'
+                  )
 
 munge(vector_files, 
       trait.names = c('ms_1', 'ms_2' , 'sle', 'pbc', 'crohn', 'uc', 'armfat'), 
       hm3 = 'SNP/w_hm3.snplist', 
       N = Prevalences)
+
+armfat_p <- 492874
+armfat <- 'Outputs/Version3/Sumstats_ready_for_munge/armfat.txt'
+munge(armfat, c('armfat'),   hm3 = 'SNP/w_hm3.snplist', N= c(armfat_p))
 
 #---- END of Group1 ------------------------------------------------------------
 
