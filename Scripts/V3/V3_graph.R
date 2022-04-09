@@ -11,11 +11,18 @@ library(dplyr)
 
 output2 <- readRDS('Outputs/Version3/LDS_output_final')
 
-#---- remove m1 that is interacting with everything because of the low h2
-#----- remove asthma_1 (demeanis is the smallest one compared to asthma_2 that is han e al)
-#----- remove Alzh_1 that is the smallest (kunkle), leave Alzh_2 that is the bigger one (Wightman)
 
-t1<- output2$S_Stand[-10, -10]
+#---- remove columns we do not want --------------------------------------------
+
+#remove m1 that is interacting with everything because of the low h2
+t1<- output2$S_Stand[-11, -11]
+
+#remove asthma_1 (demeanis is the smallest one compared to asthma_2 that is han e al)
+
+t1<- output2$S_Stand[-11, -11]
+#remove Alzh_1 that is the smallest (kunkle), leave Alzh_2 that is the bigger one (Wightman)
+
+t1<- output2$S_Stand[-11, -11]
 
 colnames(output2$S_Stand)
 colnames(output2$S_Stand) <-c('Multiple sclerosis',  "Alzheimer\'s disease ", 'Arm fat percentage', ''  )

@@ -217,7 +217,7 @@ vector_files <- c('Outputs/Version3/Sumstats_ready_for_munge/ms_imsgc-2011.txt',
 munge(vector_files, 
       trait.names = c('ms_1', 'ms_2' , 'sle', 'pbc', 'crohn', 'uc', 'armfat'), 
       hm3 = 'SNP/w_hm3.snplist', 
-      N = c(26621, 15283 , 14257, 13239, 40266, 45975, 492874))
+      N = c(, , ,,, ,))
 
 #---- END of Group1 ------------------------------------------------------------
 
