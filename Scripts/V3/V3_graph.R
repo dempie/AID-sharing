@@ -72,7 +72,36 @@ dev.off()
 
 #---- remove autocorrealtion for qraph
 
-t_no_auto <- t1
-diag(t_no_auto) <- rep(0, 15)
-qgraph(t_no_auto,threshold=0.4,layout="spring")
+rownames(net$S_Stand) <- colnames(net$S_Stand) 
+¶corrplot(net$S_Stand, is.corr = F, addCoef.col = 'black', type = 'upper')
+
+
+#- heritability --
+cbind(colnames(net2$S_Stand), (diag(ne2$S)) )
+
+#---- remove columns we do not want --------------------------------------------
+#remove asthma_1 (demeanis is the smallest one compared to asthma_2 that is han e al)
+#remove Alzh_1 that is the smallest (kunkle), leave Alzh_2 that is the bigger one (Wightman)
+#remove m1 that is interacting with everything because of the low h2
+#remove armfat that is not needed, it's only my internal control fo heritability (around 0.20)
+t1<- net$S_Stand[ !rownames(net$S_Stand) %in% c('ms_1', 'asthma_2', 'armfat', 'alzheimer_1') , !colnames(net$S_Stand) %in% c('ms_1', 'asthma_2', 'armfat', 'alzheimer_1') ]
+
+
+
+
+pre <- colnames(t1)
+
+colnames(t1) <-c('Allergies',  "Multiple sclerosis ", 'Alzheimer\'s disease', 'Asthma', 'Celiac disease',
+                 'Crohn\'s disease', 'Juvenile idiopathic arthritis', 'Primary biliary cholangitis', 'Primary sclerosing cholangitis',
+                 'Rheumatoid arthritis' , 'Systemic lupus erythematosus', 'Autoimmune thyroid disease', 'Ulcerative colitis')
+
+rownames(t1) <- colnames(t1)
+
+after <- colnames(t1)
+rbind(pre, after)
+
+pdf('/home/pietro.demela/graph.pdf', height = 14, width = 14)
+qgraph(t1, layout= 'spring', vsize=1.5, threshold=0.4, 
+       node.width=2, diag=F, label.cex=1, color='black')
+dev.off()
 
