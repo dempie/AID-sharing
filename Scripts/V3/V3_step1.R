@@ -506,7 +506,6 @@ munge(vector_files,
       trait.names = c('alzheimer_1', 'jia', 'ra', 'thyro', 'alzheimer_2'), 
       hm3 = 'SNP/w_hm3.snplist', 
       N = Prevalences_group3)
-      )
 
 
 

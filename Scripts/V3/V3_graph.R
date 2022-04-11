@@ -73,7 +73,7 @@ dev.off()
 #---- remove autocorrealtion for qraph
 
 rownames(net$S_Stand) <- colnames(net$S_Stand) 
-¶corrplot(net$S_Stand, is.corr = F, addCoef.col = 'black', type = 'upper')
+corrplot(net$S_Stand, is.corr = F, addCoef.col = 'black', type = 'upper')
 
 
 #- heritability --

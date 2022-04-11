@@ -83,7 +83,7 @@ a <- corrplot(cormatrix, order = 'hclust', addCoef.col = 'black')
 #standard errors
 k<-nrow(LDS_version1$S)
 SE_corr <-matrix(0, k, k)
-SE_corr[lower.tri(SE,diag=TRUE)] <-sqrt(diag(LDS_version1$V) #the SE of the correlation
+SE_corr[lower.tri(SE,diag=TRUE)] <-sqrt(diag(LDS_version1$V)) #the SE of the correlation
 
 
 #the heritability lies on the diagonal of the genetic covariance matrix 
