@@ -77,15 +77,38 @@ ldsc_output_step3 <- ldsc(traits = GWAS_info_step3$traits,
                           stand = T)
 
 saveRDS(ldsc_output_step3, file='Outputs/Version3/ldsc_output_step3')
+ldsc_output_step3 <- readRDS('Outputs/Version3/ldsc_output_step3')
 
+rownames(ldsc_output_step3$S_Stand) <-  colnames(ldsc_output_step3$S_Stand) 
+
+#visaul inspection to select the right model
 corrplot(ldsc_output_step3$S_Stand, order = 'hclust', addCoef.col = 'black', type = 'upper')
+
+qgraph(ldsc_output_step3$S_Stand, layout= 'spring', vsize=1.5, threshold=0.5, 
+       node.width=2, diag=F, label.cex=1, color='black')
+
+qgraph(ldsc_output_step3$S_Stand, layout= 'spring', vsize=1.5, threshold=0.4, 
+       node.width=2, diag=F, label.cex=1, color='black')
+#from qgraph a two factor model might be adequate, 
+#factor 1 ms, psc, uc, and chrohn 
+#factor 2 pbc, sle, jia 
 
 #----The model------------------------------------------------------------------
 
+#Specify the Genomic confirmatory factor model
+
+aid_model <-'F1 =~ NA*crohn + uc  + psc 
+             F2 =~ NA*jia + pbc + sle + ra 
+F1~~F2'
+
+#run the model
+aid_factor <-usermodel(ldsc_output_step3, estimation = "DWLS", model = aid_model, CFIcalc = TRUE, std.lv = TRUE, imp_cov = FALSE)
+
+#print the results
 
 
-Ssmooth <- as.matrix((nearPD(ldsc_output$S, corr = FALSE))$mat)
 
-nearPD(ldsc_output$S, corr = FALSE)
+
+
 
 

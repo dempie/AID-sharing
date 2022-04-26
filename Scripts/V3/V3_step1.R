@@ -507,11 +507,13 @@ munge(vector_files,
       hm3 = 'SNP/w_hm3.snplist', 
       N = Prevalences_group3)
 
+#---END of group 3--------------------------------------------------------------
 
+#---Group 4 load the dataset--------------------------------------------------------------
 
-
-
-
+t1d <- fread('Summary_Stats/chiou-2021_t1d_build38_GCST90014023_buildGRCh38.tsv')
+derma <- fread('Summary_Stats/sliz-2021_atopic-dermatitis_build38_GCST90027161_buildGRCh38.tsv.gz')
+v
 
 
 
