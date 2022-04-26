@@ -5,10 +5,11 @@
 #The tutorial and info on the package and how to run the code are here:  
 # https://github.com/GenomicSEM/GenomicSEM/wiki/3.-Models-without-Individual-SNP-effects
 
-# in this script I do the LD score regreeion of the summary stats munged in V£_step1
+# in this script I do the LD score regreeion of the summary stats munged in V3_step1
 #--- Load the libraries--------------------------------------
 library(data.table)
 library(GenomicSEM)
+library(stats)
 library(tidyr)
 library(dplyr)
 library(corrplot)
@@ -92,9 +93,6 @@ diag(t_no_auto) <- rep(0, 16)
 pdf(file = 'Graphs/V3/Network_noMS_1.pdf', height = 14, width = 14 )
 qgraph(t_no_auto,threshold=0.4,layout="spring")
 dev.off()
-
-
-
 
 
 

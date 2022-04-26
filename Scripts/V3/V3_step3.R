@@ -1,0 +1,91 @@
+#  LD score regression on auotoimmunity GWAS
+## Version3  will be a replication of the version 2 that might be wrong in the 
+## allele orientation 
+
+#The tutorial and info on the package and how to run the code are here:  
+# https://github.com/GenomicSEM/GenomicSEM/wiki/3.-Models-without-Individual-SNP-effects
+
+# in this script I do the LD score regreeion of the summary stats munged in V3_step1 
+# with only the studies we want to put into the factor model
+
+#--- Load the libraries--------------------------------------
+library(data.table)
+library(GenomicSEM)
+library(Matrix)
+library(tidyr)
+library(dplyr)
+library(corrplot)
+library(qgraph)
+
+#---- Crete a table that contains all the info on the GWAS----------------------
+
+traits <- c('Outputs/Version3/Munged-Sumstats/allergies.sumstats.gz',  
+            'Outputs/Version3/Munged-Sumstats/ms_2.sumstats.gz' ,
+            'Outputs/Version3/Munged-Sumstats/alzheimer_1.sumstats.gz',
+            'Outputs/Version3/Munged-Sumstats/alzheimer_2.sumstats.gz',
+            'Outputs/Version3/Munged-Sumstats/armfat.sumstats.gz',
+            'Outputs/Version3/Munged-Sumstats/asthma_1.sumstats.gz',
+            'Outputs/Version3/Munged-Sumstats/asthma_2.sumstats.gz',
+            
+            'Outputs/Version3/Munged-Sumstats/celiac.sumstats.gz',
+            'Outputs/Version3/Munged-Sumstats/crohn.sumstats.gz',
+            'Outputs/Version3/Munged-Sumstats/jia.sumstats.gz',
+            'Outputs/Version3/Munged-Sumstats/ms_1.sumstats.gz',
+            'Outputs/Version3/Munged-Sumstats/pbc.sumstats.gz',
+            
+            'Outputs/Version3/Munged-Sumstats/psc.sumstats.gz', 
+            'Outputs/Version3/Munged-Sumstats/ra.sumstats.gz',
+            'Outputs/Version3/Munged-Sumstats/sle.sumstats.gz', 
+            'Outputs/Version3/Munged-Sumstats/thyro.sumstats.gz',
+            'Outputs/Version3/Munged-Sumstats/uc.sumstats.gz'
+) 
+
+trait.names <- c( 'allergies','ms_2','alzheimer_1', 'alzheimer_2', 'armfat', 'asthma_1', 'asthma_2', 
+                  'celiac', 'crohn', 'jia', 'ms_1', 'pbc', 
+                  'psc', 'ra', 'sle', 'thyro', 'uc')
+sample.prev <-  c(.5, .5, .5, .5, NA, .5, (64538/(64538 + 239321)),
+                        .5, .5, (3305/(3305 + 9196)), (9772 /(9772 + 16849)), .5, 
+                        ( 2871 /(2871 + 12019)), .5, .5, .5, .5 )
+                      
+population.prev <-  c((0.20 ),(35.9/100000), (0.058), (0.058), (NA), (0.0357), (0.0357), 
+                            (0.014), (100/100000), (44.7/100000), (35.9/100000), (10/100000),
+                            (5/100000), (460/100000), (50/100000), (0.05), (30/100000) )
+
+GWAS_info <- data.frame(trait.names, traits, sample.prev, population.prev)
+row.names(GWAS_info) <- GWAS_info$trait.names
+
+#----remove the studies I do not want to include in the next step---------------
+#remove asthma_1 (demeanis is the smallest one compared to asthma_2 that is han e al)
+#remove Alzh_1 that is the smallest (kunkle), leave Alzh_2 that is the bigger one (Wightman)
+#remove m1 that is interacting with everything because of the low h2
+#remove armfat that is not needed, it's only my internal control fo heritability (around 0.20)
+filter <- 
+GWAS_info_step3 <- GWAS_info[!(row.names(GWAS_info) %in% c('asthma_1', 'alzheimer_1', 'ms_1', 'armfat')),]
+
+
+#----run ldsc function with only the studies we want----------------------------
+ld <- "ldscores/eur_w_ld_chr"
+wld <- "ldscores/eur_w_ld_chr"
+
+
+ldsc_output_step3 <- ldsc(traits = GWAS_info_step3$traits, 
+                          trait.names = GWAS_info_step3$trait.names, 
+                          sample.prev = GWAS_info_step3$sample.prev, 
+                          population.prev = GWAS_info_step3$population.prev,
+                          ld = ld, 
+                          wld =  wld ,
+                          stand = T)
+
+saveRDS(ldsc_output_step3, file='Outputs/Version3/ldsc_output_step3')
+
+corrplot(ldsc_output_step3$S_Stand, order = 'hclust', addCoef.col = 'black', type = 'upper')
+
+#----The model------------------------------------------------------------------
+
+
+
+Ssmooth <- as.matrix((nearPD(ldsc_output$S, corr = FALSE))$mat)
+
+nearPD(ldsc_output$S, corr = FALSE)
+
+

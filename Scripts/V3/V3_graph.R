@@ -101,7 +101,7 @@ after <- colnames(t1)
 rbind(pre, after)
 
 pdf('/home/pietro.demela/graph.pdf', height = 14, width = 14)
-qgraph(t1, layout= 'spring', vsize=1.5, threshold=0.4, 
+qgraph(output2$S_Stand, layout= 'spring', vsize=1.5, threshold=0.45, 
        node.width=2, diag=F, label.cex=1, color='black')
 dev.off()
 
