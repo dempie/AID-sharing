@@ -105,3 +105,68 @@ qgraph(output2$S_Stand, layout= 'spring', vsize=1.5, threshold=0.45,
        node.width=2, diag=F, label.cex=1, color='black')
 dev.off()
 
+
+
+#-------- Nicola's function for SEM plots --------------------------------------
+
+semPlotModel_GSEM=function(gsem.object=GWISoutput , est.label="STD_All"){ 
+  require(semPlot)
+  object=gsem.object$results
+  object$free=0
+  numb=1:length(which(object$op!="~~"))
+  object$free[which(object$op!="~~")]=numb
+  varNames <- lavaanNames(object, type = "ov")
+  factNames <- lavaanNames(object, type = "lv")
+  factNames <- factNames[!factNames %in% varNames]
+  n <- length(varNames)
+  k <- length(factNames)
+  if (is.null(object$label)) 
+    object$label <- rep("", nrow(object))
+  semModel <- new("semPlotModel")
+  object$est <- object[,est.label]
+  if (is.null(object$group)) 
+    object$group <- ""
+  semModel@Pars <- data.frame(label = object$label, lhs = ifelse(object$op == 
+                                                                   "~" | object$op == "~1", object$rhs, object$lhs), edge = "--", 
+                              rhs = ifelse(object$op == "~" | object$op == "~1", object$lhs, 
+                                           object$rhs), est = object$est, std = NA, group = object$group, 
+                              fixed = object$free==0, par = object$free, stringsAsFactors = FALSE)
+  semModel@Pars$edge[object$op == "~~"] <- "<->"
+  semModel@Pars$edge[object$op == "~*~"] <- "<->"
+  semModel@Pars$edge[object$op == "~"] <- "~>"
+  semModel@Pars$edge[object$op == "=~"] <- "->"
+  semModel@Pars$edge[object$op == "~1"] <- "int"
+  semModel@Pars$edge[grepl("\\|", object$op)] <- "|"
+  semModel@Thresholds <- semModel@Pars[grepl("\\|", semModel@Pars$edge), 
+                                       -(3:4)]
+  semModel@Pars <- semModel@Pars[!object$op %in% c(":=", "<", 
+                                                   ">", "==", "|", "<", ">"), ]
+  semModel@Vars <- data.frame(name = c(varNames, factNames), 
+                              manifest = c(varNames, factNames) %in% varNames, exogenous = NA, 
+                              stringsAsFactors = FALSE)
+  semModel@ObsCovs <- list()
+  semModel@ImpCovs <- list()
+  semModel@Computed <- FALSE
+  semModel@Original <- list(object)
+  return(semModel)
+  
+}
+
+
+#the fucntion creates the object that is then accepted by semPath function from
+#semPlot package. Here an example of how to plot it
+plot1 <- semPlotModel_GSEM(gsem.object = aid_factor)
+
+#for having different colors for the different groups create a list of groups
+f1 <- c('crohn', 'uc',  'psc' )
+f2 <- c('jia', 'pbc' ,'sle' ,  'ra')
+lista <- list(f1, f2)
+
+
+pdf(file = 'Graphs/V3/Two_factor_model_1', height = 14, width = 14)
+semPaths(plot1, what = 'par', residuals = T, groups = lista, 
+         color = c('darksalmon', 'darkslategray3'), edge.color = 'black',
+         sizeMan = 10, sizeLat = 10, label.cex=2, edge.label.cex = 2)
+dev.off()
+
+

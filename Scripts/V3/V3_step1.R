@@ -509,11 +509,51 @@ munge(vector_files,
 
 #---END of group 3--------------------------------------------------------------
 
-#---Group 4 load the dataset--------------------------------------------------------------
+#---Group 4 load the dataset----------------------------------------------------
 
 t1d <- fread('Summary_Stats/chiou-2021_t1d_build38_GCST90014023_buildGRCh38.tsv')
 derma <- fread('Summary_Stats/sliz-2021_atopic-dermatitis_build38_GCST90027161_buildGRCh38.tsv.gz')
-v
+
+#----t1d GWAS-------------------------------------------------------------------
+
+head(t1d)
+prepare_munge(t1d, rsID = 'variant_id',
+              effect_size = 'beta', 
+              the_effect_allele = 'effect_allele', 
+              the_non_effect_allele = 'other_allele', 
+              pvalue = 'p_value', 
+              path = 'Outputs/Version3/Sumstats_ready_for_munge/t1d_chiou-2021.txt'
+              )
+
+
+#----derma GWAS-----------------------------------------------------------------
+
+head(derma) 
+prepare_munge(derma, rsID = 'variant_id',
+              effect_size = 'beta',
+              the_effect_allele = 'effect_allele', 
+              the_non_effect_allele = 'other_allele', 
+              pvalue = 'p_value', 
+              path = 'Outputs/Version3/Sumstats_ready_for_munge/derma_sliz-2021.txt')
+
+#-----calcualate sample prevalence Group 4---------------------------------------
+
+prevalence_t1d <- calculate_prevalence('Prevalences/CSV_prevalences/t1d_chiou-2021.csv')
+prevalence_derma <- calculate_prevalence('Prevalences/CSV_prevalences/derma_sliz-2021.csv')
+
+#-----munge Group 4-------------------------------------------------------------
+
+
+trait.names <- c('t1d', 'derma' )
+traits <- c('Outputs/Version3/Sumstats_ready_for_munge/t1d_chiou-2021.txt',
+            'Outputs/Version3/Sumstats_ready_for_munge/derma_sliz-2021.txt') 
+
+sample.prev <- c(prevalence_t1d, prevalence_derma)
+
+munge(files = traits, hm3 = 'SNP/w_hm3.snplist', N = sample.prev, trait.names = trait.names)
+
+
+
 
 
 

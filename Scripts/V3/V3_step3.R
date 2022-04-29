@@ -59,7 +59,7 @@ row.names(GWAS_info) <- GWAS_info$trait.names
 #remove Alzh_1 that is the smallest (kunkle), leave Alzh_2 that is the bigger one (Wightman)
 #remove m1 that is interacting with everything because of the low h2
 #remove armfat that is not needed, it's only my internal control fo heritability (around 0.20)
-filter <- 
+
 GWAS_info_step3 <- GWAS_info[!(row.names(GWAS_info) %in% c('asthma_1', 'alzheimer_1', 'ms_1', 'armfat')),]
 
 
@@ -87,7 +87,7 @@ corrplot(ldsc_output_step3$S_Stand, order = 'hclust', addCoef.col = 'black', typ
 qgraph(ldsc_output_step3$S_Stand, layout= 'spring', vsize=1.5, threshold=0.5, 
        node.width=2, diag=F, label.cex=1, color='black')
 
-qgraph(ldsc_output_step3$S_Stand, layout= 'spring', vsize=1.5, threshold=0.4, 
+qgraph(ldsc_output_step3$S_Stand, layout= 'spring', vsize=1.5, threshold=0.6, 
        node.width=2, diag=F, label.cex=1, color='black')
 #from qgraph a two factor model might be adequate, 
 #factor 1 ms, psc, uc, and chrohn 
@@ -98,15 +98,64 @@ qgraph(ldsc_output_step3$S_Stand, layout= 'spring', vsize=1.5, threshold=0.4,
 #Specify the Genomic confirmatory factor model
 
 aid_model <-'F1 =~ NA*crohn + uc  + psc 
-             F2 =~ NA*jia + pbc + sle + ra 
+             F2 =~ NA*jia + pbc + sle + ra
 F1~~F2'
 
 #run the model
 aid_factor <-usermodel(ldsc_output_step3, estimation = "DWLS", model = aid_model, CFIcalc = TRUE, std.lv = TRUE, imp_cov = FALSE)
 
 #print the results
+aid_factor
 
 
+#----Nicola's function for plotting SEM-----------------------------------------
+
+semPlotModel_GSEM=function(gsem.object=GWISoutput , est.label="STD_All"){ 
+  require(semPlot)
+  object=gsem.object$results
+  object$free=0
+  numb=1:length(which(object$op!="~~"))
+  object$free[which(object$op!="~~")]=numb
+  varNames <- lavaanNames(object, type = "ov")
+  factNames <- lavaanNames(object, type = "lv")
+  factNames <- factNames[!factNames %in% varNames]
+  n <- length(varNames)
+  k <- length(factNames)
+  if (is.null(object$label)) 
+    object$label <- rep("", nrow(object))
+  semModel <- new("semPlotModel")
+  object$est <- object[,est.label]
+  if (is.null(object$group)) 
+    object$group <- ""
+  semModel@Pars <- data.frame(label = object$label, lhs = ifelse(object$op == 
+                                                                   "~" | object$op == "~1", object$rhs, object$lhs), edge = "--", 
+                              rhs = ifelse(object$op == "~" | object$op == "~1", object$lhs, 
+                                           object$rhs), est = object$est, std = NA, group = object$group, 
+                              fixed = object$free==0, par = object$free, stringsAsFactors = FALSE)
+  semModel@Pars$edge[object$op == "~~"] <- "<->"
+  semModel@Pars$edge[object$op == "~*~"] <- "<->"
+  semModel@Pars$edge[object$op == "~"] <- "~>"
+  semModel@Pars$edge[object$op == "=~"] <- "->"
+  semModel@Pars$edge[object$op == "~1"] <- "int"
+  semModel@Pars$edge[grepl("\\|", object$op)] <- "|"
+  semModel@Thresholds <- semModel@Pars[grepl("\\|", semModel@Pars$edge), 
+                                       -(3:4)]
+  semModel@Pars <- semModel@Pars[!object$op %in% c(":=", "<", 
+                                                   ">", "==", "|", "<", ">"), ]
+  semModel@Vars <- data.frame(name = c(varNames, factNames), 
+                              manifest = c(varNames, factNames) %in% varNames, exogenous = NA, 
+                              stringsAsFactors = FALSE)
+  semModel@ObsCovs <- list()
+  semModel@ImpCovs <- list()
+  semModel@Computed <- FALSE
+  semModel@Original <- list(object)
+  return(semModel)
+  
+}
+
+semPaths(plot1, what = 'par', residuals = T, groups = lista, 
+         color = c('darksalmon', 'darkslategray3'), edge.color = 'black',
+         sizeMan = 10, sizeLat = 10, label.cex=2, edge.label.cex = 2)
 
 
 
