@@ -153,9 +153,9 @@ semPlotModel_GSEM=function(gsem.object=GWISoutput , est.label="STD_All"){
   
 }
 
-semPaths(plot1, what = 'par', residuals = T, groups = lista, 
+semPaths(plot1, what = 'est' , residuals = T, groups = lista, 
          color = c('darksalmon', 'darkslategray3'), edge.color = 'black',
-         sizeMan = 10, sizeLat = 10, label.cex=2, edge.label.cex = 2)
+         sizeMan = 7, sizeLat = 7, label.cex=2, edge.label.cex = 1)
 
 
 

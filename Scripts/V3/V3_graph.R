@@ -111,6 +111,7 @@ dev.off()
 
 semPlotModel_GSEM=function(gsem.object=GWISoutput , est.label="STD_All"){ 
   require(semPlot)
+  require(lavaan)
   object=gsem.object$results
   object$free=0
   numb=1:length(which(object$op!="~~"))
