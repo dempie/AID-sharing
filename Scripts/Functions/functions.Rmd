@@ -1,0 +1,115 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+In this notebook I will add the fucntion useful for this project that I have created or stolen from someone.
+
+## prepare_munge
+
+This function is useful to format GWAS summary statistic as the munge function from GenomicSEM wants them. 
+
+```{r prepare_munge }
+prepare_munge<- function(sum_stats, rsID, the_effect_allele, the_non_effect_allele, pvalue, effect_size, to_remove=NA, path = NA){
+  #an error if arguments are not provided 
+  if (missing(sum_stats) | missing(rsID) | missing(the_effect_allele) | missing(the_non_effect_allele) |missing(pvalue) | missing(effect_size) ) {
+    stop( 'At least one argument is missing')
+    
+  } else {
+    
+    require(dplyr)
+    require(data.table)
+    sum_stats <- sum_stats  %>% rename(c(SNP = rsID, A1 = all_of(the_effect_allele), A2 = all_of(the_non_effect_allele), p = all_of(pvalue), effect = all_of(effect_size)))
+    #conditional remove
+    if(is.na(to_remove[1])){
+      #do nothing 
+    } else {
+      sum_stats <- select(sum_stats,-(all_of(to_remove)))
+    }
+    
+    #save the file if a path is provided
+    if(is.na(path)){
+      return(sum_stats)
+    } else {
+      fwrite(sum_stats, path, sep = '\t', col.names = T, row.names = F, quote = F)
+      return(sum_stats)
+    }
+  }
+}
+```
+
+## semPlotModel_GSEM
+
+This function transforms the output from genomic sem in an object that can be used by the semPlot function to draw paths for factor analysis representation. 
+```{r semPlotModel_GSEM}
+semPlotModel_GSEM=function(gsem.object=GWISoutput , est.label="STD_All"){ 
+  require(semPlot)
+  object=gsem.object$results
+  object$free=0
+  numb=1:length(which(object$op!="~~"))
+  object$free[which(object$op!="~~")]=numb
+  varNames <- lavaanNames(object, type = "ov")
+  factNames <- lavaanNames(object, type = "lv")
+  factNames <- factNames[!factNames %in% varNames]
+  n <- length(varNames)
+  k <- length(factNames)
+  if (is.null(object$label)) 
+    object$label <- rep("", nrow(object))
+  semModel <- new("semPlotModel")
+  object$est <- object[,est.label]
+  if (is.null(object$group)) 
+    object$group <- ""
+  semModel@Pars <- data.frame(label = object$label, lhs = ifelse(object$op == 
+                                                                   "~" | object$op == "~1", object$rhs, object$lhs), edge = "--", 
+                              rhs = ifelse(object$op == "~" | object$op == "~1", object$lhs, 
+                                           object$rhs), est = object$est, std = NA, group = object$group, 
+                              fixed = object$free==0, par = object$free, stringsAsFactors = FALSE)
+  semModel@Pars$edge[object$op == "~~"] <- "<->"
+  semModel@Pars$edge[object$op == "~*~"] <- "<->"
+  semModel@Pars$edge[object$op == "~"] <- "~>"
+  semModel@Pars$edge[object$op == "=~"] <- "->"
+  semModel@Pars$edge[object$op == "~1"] <- "int"
+  semModel@Pars$edge[grepl("\\|", object$op)] <- "|"
+  semModel@Thresholds <- semModel@Pars[grepl("\\|", semModel@Pars$edge), 
+                                       -(3:4)]
+  semModel@Pars <- semModel@Pars[!object$op %in% c(":=", "<", 
+                                                   ">", "==", "|", "<", ">"), ]
+  semModel@Vars <- data.frame(name = c(varNames, factNames), 
+                              manifest = c(varNames, factNames) %in% varNames, exogenous = NA, 
+                              stringsAsFactors = FALSE)
+  semModel@ObsCovs <- list()
+  semModel@ImpCovs <- list()
+  semModel@Computed <- FALSE
+  semModel@Original <- list(object)
+  return(semModel)
+  
+}
+```
+
+
+## split_sum_stats
+This function is meant to seaprate GWAS summary statas in n chunks of x size, and then recover a specific chunk. This is usefull for running job arrays in the cluster. 
+
+```{r split_sum_stats}
+split_sum_stats <- function(summary_stats, chunk_size, which_chunk) {
+  require(data.table)
+  #give a number to the elements of the sum_states
+  my_index <- seq_along(1: nrow(summary_stats))
+  n <- nrow(summary_stats) 
+  chunks <- rep(1:ceiling(n/chunk_size),each=chunk_size)[1:n] #the last piece [1:n] is necessary because otherwise the last chunk will become long as the chunk size and will replicate it thus exciding the length of the sumstats
+  a <- split(my_index, chunks)
+  summary_stats[ (a[[which_chunk]]) , ]
+}
+```
+
+
+## is_se_logB
+This function is for checking if the standard error reported in GWAS summary stats is a standard error of logistic beta. If the calculated and reported are almost identical that it is a selogB.  
+
+```{r is_se_logB}
+is_se_logB <- function(BETA,SE, PVALUE) {
+  p_calculated <- 2*pnorm((abs(BETA) / SE),lower.tail = F)
+  p_reported <- PVALUE
+  data.frame(p_calculated, p_reported)
+}
+```
+

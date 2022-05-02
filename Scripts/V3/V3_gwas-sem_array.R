@@ -16,12 +16,3 @@ split_sum_stats <- function(summary_stats, chunk_size, which_chunk) {
   a <- split(my_index, chunks)
   summary_stats[ (a[[which_chunk]]) , ]
 }
-
-#---- Function for standard error of logistic beta------------------------------
-is_se_logB <- function(BETA,SE, PVALUE) {
-  p_calculated <- 2*pnorm((abs(BETA) / SE),lower.tail = F)
-  p_reported <- PVALUE
-  data.frame(p_calculated, p_reported)
-}
-
-#--------
