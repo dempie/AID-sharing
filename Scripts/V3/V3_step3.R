@@ -54,6 +54,8 @@ population.prev <-  c((0.20 ),(35.9/100000), (0.058), (0.058), (NA), (0.0357), (
 GWAS_info <- data.frame(trait.names, traits, sample.prev, population.prev)
 row.names(GWAS_info) <- GWAS_info$trait.names
 
+saveRDS(GWAS_info, file = 'Outputs/Version3/GWAS_info_table')
+
 #----remove the studies I do not want to include in the next step---------------
 #remove asthma_1 (demeanis is the smallest one compared to asthma_2 that is han e al)
 #remove Alzh_1 that is the smallest (kunkle), leave Alzh_2 that is the bigger one (Wightman)
@@ -104,9 +106,9 @@ F1~~F2'
 #run the model
 aid_factor <-usermodel(ldsc_output_step3, estimation = "DWLS", model = aid_model, CFIcalc = TRUE, std.lv = TRUE, imp_cov = FALSE)
 
-#print the results
+#print the two factor model results
 aid_factor
-
+#the statistic related to the fitting seem good sot the two factor model will be used to run the GWAS
 
 #----Nicola's function for plotting SEM-----------------------------------------
 
