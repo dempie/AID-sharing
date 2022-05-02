@@ -107,6 +107,16 @@ sle <- prepare_munge(sle,
 head(sle)
 dim(sle) #7915251       9
 
+# the same sumstats but with betas and SE
+prepare_munge(sle,
+              rsID = 'rsid', 
+              the_effect_allele = 'effect_allele', #manually confirmed on the paper 
+              the_non_effect_allele = 'other_allele', 
+              pvalue = 'p',
+              effect_size = 'beta', 
+              to_remove = c('OR', 'OR_lower', 'OR_upper'),
+              path = 'Outputs/Version3/Sumstats_ready_for_munge/sle_beta_bentham-2015.txt') 
+
 
 #---- pbc GWAS -----------------------------------------------------------------
 head(pbc)
@@ -172,7 +182,7 @@ dim(uc) # 9570787      16
 #prepare function
 uc <- prepare_munge(uc, 
                        rsID = 'SNP',
-                       the_effect_allele = 'Allele2', # the manual check seemed to indicate Allele 2 as risk, but not 100% sure
+                       the_effect_allele = 'Allele2', #  manual check seemed to indicate Allele 2 as risk, but not 100% sure
                        the_non_effect_allele = 'Allele1', 
                        pvalue = 'P.value',
                        effect_size = 'Effect',
