@@ -117,37 +117,51 @@ aid_factor <-usermodel(ldsc_step4, estimation = "DWLS", model = aid_model, CFIca
 
 #print the two factor model results
 saveRDS(aid_factor, file = 'Outputs/Version3/Step4/aid_twofactor') 
-
+aid_factor <- readRDS('Outputs/Version3/Step4/aid_twofactor')
 
 #----Sumstats function----------------------------------------------------------
 
 #----SE of logistic BETA--------------------------------------------------------
-#create a function to check if the SE are STD error of log10(OD)
+
+#----- Function to check if the SE are STD error of log(OD)-----
 is_se_logB <- function(BETA,SE, PVALUE) {
     p_calculated <- 2*pnorm((abs(BETA) / SE),lower.tail = F)
     p_reported <- PVALUE
     data.frame(p_calculated, p_reported)
 }
 
-#create a function to compute SE from CI or from Betas
-add_SE <- function(OR, PVALUE, upper_CI, use_chi = F) {
-  if(use_chi == F){
-    se_column <- (log(upper_CI) - log(OR) )/qnorm(0.975)
-    p_calculated <- 2*pnorm((abs(log(OR)) / se_column),lower.tail = F)
-    p_reported <- PVALUE
-    
-    #derive SE from X2 distribution
-  } else {
-    chi <-  qchisq(1-PVALUE, df=1)
-    se_column <- sqrt((abs(log(OR)))^2/chi)
-    p_calculated <- 2*pnorm((abs(log(OR)) / se_column),lower.tail = F)
-    p_reported <- PVALUE
-  }
+#------- Function to compute SE from CI or from Betas-----
+
+add_SE <- function(OR, PVALUE, upper_CI, use_chi = F, add_se=F, sum_stat) {
   
-  #add se column if entry is True
-  return(data.frame(p_calculated, p_reported))
-  return(se_column)
+  #calculate SE from Confidence intervals 
+  if(use_chi == F){
+      se_column <- (log(upper_CI) - log(OR) )/qnorm(0.975)
+      p_calculated <- 2*pnorm((abs(log(OR)) / se_column),lower.tail = F)
+      p_reported <- PVALUE
+    
+      #add SE column
+      if(add_se == T) {
+        sum_stat2 <- mutate(sum_stat, SE = (log(upper_CI) - log(OR) )/qnorm(0.975) )
+        return(sum_stat2) }
+    
+    
+    #calculate SE from X2 distribution
+  } else {
+      chi <-  qchisq(1-PVALUE, df=1)
+      se_column <- sqrt((abs(log(OR)))^2/chi)
+      p_calculated <- 2*pnorm((abs(log(OR)) / se_column),lower.tail = F)
+      p_reported <- PVALUE
+    
+      #add SE column
+      if(add_se == T) {
+        sum_stat2 <- mutate(sum_stat, SE = sqrt((abs(log(OR)))^2/chi) )
+        return(sum_stat2) }
+  }
 }
+   
+  
+
 
 #---- crohn SE -----------------------------------------------------------------
 cd <- fread('Outputs/Version3/Sumstats_ready_for_munge/crohn_delange-2017.txt', data.table = F)
@@ -166,27 +180,40 @@ head(psc)
 is_se_logB(log(psc$Effect), psc$SE, psc$P) #SE of Odds Ratio
 
 #----- jia SE ------------------------------------------------------------------
+
 jia  <- fread('Outputs/Version3/Sumstats_ready_for_munge/jia_lopezisac-2020.txt', data.table = F) 
 head(jia)
 
 #there are a bunch of columns we do not care and the SE have to be calculated from the CI
 jia_ok <- jia %>% select(-c(frequentist_add_beta_1, frequentist_add_se_1, alternate_ids ))
 
-#the effect should be OR
+#here derive the SE from the CHI square to avoid rounding issues. 
+#the effect seems to be an Odds Ratio
+jia_ok <- add_SE(OR = jia_ok$effect, PVALUE = jia_ok$p, upper_CI = jia_ok$all_OR_upper, 
+       use_chi =  T, add_se = T, sum_stat = jia_ok )
 
-
-(log(1.10864) - log(1.037930))/1.96
-
-2*pnorm(( log(1.037930) / se) ,lower.tail = F)
-
-a <- add_SE(OR = jia_ok$effect, PVALUE = jia_ok$p, upper_CI = jia_ok$all_OR_upper,use_chi =  F)
-
-#there are rounding issues with the SE, the trend is the same but there are differences
-#try to derive the CHIsquare statistic 
-
-chi <-  qchisq(1-0.104282, df=1)
-se <- sqrt((log(1.037930))^2/chi)
 head(jia_ok)
+
+is_se_logB(BETA = log(jia_ok$effect), SE = jia_ok$SE, PVALUE = jia_ok$p) #now is a SE of logistic Beta
+
+#save the file with SE
+fwrite(jia_ok, file='Outputs/Version3/Sumstats_ready_for_munge/jia_lopezisac-2020_SE_.txt', 
+       sep = '\t', col.names = T, row.names = F, quote = F)
+#----
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
