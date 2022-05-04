@@ -122,7 +122,7 @@ prepare_munge(sle,
 head(pbc)
 dim(pbc) #1134141      11
 
-pbc <- prepare_munge(pbc,
+pbc_1 <- prepare_munge(pbc,
                      rsID = 'rsid',
                      the_effect_allele = 'effect_allele', #manually checked from the paper seemed to correspond (when it did not correspond the effect was in the opposite direction) 
                      the_non_effect_allele = 'other_allele', 
@@ -130,6 +130,16 @@ pbc <- prepare_munge(pbc,
                      effect_size = 'OR',
                      to_remove = c('se', 'beta'), 
                      path = 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/pbc_cordell-2015.txt')
+
+pbc <- fread('Summary_Stats/cordell-2015_pbc_build37_26394269_pbc_efo1001486_1_gwas.sumstats.tsv.gz', data.table = F)
+pbc_2 <- prepare_munge(pbc,
+                     rsID = 'rsid',
+                     the_effect_allele = 'effect_allele', #manually checked from the paper seemed to correspond (when it did not correspond the effect was in the opposite direction) 
+                     the_non_effect_allele = 'other_allele', 
+                     pvalue = 'p', 
+                     effect_size = 'beta',
+                     to_remove = c('OR', 'OR_lower', 'OR_upper'), 
+                     path = 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/pbc_cordell-2015_beta_SE.txt')
 
 head(pbc)
 dim(pbc) #1134141       8
@@ -521,19 +531,32 @@ munge(vector_files,
 
 #---Group 4 load the dataset----------------------------------------------------
 
-t1d <- fread('Summary_Stats/chiou-2021_t1d_build38_GCST90014023_buildGRCh38.tsv')
-derma <- fread('Summary_Stats/sliz-2021_atopic-dermatitis_build38_GCST90027161_buildGRCh38.tsv.gz')
+t1d <- fread('Summary_Stats/chiou-2021_t1d_build38_GCST90014023_buildGRCh38.tsv', data.table = F)
+derma <- fread('Summary_Stats/sliz-2021_atopic-dermatitis_build38_GCST90027161_buildGRCh38.tsv.gz', data.table = F)
 
 #----t1d GWAS-------------------------------------------------------------------
 
 head(t1d)
-prepare_munge(t1d, rsID = 'variant_id',
-              effect_size = 'beta', 
-              the_effect_allele = 'effect_allele', 
-              the_non_effect_allele = 'other_allele', 
-              pvalue = 'p_value', 
-              path = 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/t1d_chiou-2021.txt'
-              )
+
+#the p_value column is not properly read by munge function as it is a character
+#So transform it into as.numeric
+
+t1d_pk <-  cbind( rsID = t1d$variant_id,
+                  effect_size = t1d$beta, 
+                  the_effect_allele = t1d$effect_allele, 
+                  the_non_effect_allele = t1d$other_allele, 
+                  pvalue = as.numeric(t1d$p_value),
+                  chr = t1d$chromosome ,
+                  position =t1d$base_pair_location, 
+                  effect_allele_frequency= t1d$effect_allele_frequency,
+                  SE = t1d$standard_error, 
+                  sample_size = t1d$sample_size, 
+)
+head(t1d_pk)
+sum(t1d_pk$p <0)
+
+fwrite(t1d_pk, 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/t1d_chiou-2021.txt',
+       sep = '\t', col.names = T, row.names = F, quote = F)
 
 
 #----derma GWAS-----------------------------------------------------------------
@@ -546,6 +569,7 @@ prepare_munge(derma, rsID = 'variant_id',
               pvalue = 'p_value', 
               path = 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/derma_sliz-2021.txt')
 
+
 #-----calcualate sample prevalence Group 4---------------------------------------
 
 prevalence_t1d <- calculate_prevalence('Prevalences/CSV_prevalences/t1d_chiou-2021.csv')
@@ -554,11 +578,10 @@ prevalence_derma <- calculate_prevalence('Prevalences/CSV_prevalences/derma_sliz
 #-----munge Group 4-------------------------------------------------------------
 
 
-trait.names <- c('t1d', 'derma' )
-traits <- c('outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/t1d_chiou-2021.txt',
-            'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/derma_sliz-2021.txt') 
+trait.names <- c('t1d_chiou-2021')
+traits <- c('outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/t1d_chiou-2021.txt') 
 
-sample.prev <- c(prevalence_t1d, prevalence_derma)
+sample.prev <- c(prevalence_t1d)
 
 munge(files = traits, hm3 = 'SNP/w_hm3.snplist', N = sample.prev, trait.names = trait.names)
 

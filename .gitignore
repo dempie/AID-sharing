@@ -3,9 +3,10 @@
 .RData
 .Ruserdata
 ldscores/
-Outputs/
+outputs/
 renv/
 SNP/
 Summary_Stats/
 AID_sharing.Rproj
 Prevalences/
+Temporary/

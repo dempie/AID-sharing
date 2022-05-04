@@ -79,83 +79,20 @@ jia  <- fread('outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_mu
 head(jia)
 
 #there are a bunch of columns we do not care and the SE have to be calculated from the CI
-jia_ok <- jia %>% select(-c(frequentist_add_beta_1, frequentist_add_se_1, alternate_ids ))
-
-#here derive the SE from the CHI square to avoid rounding issues. 
-median(jia$effect) #1.00067, close to one means it's an OR
-
-#add the log(OD) column and calculate the SE column
-jia_ok <- add_SE(OR = jia_ok$effect, PVALUE = jia_ok$p, use_chi =  T, add_se = T, sum_stat = jia_ok)
+jia_ok <- jia %>% select(-c(effect, all_OR_lower, all_OR_upper, alternate_ids ))
 head(jia_ok)
 
+colnames(jia_ok)[8] <- 'beta'
+colnames(jia_ok)[9] <- 'se'
 
-test<- is_se_logB(BETA = jia_ok$Beta, SE = jia_ok$SE, PVALUE = jia_ok$p) #now is a SE of logistic Beta
-
-test <- is_se_logB(BETA = jia_ok$Beta, SE = jia_ok$SE, PVALUE = jia_ok$p) #now is a SE of logistic Beta
-isTRUE(test$p_calculated == test$p_reported)
-testF <- test[!(round(test$p_calculated, 7)) == (round(test$p_reported, 7)), ]
-testT <- test[(test$p_calculated == test$p_reported),]
-
-
-
-
-
-
-
-
-#remove OD column and CI columns
-jia_ok <- jia_ok %>% select(-c(effect, all_OR_lower, all_OR_upper))
-#save the file with SE
-fwrite(jia_ok, file='outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/jia_lopezisac-2020_SE_.txt', 
+fwrite(jia_ok, file='outputs/version3/04_output_sumstats-function/Sumstats_ready_for_munge/jia_lopez-2016_beta_se.txt', 
        sep = '\t', col.names = T, row.names = F, quote = F)
-
-#-----Jia beta from sum stats--------------------------------------------------
-
-head(jia_2)
-jia_2 <- jia %>% select(-c(effect, alternate_ids, all_OR_lower, all_OR_upper  ))
-colnames(jia_2)[8] <- 'beta'
-colnames(jia_2)[9] <- 'se'
-
-fwrite(jia_2, file='Temporary/jia_lopezisac-2020_temporary_SE_.txt', 
-       sep = '\t', col.names = T, row.names = F, quote = F)
-
-
-file_names <- c('Temporary/jia_lopezisac-2020_temporary_SE_.txt')
-
-prevalences <- c(jia_p) #calculated above
-se_logit <-c(T)
-OLS <- c(F,)
-lin_pr <- c(F,F,F,F,F,F,F)
-
-
-
-aid_sumstats <-sumstats(files = file_names, ref = 'SNP/reference.1000G.maf.0.005.txt.gz',
-                        trait.names = c('jia'),
-                        se.logit =  c(T),
-                        OLS = c(F), 
-                        linprob = c(F), 
-                        N = prevalences, 
-                        parallel = T,
-                        keep.indel= F 
-)
-
 
 #----- pbc SE -------------------------------------------------------------------
 
-pbc <- fread('outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/pbc_cordell-2015.txt', data.table = F)
+pbc <- fread('outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/pbc_cordell-2015_beta_SE.txt', data.table = F)
 head(pbc)
-#compute SE
-pbc_ok <- add_SE(OR = pbc$effect, PVALUE = pbc$p, upper_CI = pbc$OR_upper,
-                 use_chi = T, sum_stat = pbc, add_se = T)
-head(pbc_ok)
-is_se_logB(BETA = pbc_ok$Beta, SE = pbc_ok$SE, PVALUE = pbc_ok$p) #now is SE of logistic beta
-
-#remove OD column and CI columns
-pbc_ok <- pbc_ok %>% select(-c(effect, OR_lower, OR_upper))
-
-#save the file with SE
-fwrite(pbc_ok, file='outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/pbc_cordell-2015_SE.txt', 
-       sep = '\t', col.names = T, row.names = F, quote = F)
+is_se_logB(pbc$effect, pbc$se, pbc$p)
 
 #----- sle SE ------------------------------------------------------------------
 
@@ -167,22 +104,31 @@ is_se_logB(BETA = sle$effect, SE = sle$se, PVALUE = sle$p) #SE of logistic beta 
 
 ra <- fread('outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/ra_okada-2014.txt', data.table = F)
 head(ra)
-
-#calculate SE from Confidence intervals
-ra <- separate(data = ra, col = 'OR_95%CIup-OR_95%CIlow', sep = '-', 
-               into = c('OR_95%CIup', 'OR_95%CIlow'), remove = T, extra = 'warn')
+length(which(ra$effect == 1)) #1324526 this means that they have rounded to 1 and when computing z this causes inf and -inf 
+dim(ra) #9739303  8
+#remove the effects == 1
+ra <- ra[!(ra$effect == 1),]
+dim(ra) #8414777       8
 head(ra)
-ra_ok <- add_SE( OR = ra$effect, PVALUE = ra$p, use_chi = T, sum_stat = ra,
+
+
+ra <- add_SE( OR = ra$effect, PVALUE = ra$p, use_chi = T, sum_stat = ra,
                  upper_CI = ra$`OR_95%CIup`, add_se = T)
-head(ra_ok)
 
+summary(se_column)
+OR_SE_issue <- ra[which(ra$SE ==0 ), ]
+ra$CHI <-  qchisq(1- (ra$p) , df=1)
+
+head(ra)
+length(which(ra$Beta== 0))
 is_se_logB(BETA = ra_ok$Beta, SE = ra_ok$SE, PVALUE = ra_ok$p) #SE of logistic beta
-
+dim(ra)
 #remove OD column and CI columns
-ra_ok <- ra_ok %>% select(-c(effect,  'OR_95%CIup-OR_95%CIlow'))
-fwrite(ra_ok, file= 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/ra_okada-2014_SE.txt',
+ra <- ra %>% select(-c(effect))
+fwrite(ra, file= 'outputs/version3/04_output_sumstats-function/Sumstats_ready_for_munge/ra_okada-2014_SE_RoundIssues.txt',
        sep = '\t', col.names = T, row.names = F, quote = F)
 
+length(which(ra$SE == 0))
 
 
 #---- Munge the summary stats --------------------------------------------------
@@ -218,13 +164,12 @@ calculate_prevalence <- function(path_of_csv){
 
 file_names <- c('outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/crohn_delange-2017.txt',
                 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/uc_delange-2017.txt', 
-                'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/psc_ji-2016.txt',
-                'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/jia_lopezisac-2020_SE_.txt',
-                'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/pbc_cordell-2015_SE.txt',
+                'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/psc_ji-2016.txt',       
+                'outputs/version3/04_output_sumstats-function/Sumstats_ready_for_munge/jia_lopez-2016_beta_se.txt',
+                'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/pbc_cordell-2015_beta_SE.txt',
                 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/sle_beta_bentham-2015.txt',
-                'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/ra_okada-2014_SE.txt') 
-
-
+                'outputs/version3/04_output_sumstats-function/Sumstats_ready_for_munge/ra_okada-2014_SE_RoundIssues.txt'
+                ) 
 
 crohn_p <- calculate_prevalence('Prevalences/CSV_prevalences/crohn_delange-2017.csv')
 uc_p <- calculate_prevalence('Prevalences/CSV_prevalences/uc_delange-2017.csv')
@@ -259,7 +204,7 @@ munged_files <- c('outputs/version3/04_output_sumstats-function/munged/croh.sums
 names = c('croh', 'uc', 'psc', 'jia', 'pbc', 'sle', 'ra') 
 
 ldsc_step4 <- ldsc(traits = munged_files, sample.prev = GWAS_info_2$sample.prev, 
-                   population.prev = GWAS_info_2$population.prev, trait.names = names,
+                   population.prev = GWAS_info_2$population p.prev, trait.names = names,
                    ld = "ldscores/eur_w_ld_chr",
                    wld= "ldscores/eur_w_ld_chr", stand = T)
 
@@ -285,11 +230,11 @@ aid_factor <- readRDS('outputs/version3/04_output_sumstats-function/aid_twofacto
 
 file_names <- c('outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/crohn_delange-2017.txt',
                 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/uc_delange-2017.txt', 
-                'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/psc_ji-2016.txt',
-                'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/jia_lopezisac-2020_SE_.txt',
-                'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/pbc_cordell-2015_SE.txt',
+                'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/psc_ji-2016.txt',       
+                'outputs/version3/04_output_sumstats-function/Sumstats_ready_for_munge/jia_lopez-2016_beta_se.txt',
+                'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/pbc_cordell-2015_beta_SE.txt',
                 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/sle_beta_bentham-2015.txt',
-                'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/ra_okada-2014_SE.txt')
+                'outputs/version3/04_output_sumstats-function/Sumstats_ready_for_munge/ra_okada-2014_SE_RoundIssues.txt') 
 
 prevalences <- c(crohn_p, uc_p, psc_p, jia_p, pbc_p, sle_p, ra_p) #calculated above
 se_logit <-c(T,T,T,T,T,T,T,T)
@@ -312,13 +257,4 @@ aid_sumstats <- readRDS('outputs/version3/04_output_sumstats-function/aid_sumsta
 
 
 #----------------------------------------------------------------------------
-
-
-
-
-
-
-
-
-
 
