@@ -1,5 +1,5 @@
 #  LD score regression on auotoimmunity GWAS
-## Version3  will be a replication of the version 2 that might be wrong in the 
+## version3  will be a replication of the version 2 that might be wrong in the 
 ## allele orientation 
 
 #The tutorial and info on the package and how to run the code are here:  
@@ -19,25 +19,25 @@ library(qgraph)
 
 #---- Crete a table that contains all the info on the GWAS----------------------
 
-traits <- c('Outputs/Version3/Munged-Sumstats/allergies.sumstats.gz',  
-            'Outputs/Version3/Munged-Sumstats/ms_2.sumstats.gz' ,
-            'Outputs/Version3/Munged-Sumstats/alzheimer_1.sumstats.gz',
-            'Outputs/Version3/Munged-Sumstats/alzheimer_2.sumstats.gz',
-            'Outputs/Version3/Munged-Sumstats/armfat.sumstats.gz',
-            'Outputs/Version3/Munged-Sumstats/asthma_1.sumstats.gz',
-            'Outputs/Version3/Munged-Sumstats/asthma_2.sumstats.gz',
+traits <- c('outputs/version3/01_output_prepare-sumstats/Munged-Sumstats/allergies.sumstats.gz',  
+            'outputs/version3/01_output_prepare-sumstats/Munged-Sumstats/ms_2.sumstats.gz' ,
+            'outputs/version3/01_output_prepare-sumstats/Munged-Sumstats/alzheimer_1.sumstats.gz',
+            'outputs/version3/01_output_prepare-sumstats/Munged-Sumstats/alzheimer_2.sumstats.gz',
+            'outputs/version3/01_output_prepare-sumstats/Munged-Sumstats/armfat.sumstats.gz',
+            'outputs/version3/01_output_prepare-sumstats/Munged-Sumstats/asthma_1.sumstats.gz',
+            'outputs/version3/01_output_prepare-sumstats/Munged-Sumstats/asthma_2.sumstats.gz',
             
-            'Outputs/Version3/Munged-Sumstats/celiac.sumstats.gz',
-            'Outputs/Version3/Munged-Sumstats/crohn.sumstats.gz',
-            'Outputs/Version3/Munged-Sumstats/jia.sumstats.gz',
-            'Outputs/Version3/Munged-Sumstats/ms_1.sumstats.gz',
-            'Outputs/Version3/Munged-Sumstats/pbc.sumstats.gz',
+            'outputs/version3/01_output_prepare-sumstats/Munged-Sumstats/celiac.sumstats.gz',
+            'outputs/version3/01_output_prepare-sumstats/Munged-Sumstats/crohn.sumstats.gz',
+            'outputs/version3/01_output_prepare-sumstats/Munged-Sumstats/jia.sumstats.gz',
+            'outputs/version3/01_output_prepare-sumstats/Munged-Sumstats/ms_1.sumstats.gz',
+            'outputs/version3/01_output_prepare-sumstats/Munged-Sumstats/pbc.sumstats.gz',
             
-            'Outputs/Version3/Munged-Sumstats/psc.sumstats.gz', 
-            'Outputs/Version3/Munged-Sumstats/ra.sumstats.gz',
-            'Outputs/Version3/Munged-Sumstats/sle.sumstats.gz', 
-            'Outputs/Version3/Munged-Sumstats/thyro.sumstats.gz',
-            'Outputs/Version3/Munged-Sumstats/uc.sumstats.gz'
+            'outputs/version3/01_output_prepare-sumstats/Munged-Sumstats/psc.sumstats.gz', 
+            'outputs/version3/01_output_prepare-sumstats/Munged-Sumstats/ra.sumstats.gz',
+            'outputs/version3/01_output_prepare-sumstats/Munged-Sumstats/sle.sumstats.gz', 
+            'outputs/version3/01_output_prepare-sumstats/Munged-Sumstats/thyro.sumstats.gz',
+            'outputs/version3/01_output_prepare-sumstats/Munged-Sumstats/uc.sumstats.gz'
 ) 
 
 trait.names <- c( 'allergies','ms_2','alzheimer_1', 'alzheimer_2', 'armfat', 'asthma_1', 'asthma_2', 
@@ -54,7 +54,7 @@ population.prev <-  c((0.20 ),(35.9/100000), (0.058), (0.058), (NA), (0.0357), (
 GWAS_info <- data.frame(trait.names, traits, sample.prev, population.prev)
 row.names(GWAS_info) <- GWAS_info$trait.names
 
-saveRDS(GWAS_info, file = 'Outputs/Version3/GWAS_info_table')
+saveRDS(GWAS_info, file = 'outputs/version3/GWAS_info_table')
 
 #----remove the studies I do not want to include in the next step---------------
 #remove asthma_1 (demeanis is the smallest one compared to asthma_2 that is han e al)
@@ -78,8 +78,8 @@ ldsc_output_step3 <- ldsc(traits = GWAS_info_step3$traits,
                           wld =  wld ,
                           stand = T)
 
-saveRDS(ldsc_output_step3, file='Outputs/Version3/ldsc_output_step3')
-ldsc_output_step3 <- readRDS('Outputs/Version3/ldsc_output_step3')
+saveRDS(ldsc_output_step3, file='outputs/version3/03_output_prepare-sumstats/ldsc_output_step3')
+ldsc_output_step3 <- readRDS('outputs/version3/03_output_prepare-sumstats/ldsc_output_step3')
 
 rownames(ldsc_output_step3$S_Stand) <-  colnames(ldsc_output_step3$S_Stand) 
 

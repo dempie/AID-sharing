@@ -1,5 +1,5 @@
 #  LD score regression on auotoimmunity GWAS
-## Version3  will be a replication of the version 2 that might be wrong in the 
+## version3  will be a replication of the version 2 that might be wrong in the 
 ## allele orientation 
 
 #The tutorial and info on the package and how to run the code are here:  
@@ -72,7 +72,7 @@ ms <- prepare_munge(ms_1,
                     pvalue = 'p',
                     effect_size = 'OR' , 
                     to_remove = c('beta', 'se' ),
-                    path = 'Outputs/Version3/Sumstats_ready_for_munge/ms_imsgc-2011.txt'
+                    path = 'outputs/version3/01_output_prepare-sumstats/01_output_prepare-sumstats/Sumstats_ready_for_munge/ms_imsgc-2011.txt'
                     )
                     
 head(ms_1)
@@ -88,7 +88,7 @@ ms_x<- prepare_munge(ms_2,
                     the_non_effect_allele = 'effect_allele', 
                     pvalue = 'p_value',
                     effect_size = 'beta' , 
-                    path = 'Outputs/Version3/Sumstats_ready_for_munge/ms_andlauer-2016.txt'
+                    path = 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/ms_andlauer-2016.txt'
                     )
 head(ms_x)
 #---- sle GWAS -----------------------------------------------------------------
@@ -102,7 +102,7 @@ sle <- prepare_munge(sle,
                      pvalue = 'p',
                      effect_size = 'OR', 
                      to_remove = c('beta', 'se'),
-                     path = 'Outputs/Version3/Sumstats_ready_for_munge/sle_bentham-2015.txt') 
+                     path = 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/sle_bentham-2015.txt') 
 
 head(sle)
 dim(sle) #7915251       9
@@ -115,7 +115,7 @@ prepare_munge(sle,
               pvalue = 'p',
               effect_size = 'beta', 
               to_remove = c('OR', 'OR_lower', 'OR_upper'),
-              path = 'Outputs/Version3/Sumstats_ready_for_munge/sle_beta_bentham-2015.txt') 
+              path = 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/sle_beta_bentham-2015.txt') 
 
 
 #---- pbc GWAS -----------------------------------------------------------------
@@ -129,7 +129,7 @@ pbc <- prepare_munge(pbc,
                      pvalue = 'p', 
                      effect_size = 'OR',
                      to_remove = c('se', 'beta'), 
-                     path = 'Outputs/Version3/Sumstats_ready_for_munge/pbc_cordell-2015.txt')
+                     path = 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/pbc_cordell-2015.txt')
 
 head(pbc)
 dim(pbc) #1134141       8
@@ -162,7 +162,7 @@ crohn <- prepare_munge(crohn,
                        pvalue = 'P.value',
                        effect_size = 'Effect',
                        to_remove = c('Variant_rsID', 'Min_single_cohort_pval', 'Pval_GWAS3', 'Pval_IIBDGC', 'Pval_IBDseq', 'HetPVal', 'HetDf', 'HetChiSq', 'HetISq'  ),
-                       path = 'Outputs/Version3/Sumstats_ready_for_munge/crohn_delange-2017.txt')
+                       path = 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/crohn_delange-2017.txt')
 head(crohn)
 dim(crohn) #9570787       7
 
@@ -187,7 +187,7 @@ uc <- prepare_munge(uc,
                        pvalue = 'P.value',
                        effect_size = 'Effect',
                        to_remove = c('Variant_rsID', 'Min_single_cohort_pval', 'Pval_GWAS3', 'Pval_IIBDGC', 'Pval_IBDseq', 'HetPVal', 'HetDf', 'HetChiSq', 'HetISq'  ),
-                       path = 'Outputs/Version3/Sumstats_ready_for_munge/uc_delange-2017.txt')
+                       path = 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/uc_delange-2017.txt')
 head(uc)
 
 
@@ -209,7 +209,7 @@ armfat <- prepare_munge(armfat,
               the_non_effect_allele = 'ref',
               pvalue = 'pval_meta', 
               effect_size = 'beta_meta',
-              path = 'Outputs/Version3/Sumstats_ready_for_munge/armfat.txt'
+              path = 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/armfat.txt'
               )
 
 #----calculate sample prevalence of group 1-------------------------------------
@@ -252,12 +252,12 @@ uc_p <- calculate_prevalence('Prevalences/CSV_prevalences/uc_delange-2017.csv')
 #---- Group 1 munge function  --------------------------------------------------
 
 Prevalences <- c(ms_1_p, ms_2_p, sle_p, pbc_p, crohn_p, uc_p)
-vector_files <- c('Outputs/Version3/Sumstats_ready_for_munge/ms_imsgc-2011.txt',
-                  'Outputs/Version3/Sumstats_ready_for_munge/ms_andlauer-2016.txt',
-                  'Outputs/Version3/Sumstats_ready_for_munge/sle_bentham-2015.txt',
-                  'Outputs/Version3/Sumstats_ready_for_munge/pbc_cordell-2015.txt',
-                  'Outputs/Version3/Sumstats_ready_for_munge/crohn_delange-2017.txt', 
-                  'Outputs/Version3/Sumstats_ready_for_munge/uc_delange-2017.txt'
+vector_files <- c('outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/ms_imsgc-2011.txt',
+                  'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/ms_andlauer-2016.txt',
+                  'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/sle_bentham-2015.txt',
+                  'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/pbc_cordell-2015.txt',
+                  'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/crohn_delange-2017.txt', 
+                  'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/uc_delange-2017.txt'
                   )
 
 munge(vector_files, 
@@ -266,7 +266,7 @@ munge(vector_files,
       N = Prevalences)
 
 armfat_p <- 492874
-armfat <- 'Outputs/Version3/Sumstats_ready_for_munge/armfat.txt'
+armfat <- 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/armfat.txt'
 munge(armfat, c('armfat'),   hm3 = 'SNP/w_hm3.snplist', N= c(armfat_p))
 
 #---- END of Group1 ------------------------------------------------------------
@@ -295,7 +295,7 @@ asthma_demeanis <- prepare_munge(asthma_demeanis,
                              "Multiancestry_pval_HetQtest","European_ancestry_beta_rand","European_ancestry_se_rand",
                              "European_ancestry_pval_rand","European_ancestry_HetQtest","European_ancestry_df_HetQtest",
                              "European_ancestry_pval_HetQtest"),
-              path = 'Outputs/Version3/Sumstats_ready_for_munge/asthma_demeanis-2018.txt')
+              path = 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/asthma_demeanis-2018.txt')
 
 head(asthma_demeanis)
 dim(asthma_demeanis) #2001280       8
@@ -310,7 +310,7 @@ asthma_han <- prepare_munge(asthma_han,
                             the_non_effect_allele = 'NEA',
                             pvalue = 'P',
                             effect_size = 'OR',
-                            path = 'Outputs/Version3/Sumstats_ready_for_munge/asthma_ban-2020.txt'
+                            path = 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/asthma_ban-2020.txt'
                             )
 head(asthma_han)
 dim(asthma_han) #9572556      12
@@ -327,7 +327,7 @@ celiac <- prepare_munge(celiac,
                           pvalue = 'p',
                           effect_size = 'beta', 
                           to_remove = c('OR','OR_lower', 'OR_upper'),
-                          path = 'Outputs/Version3/Sumstats_ready_for_munge/celiac_dubois-2020.txt'
+                          path = 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/celiac_dubois-2020.txt'
                           )
 head(celiac)
 dim(celiac) #523398      8
@@ -341,7 +341,7 @@ dim(allergies) #8307659      13
 colnames(allergies)[1] <- 'position'
 colnames(allergies)[10] <- 'rsID'
 
-fwrite(allergies, 'Outputs/Version3/Sumstats_ready_for_munge/allergies_ferreira-2017.txt',
+fwrite(allergies, 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/allergies_ferreira-2017.txt',
        col.names = T, row.names = F, sep = '\t', quote = F)
 
 
@@ -360,7 +360,7 @@ psc_ok <- data.frame( 'SNP' = psc$SNP ,
                       'SE' = psc$se ,
                       'P' = psc$p )
 
-fwrite(psc_ok, file='Outputs/Version3/Sumstats_ready_for_munge/psc_ji-2016.txt',
+fwrite(psc_ok, file='outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/psc_ji-2016.txt',
        col.names = T, row.names = F, sep = '\t', quote = F)
 
 
@@ -375,11 +375,11 @@ psc_p <- 2871 + 12019
 #---- Group2 munge function ----------------------------------------------------
 
 Prevalences_group2 <- c(asthma_deme_1_p, asthma_han_2_p, celiac_p, allergies_p, psc_p )
-vector_files <- c('Outputs/Version3/Sumstats_ready_for_munge/asthma_demeanis-2018.txt',
-                  'Outputs/Version3/Sumstats_ready_for_munge/asthma_ban-2020.txt',
-                  'Outputs/Version3/Sumstats_ready_for_munge/celiac_dubois-2020.txt',
-                  'Outputs/Version3/Sumstats_ready_for_munge/allergies_ferreira-2017.txt', 
-                  'Outputs/Version3/Sumstats_ready_for_munge/psc_ji-2016.txt')
+vector_files <- c('outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/asthma_demeanis-2018.txt',
+                  'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/asthma_ban-2020.txt',
+                  'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/celiac_dubois-2020.txt',
+                  'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/allergies_ferreira-2017.txt', 
+                  'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/psc_ji-2016.txt')
 
 munge(vector_files, 
       trait.names = c('asthma_1', 'asthma_2', 'celiac', 'allergies', 'psc'), 
@@ -409,7 +409,7 @@ alzh_kunkle <- prepare_munge(alzh_kunkle,
                                the_non_effect_allele = 'Non_Effect_allele', 
                                effect_size = 'Beta', 
                                pvalue = 'Pvalue',
-                               path = 'Outputs/Version3/Sumstats_ready_for_munge/alzheimer_kunkle-2019.txt')
+                               path = 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/alzheimer_kunkle-2019.txt')
 head(alzh_kunkle)
 dim(alzh_kunkle) #11480632        8
 
@@ -430,7 +430,7 @@ jia <- prepare_munge(jia,
                        the_non_effect_allele = 'alleleA',
                        pvalue = 'p_value', 
                        effect_size = 'all_OR' , 
-                       path= 'Outputs/Version3/Sumstats_ready_for_munge/jia_lopezisac-2020.txt')
+                       path= 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/jia_lopezisac-2020.txt')
 
 head(jia)
 dim(jia) #7461261      13
@@ -446,7 +446,7 @@ ra <- prepare_munge(ra,
                       the_non_effect_allele = 'A2' ,
                       effect_size = 'OR(A1)',
                       pvalue = 'P-val', 
-                      path= 'Outputs/Version3/Sumstats_ready_for_munge/ra_okada-2014.txt',
+                      path= 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/ra_okada-2014.txt',
                       )
 head(ra)
 dim(ra) #9739303       8
@@ -465,7 +465,7 @@ thyro_ok <- data.frame('SNP'= thyro$rsID,
 #the file is big, remove the rows without rsID
 thyro_ok <- thyro_ok[(!is.na(thyro_ok$SNP)),]
 
-fwrite(thyro_ok, file='Outputs/Version3/Sumstats_ready_for_munge/thyro_saevarsdottir-2020.txt',
+fwrite(thyro_ok, file='outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/thyro_saevarsdottir-2020.txt',
        col.names = T, row.names = F, sep = '\t', quote = F)
 
 #---- alzheimer wightman GWAS --------------------------------------------------
@@ -492,7 +492,7 @@ alzh_wightman <- prepare_munge(alzh_wightman,
                                  the_non_effect_allele = 'otherAllele', 
                                  pvalue = 'p',
                                  effect_size = 'z',
-                                 path = 'Outputs/Version3/Sumstats_ready_for_munge/alzh_wightman-2021.txt')
+                                 path = 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/alzh_wightman-2021.txt')
 head(alzh_wightman)
 
 #----calculate sample prevalence of group 3-------------------------------------
@@ -506,11 +506,11 @@ alzh_wightman_2_p <- calculate_prevalence('Prevalences/CSV_prevalences/ad_wightm
 Prevalences_group3 <- c(alzh_kunkle_1_p, jia_p, ra_p, thyro_p, alzh_wightman_2_p)
 #---- Group 3 munge ------------------------------------------------------------
 
-vector_files <- c('Outputs/Version3/Sumstats_ready_for_munge/alzheimer_kunkle-2019.txt',
-                  'Outputs/Version3/Sumstats_ready_for_munge/jia_lopezisac-2020.txt',
-                  'Outputs/Version3/Sumstats_ready_for_munge/ra_okada-2014.txt',
-                  'Outputs/Version3/Sumstats_ready_for_munge/thyro_saevarsdottir-2020.txt', 
-                  'Outputs/Version3/Sumstats_ready_for_munge/alzh_wightman-2021.txt')
+vector_files <- c('outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/alzheimer_kunkle-2019.txt',
+                  'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/jia_lopezisac-2020.txt',
+                  'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/ra_okada-2014.txt',
+                  'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/thyro_saevarsdottir-2020.txt', 
+                  'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/alzh_wightman-2021.txt')
 
 munge(vector_files, 
       trait.names = c('alzheimer_1', 'jia', 'ra', 'thyro', 'alzheimer_2'), 
@@ -532,7 +532,7 @@ prepare_munge(t1d, rsID = 'variant_id',
               the_effect_allele = 'effect_allele', 
               the_non_effect_allele = 'other_allele', 
               pvalue = 'p_value', 
-              path = 'Outputs/Version3/Sumstats_ready_for_munge/t1d_chiou-2021.txt'
+              path = 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/t1d_chiou-2021.txt'
               )
 
 
@@ -544,7 +544,7 @@ prepare_munge(derma, rsID = 'variant_id',
               the_effect_allele = 'effect_allele', 
               the_non_effect_allele = 'other_allele', 
               pvalue = 'p_value', 
-              path = 'Outputs/Version3/Sumstats_ready_for_munge/derma_sliz-2021.txt')
+              path = 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/derma_sliz-2021.txt')
 
 #-----calcualate sample prevalence Group 4---------------------------------------
 
@@ -555,8 +555,8 @@ prevalence_derma <- calculate_prevalence('Prevalences/CSV_prevalences/derma_sliz
 
 
 trait.names <- c('t1d', 'derma' )
-traits <- c('Outputs/Version3/Sumstats_ready_for_munge/t1d_chiou-2021.txt',
-            'Outputs/Version3/Sumstats_ready_for_munge/derma_sliz-2021.txt') 
+traits <- c('outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/t1d_chiou-2021.txt',
+            'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/derma_sliz-2021.txt') 
 
 sample.prev <- c(prevalence_t1d, prevalence_derma)
 

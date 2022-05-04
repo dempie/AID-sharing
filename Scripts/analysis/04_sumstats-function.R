@@ -1,5 +1,5 @@
 #  LD score regression on auotoimmunity GWAS
-## Version3  will be a replication of the version 2 that might be wrong in the 
+## version3  will be a replication of the version 2 that might be wrong in the 
 ## allele orientation 
 
 #The tutorial and info on the package and how to run the code are here:  
@@ -34,7 +34,7 @@ is_se_logB <- function(BETA,SE, PVALUE) {
 
 #------- Function to compute SE from CI or from Betas-----
 
-add_SE <- function(OR, PVALUE, upper_CI, use_chi = F, add_se=F, sum_stat) {
+add_SE <- function(OR, PVALUE, upper_CI, use_chi = T, add_se = T, sum_stat) {
   
   #calculate SE from Confidence intervals 
   if(use_chi == F){
@@ -58,24 +58,24 @@ add_SE <- function(OR, PVALUE, upper_CI, use_chi = F, add_se=F, sum_stat) {
    
 
 #---- crohn SE -----------------------------------------------------------------
-cd <- fread('Outputs/Version3/Sumstats_ready_for_munge/crohn_delange-2017.txt', data.table = F)
+cd <- fread('outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/crohn_delange-2017.txt', data.table = F)
 head(cd) 
 is_se_logB(cd$effect, cd$StdErr, cd$p) #SE logistic beta (effect column is beta as there are negative values)
 
 #----- uc SE --------------------------------------------------------------------
-uc <- fread('Outputs/Version3/Sumstats_ready_for_munge/uc_delange-2017.txt', data.table = F)
+uc <- fread('outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/uc_delange-2017.txt', data.table = F)
 head(uc)
 is_se_logB(uc$effect, uc$StdErr, uc$p) #SE logistic beta (effect column is beta as there are negative values)
 
 #----- psc SE -------------------------------------------------------------------
-psc <- fread('Outputs/Version3/Sumstats_ready_for_munge/psc_ji-2016.txt', data.table = F)
+psc <- fread('outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/psc_ji-2016.txt', data.table = F)
 head(psc)
 
 is_se_logB(log(psc$Effect), psc$SE, psc$P) #SE of logistic beta
 
 #----- jia SE ------------------------------------------------------------------
 
-jia  <- fread('Outputs/Version3/Sumstats_ready_for_munge/jia_lopezisac-2020.txt', data.table = F) 
+jia  <- fread('outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/jia_lopezisac-2020.txt', data.table = F) 
 head(jia)
 
 #there are a bunch of columns we do not care and the SE have to be calculated from the CI
@@ -88,20 +88,61 @@ median(jia$effect) #1.00067, close to one means it's an OR
 jia_ok <- add_SE(OR = jia_ok$effect, PVALUE = jia_ok$p, use_chi =  T, add_se = T, sum_stat = jia_ok)
 head(jia_ok)
 
-is_se_logB(BETA = jia_ok$Beta, SE = jia_ok$SE, PVALUE = jia_ok$p) #now is a SE of logistic Beta
+
+test<- is_se_logB(BETA = jia_ok$Beta, SE = jia_ok$SE, PVALUE = jia_ok$p) #now is a SE of logistic Beta
+
+test <- is_se_logB(BETA = jia_ok$Beta, SE = jia_ok$SE, PVALUE = jia_ok$p) #now is a SE of logistic Beta
+isTRUE(test$p_calculated == test$p_reported)
+testF <- test[!(round(test$p_calculated, 7)) == (round(test$p_reported, 7)), ]
+testT <- test[(test$p_calculated == test$p_reported),]
+
+
+
+
+
+
+
 
 #remove OD column and CI columns
 jia_ok <- jia_ok %>% select(-c(effect, all_OR_lower, all_OR_upper))
 #save the file with SE
-fwrite(jia_ok, file='Outputs/Version3/Sumstats_ready_for_munge/jia_lopezisac-2020_SE_.txt', 
+fwrite(jia_ok, file='outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/jia_lopezisac-2020_SE_.txt', 
+       sep = '\t', col.names = T, row.names = F, quote = F)
+
+#-----Jia beta from sum stats--------------------------------------------------
+
+head(jia_2)
+jia_2 <- jia %>% select(-c(effect, alternate_ids, all_OR_lower, all_OR_upper  ))
+colnames(jia_2)[8] <- 'beta'
+colnames(jia_2)[9] <- 'se'
+
+fwrite(jia_2, file='Temporary/jia_lopezisac-2020_temporary_SE_.txt', 
        sep = '\t', col.names = T, row.names = F, quote = F)
 
 
+file_names <- c('Temporary/jia_lopezisac-2020_temporary_SE_.txt')
+
+prevalences <- c(jia_p) #calculated above
+se_logit <-c(T)
+OLS <- c(F,)
+lin_pr <- c(F,F,F,F,F,F,F)
+
+
+
+aid_sumstats <-sumstats(files = file_names, ref = 'SNP/reference.1000G.maf.0.005.txt.gz',
+                        trait.names = c('jia'),
+                        se.logit =  c(T),
+                        OLS = c(F), 
+                        linprob = c(F), 
+                        N = prevalences, 
+                        parallel = T,
+                        keep.indel= F 
+)
 
 
 #----- pbc SE -------------------------------------------------------------------
 
-pbc <- fread('Outputs/Version3/Sumstats_ready_for_munge/pbc_cordell-2015.txt', data.table = F)
+pbc <- fread('outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/pbc_cordell-2015.txt', data.table = F)
 head(pbc)
 #compute SE
 pbc_ok <- add_SE(OR = pbc$effect, PVALUE = pbc$p, upper_CI = pbc$OR_upper,
@@ -113,18 +154,18 @@ is_se_logB(BETA = pbc_ok$Beta, SE = pbc_ok$SE, PVALUE = pbc_ok$p) #now is SE of 
 pbc_ok <- pbc_ok %>% select(-c(effect, OR_lower, OR_upper))
 
 #save the file with SE
-fwrite(pbc_ok, file='Outputs/Version3/Sumstats_ready_for_munge/pbc_cordell-2015_SE.txt', 
+fwrite(pbc_ok, file='outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/pbc_cordell-2015_SE.txt', 
        sep = '\t', col.names = T, row.names = F, quote = F)
 
 #----- sle SE ------------------------------------------------------------------
 
-sle <- fread('Outputs/Version3/Sumstats_ready_for_munge/sle_beta_bentham-2015.txt', data.table = F)
+sle <- fread('outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/sle_beta_bentham-2015.txt', data.table = F)
 head(sle)
 is_se_logB(BETA = sle$effect, SE = sle$se, PVALUE = sle$p) #SE of logistic beta (effect column is beta as there are negative values)
 
 #----- ra SE -------------------------------------------------------------------
 
-ra <- fread('Outputs/Version3/Sumstats_ready_for_munge/ra_okada-2014.txt', data.table = F)
+ra <- fread('outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/ra_okada-2014.txt', data.table = F)
 head(ra)
 
 #calculate SE from Confidence intervals
@@ -139,7 +180,7 @@ is_se_logB(BETA = ra_ok$Beta, SE = ra_ok$SE, PVALUE = ra_ok$p) #SE of logistic b
 
 #remove OD column and CI columns
 ra_ok <- ra_ok %>% select(-c(effect,  'OR_95%CIup-OR_95%CIlow'))
-fwrite(ra_ok, file= 'Outputs/Version3/Sumstats_ready_for_munge/ra_okada-2014_SE.txt',
+fwrite(ra_ok, file= 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/ra_okada-2014_SE.txt',
        sep = '\t', col.names = T, row.names = F, quote = F)
 
 
@@ -175,13 +216,13 @@ calculate_prevalence <- function(path_of_csv){
 
 #---- munge function -----------------------------------------------------------
 
-file_names <- c('Outputs/Version3/Sumstats_ready_for_munge/crohn_delange-2017.txt',
-                'Outputs/Version3/Sumstats_ready_for_munge/uc_delange-2017.txt', 
-                'Outputs/Version3/Sumstats_ready_for_munge/psc_ji-2016.txt',
-                'Outputs/Version3/Sumstats_ready_for_munge/jia_lopezisac-2020_SE_.txt',
-                'Outputs/Version3/Sumstats_ready_for_munge/pbc_cordell-2015_SE.txt',
-                'Outputs/Version3/Sumstats_ready_for_munge/sle_beta_bentham-2015.txt',
-                'Outputs/Version3/Sumstats_ready_for_munge/ra_okada-2014_SE.txt') 
+file_names <- c('outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/crohn_delange-2017.txt',
+                'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/uc_delange-2017.txt', 
+                'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/psc_ji-2016.txt',
+                'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/jia_lopezisac-2020_SE_.txt',
+                'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/pbc_cordell-2015_SE.txt',
+                'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/sle_beta_bentham-2015.txt',
+                'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/ra_okada-2014_SE.txt') 
 
 
 
@@ -202,18 +243,18 @@ munge(files = file_names, hm3 = 'SNP/w_hm3.snplist', N = prevalences, trait.name
 #----LDSC-----------------------------------------------------------------------
 
 # Load the table that contains all the info on the GWAS
-GWAS_info <- readRDS('Outputs/Version3/GWAS_info_table')
+GWAS_info <- readRDS('outputs/version3/GWAS_info_table')
 #keep only the one I want ot use here
 GWAS_info_2 <- GWAS_info[ c('croh', 'uc', 'psc', 'jia', 'pbc', 'sle', 'ra') , ]
 
 #-----ldsc function ------------------------------------------------------------
-munged_files <- c('Outputs/Version3/Step4/munged/croh.sumstats.gz', 
-                  'Outputs/Version3/Step4/munged/uc.sumstats.gz', 
-                  'Outputs/Version3/Step4/munged/psc.sumstats.gz',
-                  'Outputs/Version3/Step4/munged/jia.sumstats.gz', 
-                  'Outputs/Version3/Step4/munged/pbc.sumstats.gz', 
-                  'Outputs/Version3/Step4/munged/sle.sumstats.gz', 
-                  'Outputs/Version3/Step4/munged/ra.sumstats.gz')
+munged_files <- c('outputs/version3/04_output_sumstats-function/munged/croh.sumstats.gz', 
+                  'outputs/version3/04_output_sumstats-function/munged/uc.sumstats.gz', 
+                  'outputs/version3/04_output_sumstats-function/munged/psc.sumstats.gz',
+                  'outputs/version3/04_output_sumstats-function/munged/jia.sumstats.gz', 
+                  'outputs/version3/04_output_sumstats-function/munged/pbc.sumstats.gz', 
+                  'outputs/version3/04_output_sumstats-function/munged/sle.sumstats.gz', 
+                  'outputs/version3/04_output_sumstats-function/munged/ra.sumstats.gz')
 
 names = c('croh', 'uc', 'psc', 'jia', 'pbc', 'sle', 'ra') 
 
@@ -222,8 +263,8 @@ ldsc_step4 <- ldsc(traits = munged_files, sample.prev = GWAS_info_2$sample.prev,
                    ld = "ldscores/eur_w_ld_chr",
                    wld= "ldscores/eur_w_ld_chr", stand = T)
 
-saveRDS(ldsc_step4, 'Outputs/Version3/Step4/ldsc_V3_step4')
-#ldsc4_step4 <- readRDS('Outputs/Version3/Step4/ldsc_V3_step4')
+saveRDS(ldsc_step4, 'outputs/version3/04_output_sumstats-function/ldsc_V3_step4')
+#ldsc4_step4 <- readRDS('outputs/version3/04_output_sumstats-function/ldsc_V3_step4')
 rownames(ldsc_step4$S_Stand) <- colnames(ldsc_step4$S_Stand)
 corrplot(ldsc_step4$S_Stand, order = 'hclust', addCoef.col = 'black', type = 'upper')
 
@@ -237,18 +278,18 @@ F1~~F2'
 aid_factor <-usermodel(ldsc_step4, estimation = "DWLS", model = aid_model, CFIcalc = TRUE, std.lv = TRUE, imp_cov = FALSE)
 
 #print the two factor model results
-saveRDS(aid_factor, file = 'Outputs/Version3/Step4/aid_twofactor') 
-aid_factor <- readRDS('Outputs/Version3/Step4/aid_twofactor')
+saveRDS(aid_factor, file = 'outputs/version3/04_output_sumstats-function/aid_twofactor') 
+aid_factor <- readRDS('outputs/version3/04_output_sumstats-function/aid_twofactor')
 
 #----Sumstat function-----------------------------------------------------------
 
-file_names <- c('Outputs/Version3/Sumstats_ready_for_munge/crohn_delange-2017.txt',
-                'Outputs/Version3/Sumstats_ready_for_munge/uc_delange-2017.txt', 
-                'Outputs/Version3/Sumstats_ready_for_munge/psc_ji-2016.txt',
-                'Outputs/Version3/Sumstats_ready_for_munge/jia_lopezisac-2020_SE_.txt',
-                'Outputs/Version3/Sumstats_ready_for_munge/pbc_cordell-2015_SE.txt',
-                'Outputs/Version3/Sumstats_ready_for_munge/sle_beta_bentham-2015.txt',
-                'Outputs/Version3/Sumstats_ready_for_munge/ra_okada-2014_SE.txt')
+file_names <- c('outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/crohn_delange-2017.txt',
+                'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/uc_delange-2017.txt', 
+                'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/psc_ji-2016.txt',
+                'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/jia_lopezisac-2020_SE_.txt',
+                'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/pbc_cordell-2015_SE.txt',
+                'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/sle_beta_bentham-2015.txt',
+                'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/ra_okada-2014_SE.txt')
 
 prevalences <- c(crohn_p, uc_p, psc_p, jia_p, pbc_p, sle_p, ra_p) #calculated above
 se_logit <-c(T,T,T,T,T,T,T,T)
@@ -266,7 +307,9 @@ aid_sumstats <-sumstats(files = file_names, ref = 'SNP/reference.1000G.maf.0.005
                         parallel = T,
                         keep.indel= F 
                         )
-saveRDS(aid_sumstats, file='Outputs/Version3/Step4/aid_sumstats')
+saveRDS(aid_sumstats, file='outputs/version3/04_output_sumstats-function/aid_sumstats')
+aid_sumstats <- readRDS('outputs/version3/04_output_sumstats-function/aid_sumstats') 
+
 
 #----------------------------------------------------------------------------
 

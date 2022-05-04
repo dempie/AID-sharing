@@ -1,5 +1,5 @@
 #  LD score regression on auotoimmunity GWAS
-## Version3  will be a replication of the version 2 that might be wrong in the 
+## version3  will be a replication of the version 2 that might be wrong in the 
 ## allele orientation 
 
 #The tutorial and info on the package and how to run the code are here:  
@@ -17,25 +17,25 @@ library(qgraph)
 
 #---- LD score regression function----------------------------------------------
 
-traits <- c('Outputs/Version3/Munged-Sumstats/allergies.sumstats.gz',  
-            'Outputs/Version3/Munged-Sumstats/ms_2.sumstats.gz' ,
-            'Outputs/Version3/Munged-Sumstats/alzheimer_1.sumstats.gz',
-            'Outputs/Version3/Munged-Sumstats/alzheimer_2.sumstats.gz',
-            'Outputs/Version3/Munged-Sumstats/armfat.sumstats.gz',
-            'Outputs/Version3/Munged-Sumstats/asthma_1.sumstats.gz',
-            'Outputs/Version3/Munged-Sumstats/asthma_2.sumstats.gz',
+traits <- c('outputs/version3/01_output_prepare-sumstats/Munged-Sumstats/allergies.sumstats.gz',  
+            'outputs/version3/01_output_prepare-sumstats/Munged-Sumstats/ms_2.sumstats.gz' ,
+            'outputs/version3/01_output_prepare-sumstats/Munged-Sumstats/alzheimer_1.sumstats.gz',
+            'outputs/version3/01_output_prepare-sumstats/Munged-Sumstats/alzheimer_2.sumstats.gz',
+            'outputs/version3/01_output_prepare-sumstats/Munged-Sumstats/armfat.sumstats.gz',
+            'outputs/version3/01_output_prepare-sumstats/Munged-Sumstats/asthma_1.sumstats.gz',
+            'outputs/version3/01_output_prepare-sumstats/Munged-Sumstats/asthma_2.sumstats.gz',
             
-            'Outputs/Version3/Munged-Sumstats/celiac.sumstats.gz',
-            'Outputs/Version3/Munged-Sumstats/crohn.sumstats.gz',
-            'Outputs/Version3/Munged-Sumstats/jia.sumstats.gz',
-            'Outputs/Version3/Munged-Sumstats/ms_1.sumstats.gz',
-            'Outputs/Version3/Munged-Sumstats/pbc.sumstats.gz',
+            'outputs/version3/01_output_prepare-sumstats/Munged-Sumstats/celiac.sumstats.gz',
+            'outputs/version3/01_output_prepare-sumstats/Munged-Sumstats/crohn.sumstats.gz',
+            'outputs/version3/01_output_prepare-sumstats/Munged-Sumstats/jia.sumstats.gz',
+            'outputs/version3/01_output_prepare-sumstats/Munged-Sumstats/ms_1.sumstats.gz',
+            'outputs/version3/01_output_prepare-sumstats/Munged-Sumstats/pbc.sumstats.gz',
             
-            'Outputs/Version3/Munged-Sumstats/psc.sumstats.gz', 
-            'Outputs/Version3/Munged-Sumstats/ra.sumstats.gz',
-            'Outputs/Version3/Munged-Sumstats/sle.sumstats.gz', 
-            'Outputs/Version3/Munged-Sumstats/thyro.sumstats.gz',
-            'Outputs/Version3/Munged-Sumstats/uc.sumstats.gz'
+            'outputs/version3/01_output_prepare-sumstats/Munged-Sumstats/psc.sumstats.gz', 
+            'outputs/version3/01_output_prepare-sumstats/Munged-Sumstats/ra.sumstats.gz',
+            'outputs/version3/01_output_prepare-sumstats/Munged-Sumstats/sle.sumstats.gz', 
+            'outputs/version3/01_output_prepare-sumstats/Munged-Sumstats/thyro.sumstats.gz',
+            'outputs/version3/01_output_prepare-sumstats/Munged-Sumstats/uc.sumstats.gz'
             ) 
 
 trait.names <- c( 'allergies','ms_2','alzheimer_1', 'alzheimer_2', 'armfat', 'asthma_1', 'asthma_2', 
@@ -57,8 +57,8 @@ wld <- "ldscores/eur_w_ld_chr"
 LDS_output <- ldsc(traits, sample.prev, population.prev, ld, wld, trait.names, stand = T)
 
 #save the output 
-saveRDS(LDS_output, file = 'Outputs/Version3/LDS_output_final')
-output2 <- readRDS('Outputs/Version3/LDS_output_final')
+saveRDS(LDS_output, file = 'outputs/version3/02_output_ldsc-all-traits/LDS_output_final')
+output2 <- readRDS('outputs/version3/02_output_ldsc-all-traits/LDS_output_final')
 
 #---- heritability -------------------------------------------------------------
 cbind(colnames(output2$S_Stand), (diag(output2$S)) )
