@@ -1,6 +1,6 @@
 #  LD score regression on auotoimmunity GWAS
-## version3  will be a replication of the version 2 that might be wrong in the 
-## allele orientation 
+## in this script summary statistics will be prepare to be run in ldsc function
+
 
 #The tutorial and info on the package and how to run the code are here:  
 # https://github.com/GenomicSEM/GenomicSEM/wiki/3.-Models-without-Individual-SNP-effects
@@ -541,31 +541,24 @@ head(t1d)
 #the p_value column is not properly read by munge function as it is a character
 #So transform it into as.numeric
 
-t1d_ok <- prepare_munge(t1d, 
-                        rsID = 'variant_id', 
-                        pvalue = 'p_value', 
-                        the_effect_allele = 'effect_allele',
-                        the_non_effect_allele = 'other_allele', 
-                        effect_size = 'beta')
-head(t1d_ok)
-sum(t1d_ok$p >1 )
 
-t1d_ok <-  cbind( 'rsID' = t1d$variant_id,
-                  'effect_size' = t1d$beta, 
-                  'the_effect_allele' = t1d$effect_allele, 
-                  'the_non_effect_allele' = t1d$other_allele, 
-                  'pvalue' = as.numeric(t1d$p_value),
+t1d_ok <-  data.frame('rsID' = t1d$variant_id,
+                  'Beta' = t1d$beta, 
+                  'A1' = t1d$effect_allele, 
+                  'A2' = t1d$other_allele, 
+                  'p' = as.numeric(t1d$p_value),
                   'chr' = t1d$chromosome,
                   'position' = t1d$base_pair_location, 
                   'effect_allele_frequency'= t1d$effect_allele_frequency,
                   'SE' = t1d$standard_error, 
-                  'sample_size' = t1d$sample_size, 
+                  'sample_size' = t1d$sample_size
 )
+ 
+head(t1d_ok)
+sum(t1d_ok$pvalue <0)
 
-head(t1d_pk)
-sum(t1d_pk$p <0)
 
-fwrite(t1d_k, 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/t1d_chiou-2021.txt',
+fwrite(t1d_ok, 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/t1d_chiou-2021.txt',
        sep = '\t', col.names = T, row.names = F, quote = F)
 
 trait.names <- c('t1d_chiou-2021')
@@ -602,6 +595,10 @@ ra_ha_1 <- unite(ra_ha, chromosome, base_pair_location, sep=':', na.rm=F, remove
 ra_ha_rsID <- merge.data.table(ra_ha_1, referenceSNP, 
                                by.x = 'chrPosition', by.y = 'chrPosition', 
                                all.x = T, all.y = F, sort = F )
+colnames(ra_ha_rsID)[6] <- 'SE'
+
+#SE column not found in ra_ha, add it
+
 
 ra_ha_rsID[grep('rs6705628', ra_ha_rsID$SNP), ]
 exp(-0.1246) #0.88285, in the paper they reported 0.88 as OR, so it should be a logistic Beta. 
@@ -616,11 +613,13 @@ prepare_munge(ra_ha_rsID,
               rsID = 'SNP',
               path= 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/ra_ha_rsID.txt')
 
+
 trait.names <- c('ra_ha-2021')
 traits <- c('outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/ra_ha_rsID.txt') 
 prevalence_ra_ha <- 84687
 munge(files = traits, hm3 = 'SNP/w_hm3.snplist', N = prevalence_ra_ha, trait.names = trait.names)
 
+#add Se column
 
 
 

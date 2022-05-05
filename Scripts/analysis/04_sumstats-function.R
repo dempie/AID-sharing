@@ -1,6 +1,6 @@
 #  LD score regression on auotoimmunity GWAS
-## version3  will be a replication of the version 2 that might be wrong in the 
-## allele orientation 
+##  in this script the selected summary stats will be used to run ldsc, munge and sum stats function
+#the have to be in the same order in the function
 
 #The tutorial and info on the package and how to run the code are here:  
 #https://github.com/GenomicSEM/GenomicSEM/wiki/5.-User-Specified-Models-with-SNP-Effects
@@ -12,8 +12,8 @@
 
 #This means that I have to run again the analysis from the munge step for only 
 #the GWAS we are keeping in the model. 
-#The GWAS included in the two factor model are croh, uc, psc, jia, pbc, sle, ra.
-#as in V3_step3
+#The GWAS included in the two factor model are croh, uc, psc, jia, sle, ra.
+#as in step3
 
 
 #--- Load the libraries--------------------------------------
@@ -198,9 +198,9 @@ munged_files <- c('outputs/version3/04_output_sumstats-function/munged/croh.sums
                   'outputs/version3/04_output_sumstats-function/munged/ra.sumstats.gz')
 
 names = c('croh', 'uc', 'psc', 'jia', 'sle', 'ra') 
-prevalences <- c(crohn_p, uc_p, psc_p, jia_p, sle_p, ra_p)
 
-ldsc_step4 <- ldsc(traits = munged_files, sample.prev = c(.5, .5, 0.1928140, 0.2643788, 0.5, 0.5),  
+
+ldsc_step4 <- ldsc(traits = munged_files, sample.prev = c(.5, .5, 0.1928, 0.2643, .5, .5),  
                    population.prev = GWAS_info_2$population.prev, trait.names = names,
                    ld = "ldscores/eur_w_ld_chr",
                    wld= "ldscores/eur_w_ld_chr", stand = T)
@@ -227,41 +227,47 @@ aid_factor <-usermodel(ldsc_step4, estimation = "DWLS", model = aid_model, CFIca
 saveRDS(aid_factor, file = 'outputs/version3/04_output_sumstats-function/aid_twofactor') 
 aid_factor <- readRDS('outputs/version3/04_output_sumstats-function/aid_twofactor')
 
+
 #----Sumstat function-----------------------------------------------------------
+ra_ha <- fread('outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/ra_ha_rsID.txt', data.table = F) 
+
+
 
 file_names <- c('outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/crohn_delange-2017.txt',
                 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/uc_delange-2017.txt', 
                 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/psc_ji-2016.txt',       
                 'outputs/version3/04_output_sumstats-function/Sumstats_ready_for_munge/jia_lopez-2016_beta_se.txt',
-               # 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/pbc_cordell-2015_beta_SE.txt',
                 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/sle_beta_bentham-2015.txt',
-                'outputs/version3/04_output_sumstats-function/Sumstats_ready_for_munge/ra_okada-2014_SE_RoundIssues.txt') 
+                'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/ra_ha_rsID.txt') 
 
-prevalences <- c(crohn_p, uc_p, psc_p, jia_p, sle_p, ra_p) #calculated above
-se_logit <-c(T,T,T,T,T,T,T)
-OLS <- c(F,F,F,F,F,F)
-lin_pr <- c(F,F,F,F,F,F)
+
+crohn_p <- calculate_prevalence('Prevalences/CSV_prevalences/crohn_delange-2017.csv')
+uc_p <- calculate_prevalence('Prevalences/CSV_prevalences/uc_delange-2017.csv')
+psc_p <- 2871 + 12019
+jia_p <- 3305 + 9196 
+sle_p <- calculate_prevalence('Prevalences/CSV_prevalences/sle_benthman-2015.csv')
+ra_p <- 84687
+prevalences <- c(crohn_p, uc_p, psc_p, jia_p, sle_p, ra_p) 
+
 
 
 
 aid_sumstats_noPBC <-sumstats(files = file_names, ref = 'SNP/reference.1000G.maf.0.005.txt.gz',
                         trait.names = c('croh', 'uc', 'psc', 'jia', 'sle', 'ra'),
-                        se.logit =  c(T,T,T,T,T,T),
+                        se.logit =  c(T,T,T,T,T,T), #crohn, uc, ra, psc,sle I am sure as they report OR or I have checked in the papers, jia not sure 
                         OLS = c(F,F,F,F,F,F), 
                         linprob = c(F,F,F,F,F,F), 
                         N = prevalences, 
                         parallel = T,
-                        keep.indel= T 
+                        keep.indel= F 
                         )
 
-saveRDS(aid_sumstats_noPBC, file= 'outputs/version3/04_output_sumstats-function/aid_sumstats_noPBC')
-saveRDS(aid_sumstats, file='outputs/version3/04_output_sumstats-function/aid_sumstats')
-aid_sumstats <- readRDS('outputs/version3/04_output_sumstats-function/aid_sumstats') 
+saveRDS(aid_sumstats_noPBC, file= 'outputs/version3/04_output_sumstats-function/aid_sumstats_newRA.RDS')
 
+#aid_sumstats_noPBC <- readRDS('outputs/version3/04_output_sumstats-function/aid_sumstats_newRA.RDS') 
 
+dim(aid_sumstats_noPBC)
 #----------------------------------------------------------------------------
-
-#----QC plots --------------------------------------------------------------
 
 
 
