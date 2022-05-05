@@ -1,8 +1,8 @@
 #this scripts is for running a GWAS with GenomicSEM package in a fast way
 #it takes the GWAS summary stats and splits into chunks so that it can be run as job array 
 
-counter <-commandArgs(trailingOnly = TRUE)
-counter <- as.numeric(counter)
+args<-commandArgs(trailingOnly = TRUE)
+counter<-args[1]
 
 #------------------------------------total number of chunks---------------------
 
@@ -17,6 +17,7 @@ how_many_chunks <- function(summary_stats, chunk_size) {
 }
 
 #----Function for splitting summary stats --------------------------------------
+
 split_sum_stats <- function(summary_stats, chunk_size, which_chunk) {
   require(data.table)
   #give a number to the elements of the sum_states
@@ -29,12 +30,57 @@ split_sum_stats <- function(summary_stats, chunk_size, which_chunk) {
 
 #-------------------------------------------------------------------------------
 
+library(GenomicSEM)
+
 aid_sumstats <- readRDS('outputs/version3/04_output_sumstats-function/aid_sumstats')
+ldsc_step4 <- readRDS('outputs/version3/04_output_sumstats-function/ldsc_V3_step4')
+model_ok <- aid_model <-'F1 =~ NA*croh + uc  + psc 
+                         F2 =~ NA*jia + pbc + sle + ra
+F1~~F2
+F1 ~~ 1*F1
+F2 ~~ 1*F2
+F1 ~ SNP
+F2 ~ SNP
+'
 
-dim(aid_sumstats)
+#dim(aid_sumstats)
+#how_many_chunks(aid_sumstats, 5000)
 
-how_many_chunks(aid_sumstats, 5000)
+#chunk_to_use <- split_sum_stats(aid_sumstats, 5000, counter )
 
-chunk_to_use <- split_sum_stats(aid_sumstats, 5000, counter ) 
+output <- userGWAS(covstruc = ldsc_step4, 
+         SNPs = aid_sumstats[9898:10000, ], 
+         model = model_ok, 
+         sub = c("F1~SNP", "F2~SNP"))
 
-head(chunk_to_use)
+aid_factor_NA <-usermodel(ldsc_step4, estimation = "DWLS", model = model_ok, CFIcalc = TRUE, std.lv = TRUE, imp_cov = FALSE)
+
+
+#output<-list()
+#output[['A']]<-1
+#output[['B']]<-2
+#counter<-20
+save(output, file = file.path('/project/aid_sharing/AID_sharing/outputs/version3/', paste0(counter, ".Robj")))
+#load(file.path('/project/aid_sharing/AID_sharing/outputs/version3/', paste0(counter, ".Robj")))
+
+
+
+head(aid_sumstats)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

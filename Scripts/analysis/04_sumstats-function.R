@@ -209,18 +209,27 @@ ldsc_step4 <- ldsc(traits = munged_files, sample.prev = GWAS_info_2$sample.prev,
                    wld= "ldscores/eur_w_ld_chr", stand = T)
 
 saveRDS(ldsc_step4, 'outputs/version3/04_output_sumstats-function/ldsc_V3_step4')
-#ldsc4_step4 <- readRDS('outputs/version3/04_output_sumstats-function/ldsc_V3_step4')
-rownames(ldsc_step4$S_Stand) <- colnames(ldsc_step4$S_Stand)
-corrplot(ldsc_step4$S_Stand, order = 'hclust', addCoef.col = 'black', type = 'upper')
+ldsc4_step4 <- readRDS('outputs/version3/04_output_sumstats-function/ldsc_V3_step4')
+rownames(ldsc4_step44$S_Stand) <- colnames(ldsc_step4$S_Stand)
+corrplot(ldsc4_step4$S_Stand, order = 'hclust', addCoef.col = 'black', type = 'upper')
 
 
 #---- Two factor model ---------------------------------------------------------
-aid_model <-'F1 =~ NA*croh + uc  + psc 
-             F2 =~ NA*jia + pbc + sle + ra
+aid_model <-'F1 =~ croh + uc  + psc 
+             F2 =~ jia + pbc + sle + ra
 F1~~F2'
 
 #run the model
 aid_factor <-usermodel(ldsc_step4, estimation = "DWLS", model = aid_model, CFIcalc = TRUE, std.lv = TRUE, imp_cov = FALSE)
+
+aid_model_NA <-'F1 =~ NA*croh + uc  + psc 
+             F2 =~ NA*jia + pbc + sle + ra
+F1~~F2'
+
+#run the model
+aid_factor_NA <-usermodel(ldsc_step4, estimation = "DWLS", model = aid_model_NA, CFIcalc = TRUE, std.lv = TRUE, imp_cov = FALSE)
+
+#aid_factor$results == aid_factor_NA$results
 
 #print the two factor model results
 saveRDS(aid_factor, file = 'outputs/version3/04_output_sumstats-function/aid_twofactor') 
