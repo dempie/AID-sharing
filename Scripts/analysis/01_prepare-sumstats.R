@@ -532,7 +532,7 @@ munge(vector_files,
 #---Group 4 load the dataset----------------------------------------------------
 
 t1d <- fread('Summary_Stats/chiou-2021_t1d_build38_GCST90014023_buildGRCh38.tsv', data.table = F)
-derma <- fread('Summary_Stats/sliz-2021_atopic-dermatitis_build38_GCST90027161_buildGRCh38.tsv.gz', data.table = F)
+
 
 #----t1d GWAS-------------------------------------------------------------------
 
@@ -568,7 +568,7 @@ munge(files = traits, hm3 = 'SNP/w_hm3.snplist', N = prevalence_t1d, trait.names
 
 
 #----derma GWAS-----------------------------------------------------------------
-
+derma <- fread('Summary_Stats/sliz-2021_atopic-dermatitis_build38_GCST90027161_buildGRCh38.tsv.gz', data.table = F)
 head(derma) 
 prepare_munge(derma, rsID = 'variant_id',
               effect_size = 'beta',
@@ -584,20 +584,21 @@ munge(files = traits, hm3 = 'SNP/w_hm3.snplist', N = prevalence_derma, trait.nam
 
 #-----ra_ha-------------------------------------------------------------
 
-ra_ha <- fread('Summary_Stats/ha-2020_ra_build37_GCST90013534_buildGRCh37.tsv', data.table = F)
+ra_ha <- fread('Summary_Stats/ha-2020_ra_build37_GCST90013534_buildGRCh37.tsv', data.table = T)
 head(ra_ha)
 
 #add rsID
 referenceSNP <- fread('SNP/reference.1000G.maf.0.005.txt.gz')
 referenceSNP <- referenceSNP %>% unite(CHR, BP, sep= ':', na.rm = F, remove = T, col = 'chrPosition' ) %>% select(-c(MAF, A1,A2))
-ra_ha_1 <- unite(ra_ha, chromosome, base_pair_location, sep=':', na.rm=F, remove=T, col = 'chrPosition' )
+ra_ha <- unite(ra_ha, chromosome, base_pair_location, sep=':', na.rm=F, remove=T, col = 'chrPosition' )
 
-ra_ha_rsID <- merge.data.table(ra_ha_1, referenceSNP, 
+ra_ha_rsID <- merge.data.table(ra_ha, referenceSNP, 
                                by.x = 'chrPosition', by.y = 'chrPosition', 
                                all.x = T, all.y = F, sort = F )
-colnames(ra_ha_rsID)[6] <- 'SE'
+#SE column rename
 
-#SE column not found in ra_ha, add it
+ra_ha_rsID<- rename(ra_ha_rsID, SE= standard_error )
+
 
 
 ra_ha_rsID[grep('rs6705628', ra_ha_rsID$SNP), ]
@@ -619,7 +620,24 @@ traits <- c('outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_mung
 prevalence_ra_ha <- 84687
 munge(files = traits, hm3 = 'SNP/w_hm3.snplist', N = prevalence_ra_ha, trait.names = trait.names)
 
-#add Se column
+#------- psoriasis -------------------------------------------------------------
+psoriasis <- fread('Summary_Stats/sliz-2021_atopic-dermatitis_build38_GCST90027161_buildGRCh38.tsv.gz')
+head(psoriasis)
+
+prepare_munge(psoriasis, 
+              the_effect_allele = 'effect_allele',
+              the_non_effect_allele = 'other_allele',
+              effect_size = 'beta',
+              pvalue = 'p_value',
+              rsID = 'variant_id',
+              path = 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/psoriasis_stuart-2022.txt'
+)
+
+trait.names <- c('psoriasis_sliz-2021')
+traits <- c('outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/psoriasis_stuart-2022.txt') 
+prevalence_psoriasis <- 43401
+munge(files = traits, hm3 = 'SNP/w_hm3.snplist', N = prevalence_psoriasis, trait.names = trait.names)
+
 
 
 

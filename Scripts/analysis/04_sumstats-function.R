@@ -129,7 +129,10 @@ ra_ha <- fread('outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_m
 dim(ra_ha)
 is_se_logB(BETA= ra_ha$effect, SE= ra_ha$standard_error, PVALUE = ra_ha$p) #se of logistic beta
 
+#-----t1d SE----------------------------------------------------------------------
 
+t1d <- fread('outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/t1d_chiou-2021.txt')
+a <- is_se_logB(BETA = t1d$effect, SE = t1d$SE, PVALUE = t1d$p) #SE of logistic BETA
 #---- Munge the summary stats --------------------------------------------------
 
 #Function for sample prevalence calculation-------------------------------------
@@ -187,40 +190,42 @@ munge(files = file_names, hm3 = 'SNP/w_hm3.snplist', N = prevalences, trait.name
 # Load the table that contains all the info on the GWAS
 GWAS_info <- readRDS('outputs/version3/GWAS_info_table')
 #keep only the one I want ot use here
-GWAS_info_2 <- GWAS_info[ c('croh', 'uc', 'psc', 'jia', 'sle', 'ra') , ]
+GWAS_info_2 <- GWAS_info[ c('croh', 'uc', 'psc', 'jia', 'sle', 'ra_ha', 't1d') , ]
 
 #-----ldsc function ------------------------------------------------------------
-munged_files <- c('outputs/version3/04_output_sumstats-function/munged/croh.sumstats.gz', 
-                  'outputs/version3/04_output_sumstats-function/munged/uc.sumstats.gz', 
-                  'outputs/version3/04_output_sumstats-function/munged/psc.sumstats.gz',
+munged_files <- c('outputs/version3/01_output_prepare-sumstats/Munged-Sumstats/crohn.sumstats.gz', 
+                  'outputs/version3/01_output_prepare-sumstats/Munged-Sumstats/uc.sumstats.gz', 
+                  'outputs/version3/01_output_prepare-sumstats/Munged-Sumstats/psc.sumstats.gz',
                   'outputs/version3/04_output_sumstats-function/munged/jia.sumstats.gz', 
-                  'outputs/version3/04_output_sumstats-function/munged/sle.sumstats.gz', 
-                  'outputs/version3/04_output_sumstats-function/munged/ra.sumstats.gz')
+                  'outputs/version3/01_output_prepare-sumstats/Munged-Sumstats/sle.sumstats.gz', 
+                  'outputs/version3/01_output_prepare-sumstats/Munged-Sumstats/ra_ha-2021.sumstats.gz', 
+                  'outputs/version3/01_output_prepare-sumstats/Munged-Sumstats/t1d_chiou-2021.sumstats.gz')
 
-names = c('croh', 'uc', 'psc', 'jia', 'sle', 'ra') 
+names = c('croh', 'uc', 'psc', 'jia', 'sle', 'ra', 't1d') 
 
 
-ldsc_step4 <- ldsc(traits = munged_files, sample.prev = c(.5, .5, 0.1928, 0.2643, .5, .5),  
+ldsc_04 <- ldsc(traits = munged_files, sample.prev = c(.5, .5, 0.1928, 0.2643, .5, .5, .5),  
                    population.prev = GWAS_info_2$population.prev, trait.names = names,
                    ld = "ldscores/eur_w_ld_chr",
                    wld= "ldscores/eur_w_ld_chr", stand = T)
 
-saveRDS(ldsc_step4, 'outputs/version3/04_output_sumstats-function/ldsc_V3_step4')
-ldsc4_step4 <- readRDS('outputs/version3/04_output_sumstats-function/ldsc_V3_step4')
-rownames(ldsc4_step4$S_Stand) <- colnames(ldsc_step4$S_Stand)
+saveRDS(ldsc_04, 'outputs/version3/04_output_sumstats-function/ldsc_output_04')
+ldsc4_step4 <- readRDS('outputs/version3/04_output_sumstats-function/ldsc_output_04')
+rownames(ldsc4_step4$S_Stand) <- colnames(ldsc4_step4$S_Stand)
 corrplot(ldsc4_step4$S_Stand, order = 'hclust', addCoef.col = 'black', type = 'upper')
 
 
 #---- Two factor model ---------------------------------------------------------
 aid_model <-'F1 =~ NA*croh + uc  + psc 
-            F2 =~ NA*jia  + sle + ra
+            F2 =~ NA*jia  + sle + ra + t1d
 F1~~F2
 F1 ~~ 1*F1
-F2 ~~ 1*F2'
+F2 ~~ 1*F2
+'
 
 
 #run the model
-aid_factor <-usermodel(ldsc_step4, estimation = "DWLS", model = aid_model, CFIcalc = TRUE, std.lv = TRUE, imp_cov = FALSE)
+aid_factor <-usermodel(ldsc4_step4, estimation = "DWLS", model = aid_model, CFIcalc = TRUE, std.lv = TRUE, imp_cov = FALSE)
 
 
 #save the two factor model results
@@ -233,12 +238,13 @@ ra_ha <- fread('outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_m
 
 
 
-file_names <- c('outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/crohn_delange-2017.txt',
+file_names_ok <- c('outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/crohn_delange-2017.txt',
                 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/uc_delange-2017.txt', 
                 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/psc_ji-2016.txt',       
                 'outputs/version3/04_output_sumstats-function/Sumstats_ready_for_munge/jia_lopez-2016_beta_se.txt',
                 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/sle_beta_bentham-2015.txt',
-                'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/ra_ha_rsID.txt') 
+                'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/ra_ha_rsID.txt', 
+                'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/t1d_chiou-2021.txt') 
 
 
 crohn_p <- calculate_prevalence('Prevalences/CSV_prevalences/crohn_delange-2017.csv')
@@ -247,22 +253,23 @@ psc_p <- 2871 + 12019
 jia_p <- 3305 + 9196 
 sle_p <- calculate_prevalence('Prevalences/CSV_prevalences/sle_benthman-2015.csv')
 ra_p <- 84687
-prevalences <- c(crohn_p, uc_p, psc_p, jia_p, sle_p, ra_p) 
+t1d <- calculate_prevalence('Prevalences/CSV_prevalences/t1d_chiou-2021.csv')
+prevalences_ok <- c(crohn_p, uc_p, psc_p, jia_p, sle_p, ra_p, t1d) 
 
 
 
 
-aid_sumstats_noPBC <-sumstats(files = file_names, ref = 'SNP/reference.1000G.maf.0.005.txt.gz',
-                        trait.names = c('croh', 'uc', 'psc', 'jia', 'sle', 'ra'),
-                        se.logit =  c(T,T,T,T,T,T), #crohn, uc, ra, psc,sle I am sure as they report OR or I have checked in the papers, jia not sure 
-                        OLS = c(F,F,F,F,F,F), 
-                        linprob = c(F,F,F,F,F,F), 
-                        N = prevalences, 
+aid_sumstats_2F <-sumstats(files = file_names_ok, ref = 'SNP/reference.1000G.maf.0.005.txt.gz',
+                        trait.names = c('croh', 'uc', 'psc', 'jia', 'sle', 'ra', 't1d') ,
+                        se.logit =  c(T,T,T,T,T,T,T), #crohn, uc, ra, psc,sle, t1d I am sure as they report OR or I have checked in the papers, jia not sure 
+                        OLS = c(F,F,F,F,F,F, F), 
+                        linprob = c(F,F,F,F,F,F, F), 
+                        N = prevalences_ok, 
                         parallel = T,
                         keep.indel= F 
                         )
 
-saveRDS(aid_sumstats_noPBC, file= 'outputs/version3/04_output_sumstats-function/aid_sumstats_newRA.RDS')
+saveRDS(aid_sumstats_2F, file= 'outputs/version3/04_output_sumstats-function/aid_sumstats_2F.RDS')
 
 #aid_sumstats_noPBC <- readRDS('outputs/version3/04_output_sumstats-function/aid_sumstats_newRA.RDS') 
 

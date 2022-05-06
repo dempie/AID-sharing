@@ -31,10 +31,10 @@ split_sum_stats <- function(summary_stats, chunk_size, which_chunk) {
 #-------------------------------------------------------------------------------
 
 library(GenomicSEM)
-aid_sumstats <- readRDS('outputs/version3/04_output_sumstats-function/aid_sumstats_newRA.RDS')
-ldsc_step4 <- readRDS('outputs/version3/04_output_sumstats-function/ldsc_V3_step4')
+aid_sumstats <- readRDS('outputs/version3/04_output_sumstats-function/aid_sumstats_2F.RDS')
+ldsc_model <- readRDS('outputs/version3/04_output_sumstats-function/ldsc_output_04')
 model_ok <- aid_model <-'F1 =~ NA*croh + uc  + psc 
-            F2 =~ NA*sle  + ra + jia
+            F2 =~ NA*ra + t1d + jia + sle
 F1~~F2
 F1 ~~ 1*F1
 F2 ~~ 1*F2
@@ -47,10 +47,10 @@ F2 ~ SNP
 
 chunk_to_use <- split_sum_stats(aid_sumstats, 5000, 3 )
 
-output <- userGWAS(covstruc = ldsc_step4, 
-         SNPs = aid_sumstats[10002:10003, ], 
+output <- userGWAS(covstruc = ldsc_model, 
+         SNPs = aid_sumstats[10, ], 
          model = model_ok, 
-         sub = c("F1~SNP", "F2~SNP"))
+         sub = c("F1~SNP", "F2~SNP") )
 
 saveRDS(output, file.path('outputs/version3/05_GWAS_results/GWAS_05-05-2022/', paste0(counter, '.RDS')))
 
