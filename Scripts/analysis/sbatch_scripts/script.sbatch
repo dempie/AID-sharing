@@ -2,14 +2,14 @@
 
 #SBATCH --job-name=gwas_twof
 #SBATCH --partition=cpuq
-#SBATCH --array=1-30
+#SBATCH --array=1-2
 #SBATCH --cpus-per-task=1
 #SBATCH --time=24:00:00
 #SBATCH --output=gwas_twof-%A-%a.log
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=pietro.demela@fht.org
-#SBATCH --mem-per-cpu=
-#SBATCH --mem=
+#SBATCH --mem=64000
+
 
 echo '----------------------------'
 echo ' JOB ID: '$SLURM_ARRAY_JOB_ID
@@ -24,6 +24,6 @@ echo '----------------------------'
 
 
 module load R/4.1.0
-echo "My SLURM_ARRAY_TASK_ID: " $SLURM_ARRAY_TASK_ID > $SLURM_ARRAY_TASK_ID.txt
+echo "My SLURM_ARRAY_TASK_ID: " $SLURM_ARRAY_TASK_ID 
 Rscript gwas_two_factor_1.R  $SLURM_ARRAY_TASK_ID
 

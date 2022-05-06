@@ -9,7 +9,7 @@ library(dplyr)
 
 #---- Load the dataset ---------------------------------------------------------
 
-output2 <- readRDS('Outputs/Version3/LDS_output_final')
+output2 <- readRDS('outputs/version3/04_output_sumstats-function/ldsc_output_04_noRA')
 
 #look at the matrix
 
@@ -160,7 +160,7 @@ plot1 <- semPlotModel_GSEM(gsem.object = aid_factor)
 
 #for having different colors for the different groups create a list of groups
 f1 <- c('crohn', 'uc',  'psc' )
-f2 <- c('jia', 'pbc' ,'sle' ,  'ra')
+f2 <- c('jia', 't1d' ,'sle', )
 lista <- list(f1, f2)
 
 
