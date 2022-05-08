@@ -16,7 +16,9 @@ numbers <- rep(1:432)
 #remobe chunk 16 and chunk 169
 remove <- c(16, 169)
 numbers <- numbers[! (numbers %in% remove)]
+#-------------------------------------------------------------------------------
 
+  
 all_chunks <- lapply(numbers, function(x)readRDS(paste0(x, '_gwas_twof.RDS')))
 
 #for each chunk, separate F1 from F2
@@ -52,26 +54,21 @@ nrow(F2[F2$warning != 0,]) #27400 SNP with an error
 F1_NA <- F1[(which(!is.na(F1$Pval_Estimate))),]
 F2_NA <- F2[(which(!is.na(F2$Pval_Estimate))),]
 
-pdf(file='/project/aid_sharing/AID_sharing/plot.pdf', height = 14, width = 14)
-manhattan(F1_NA, chr="CHR", bp="BP", snp="SNP", p="Pval_Estimate" )
-dev.off()
+#miami plot of the SNPs with p<0.005
+F1_filtered <- F1_NA[F1_NA$Pval_Estimate < (0.005), ]
+F2_filtered <- F2_NA[F2_NA$Pval_Estimate < (0.005), ]
 
 
-pdf(file='/project/aid_sharing/AID_sharing/plotF2.pdf', height = 14, width = 14)
-manhattan(F2_NA, chr="CHR", bp="BP", snp="SNP", p="Pval_Estimate" )
-dev.off()
-
-
-
-#miami plot
-
-pdf(file='/project/aid_sharing/AID_sharing/miamiF1_F2.pdf', height = 14, width = 16)
+jpeg('outputs/version3/05_GWAS_results/GWAS_05-05-2022/plots/plotF1_F2.jpeg', units="in", width=14, height=7, res=300)
 par(mfrow=c(2,1))
 par(mar=c(0,5,3,3))
-manhattan(F1_NA, chr="CHR", bp="BP", snp="SNP", p="Pval_Estimate" ,ylim=c(0,30))
+manhattan(F1_filtered, chr="CHR", bp="BP", snp="SNP", p="Pval_Estimate" )
 par(mar=c(5,5,3,3))
-manhattan(F2_NA, chr="CHR", bp="BP", snp="SNP", p="Pval_Estimate" ,ylim=c(30,0), xlab="",xaxt="n")
+manhattan(F2_filtered, chr="CHR", bp="BP", snp="SNP", p="Pval_Estimate" ,ylim=c(30,0), xlab="",xaxt="n")
 dev.off()
+
+
+
 
 
 
