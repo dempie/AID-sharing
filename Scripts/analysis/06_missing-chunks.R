@@ -1,0 +1,77 @@
+#chunk 169-6_3-5 not working
+
+
+#----Function for splitting summary stats --------------------------------------
+
+split_sum_stats <- function(summary_stats, chunk_size, which_chunk) {
+  require(data.table)
+  #give a number to the elements of the sum_states
+  my_index <- seq_along(1: nrow(summary_stats))
+  n <- nrow(summary_stats) 
+  chunks <- rep(1:ceiling(n/chunk_size),each=chunk_size)[1:n] #the last piece [1:n] is necessary because otherwise the last chunk will become long as the chunk size and will replicate it thus exceeding the length of the sumstats
+  a <- split(my_index, chunks)
+  summary_stats[ (a[[which_chunk]]) , ]
+}
+
+#-------------------------------------------------------------------------------
+
+library(GenomicSEM)
+library(data.table)
+
+aid_sumstats <- readRDS('/project/aid_sharing/AID_sharing/outputs/version3/04_output_sumstats-function/aid_sumstats_2F_noRA.RDS')
+ldsc_model <- readRDS('/project/aid_sharing/AID_sharing/outputs/version3/04_output_sumstats-function/ldsc_output_04_noRA')
+model_ok <- aid_model <-'F1 =~ NA*croh + uc  + psc 
+            F2 =~ NA*t1d + jia + sle
+F1~~F2
+F1 ~~ 1*F1
+F2 ~~ 1*F2
+F1 ~ SNP
+F2 ~ SNP
+'
+
+#dim(aid_sumstats)
+#how_many_chunks(aid_sumstats_169, 1000) #10
+
+#chunk 169 and divide it into 10 chunks to see where it stops
+aid_sumstats_169  <- split_sum_stats(aid_sumstats, 10000, 169 )
+aid_sumstats_169_6 <-  split_sum_stats(aid_sumstats_169, 1000, 6)
+aid_sumstats_169_6_3_5 <- aid_sumstats_169_6[201:500,]
+#chunk_to_use <- split_sum_stats(aid_sumstats_169, 1000, counter )
+
+output <- list()
+for (i in c(1:nrow(aid_sumstats_169_6_3_5))) { #5201:5500
+  
+  output[[i]] <- userGWAS(covstruc = ldsc_model, 
+                     SNPs =aid_sumstats_169_6_3_5[i,],
+                     model = model_ok, 
+                     sub = c("F1~SNP", "F2~SNP") )
+}
+
+
+
+
+saveRDS(output, file.path('outputs/version3/05_GWAS_results/GWAS_05-05-2022/chunk_169/chunk_169_1-10/chunk_169_6/chunk_169-6_3-5/chunk169-6-3-5_gwas_twof.RDS'))
+
+
+chunk_169_6_3to5<- readRDS('outputs/version3/05_GWAS_results/GWAS_05-05-2022/chunk_169/chunk_169_1-10/chunk_169_6/chunk_169-6_3-5/chunk169-6-3-5_gwas_twof.RDS')
+length(chunk_169_6_3to5)
+#
+head(chunk_169_6_3to5)
+#
+a <- list()
+b <- list()
+for(i in (1:length(chunk_169_6_3to5))){
+  a[[i]] <- chunk_169_6_3to5[[i]][[1]]
+  b[[i]] <- chunk_169_6_3to5[[i]][[2]]
+}
+
+a <- do.call(rbind, a)
+b <- do.call(rbind, b)
+
+head(a)
+head(b)
+
+sum(is.na(a$est)) #198 had an error 
+sum(is.na(b$est)) #198 had an error
+
+
