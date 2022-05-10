@@ -71,3 +71,42 @@ locus.breaker=function(res,p.sig=5e-8, p.limit=1e-5,hole.size=250000
   trait.res
 }
 #------ run locus breaker function----------------------------------------------
+
+#load the complete summary stats
+f1_gwas <- readRDS('outputs/version3/05_GWAS_results/F1_completeGWAS.RDS')
+f2_gwas <- readRDS('outputs/version3/05_GWAS_results/F2_completeGWAS.RDS')
+
+nrow(f1_gwas) #4309927
+nrow(f2_gwas) #4309927
+
+#remove NAs
+f1_gwas_ok <- f1_gwas[which(!is.na(f1_gwas$Pval_Estimate)), ]
+f2_gwas_ok <- f2_gwas[which(!is.na(f2_gwas$Pval_Estimate)), ]
+
+nrow(f1_gwas_ok) #4281353
+nrow(f2_gwas_ok) #4281353
+
+#run the function
+
+f1_lb_output <- locus.breaker(res= f1_gwas_ok, p.label = <-  'Pval_Estimate', 
+                              chr.label = 'CHR', pos.label = 'BP'  )
+
+
+
+f2_lb_output <- locus.breaker(res= f2_gwas_ok, p.label = 'Pval_Estimate', 
+                              chr.label = 'CHR', pos.label = 'BP'  )
+
+
+dim(f1_lb_output)
+dim(f2_lb_output)
+
+
+a<- f1_lb_output$SNP
+
+b <- f2_lb_output$SNP
+
+
+
+
+
+

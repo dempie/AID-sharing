@@ -639,5 +639,103 @@ prevalence_psoriasis <- 43401
 munge(files = traits, hm3 = 'SNP/w_hm3.snplist', N = prevalence_psoriasis, trait.names = trait.names)
 
 
+#----vitiligo GWAS ------------------------------------------------------------------
+
+list_vitiligo <- lapply(c(1:22), function(x)fread(paste0('Summary_Stats/jin-2016_vitiligo_build37/GWAS123chr',x,'cmh.txt.gz')))
+str(list_vitiligo)
+
+#sum chunks contain 2 columns that we do not need and makes the join impossible (columns V13, V14 and, s)
+#remove them
+
+merge_vitiligo <- function(list_chunks){
+  
+  for(i in c(1:length(list_chunks))){
+        
+        #remove s column if exist
+        if('s' %in% colnames(list_chunks[[i]]) ){
+              list_chunks[[i]] <- select(list_chunks[[i]], -c('s'))
+        }
+        #remove V13 column if exists
+        if('V13' %in% colnames(list_chunks[[i]]) ){
+              list_chunks[[i]] <- select(list_chunks[[i]], -c('V13'))
+        }
+        #rmeove V14 column if exists
+        if('V14' %in% colnames(list_chunks[[i]]) ){
+              list_chunks[[i]] <- select(list_chunks[[i]], -c('V14'))
+        }
+    
+  }    
+    
+  return(list_chunks)
+}
+
+#prepare for merging
+a <- merge_vitiligo(list_vitiligo)   
+
+#chr1 has a P value name that it's different from the others, change it
+a[[1]]<- rename(a[[1]], 'P' = 'CMH P') 
+
+#merge them
+vitiligo <- do.call(rbind, a) 
+vitiligo$SNP <- tolower(vitiligo$SNP) #convert to lower case
+
+dim(vitiligo) # 8721242      12
+length(unique(vitiligo$CHR)) #22 chromosomes
 
 
+prepare_munge(vitiligo, 
+              rsID = 'SNP', 
+              the_effect_allele = 'A1', #checked on the paper and confirmed
+              the_non_effect_allele = 'A2', 
+              pvalue = 'P', 
+              effect_size = 'ORX', 
+              path = 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/vitiligo_jin-2016.txt' )
+
+vitiligo_prev<- calculate_prevalence('Prevalences/CSV_prevalences/vitiligo_jin-2016.csv')
+
+munge('outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/vitiligo_jin-2016.txt',
+      hm3 ='SNP/w_hm3.snplist', 
+      trait.names = 'vitiligo_jin-2016', 
+      N =  vitiligo_prev)
+
+#-----okada european -----------------------------------------------------------
+
+
+okada_euro <- fread('Summary_Stats/okada-2014_ra-european_build37_MegaGWAS_summary_European.txt.gz', data.table = F)
+head(okada_euro)
+okada_euro<- rename(okada_euro, 
+      SNPID = V1,
+       BP =V2,
+       Neighboring_gene =V3,
+       A1 = V4,
+       A2 = V5,
+       No.studies =V6,
+       No.RAcases =V7,
+       No.controls =V8,
+       A1_freq_cases =V9,
+       A2_freq_controls =V10,
+       Beta_allele_1 =V11,
+       SE_of_allele_1 = V12,
+       P_of_allele_1 =V13
+       )
+head(okada_euro)
+
+prepare_munge(okada_euro, 
+              rsID = 'SNPID',
+              the_effect_allele = 'A1',
+              the_non_effect_allele = 'A2', 
+              effect_size = 'Beta_allele_1', 
+              pvalue = 'P_of_allele_1',
+              path = 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/ra_eu_okada-2014.txt')
+
+prevalence_ra_okada_eu <- calculate_prevalence('Prevalences/CSV_prevalences/ra_okada-2014_only-eu.csv')
+
+munge('outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/ra_eu_okada-2014.txt', 
+      hm3 ='SNP/w_hm3.snplist', 
+      trait.names = 'ra_okada-2014_only-eu', 
+      N =  prevalence_ra_okada_eu)
+
+
+
+
+                        
