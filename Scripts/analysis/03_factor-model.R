@@ -37,14 +37,15 @@ F1~~F2'
 #ok very bello
 aid_model <-'F1 =~ NA*crohn + uc  + psc  
              F2 =~ NA*jia + pbc + sle + ra_eu + t1d + ms_2 
-             F3 =~ NA*asthma_2 + derma
+             F3 =~ NA*asthma_2 + derma 
              
 F1~~F2
-F1~~F3
-F2~~F3
+
 F1 ~~ 1*F1
 F2 ~~ 1*F2
 F3 ~~ 1*F3
+derma~~a*derma
+a>0.001
 '
 
 #NO
