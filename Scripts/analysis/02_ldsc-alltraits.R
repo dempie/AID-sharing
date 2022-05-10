@@ -22,39 +22,39 @@ traits <- c('outputs/version3/01_output_prepare-sumstats/Munged-Sumstats/allergi
             'outputs/version3/01_output_prepare-sumstats/Munged-Sumstats/alzheimer_1.sumstats.gz',
             'outputs/version3/01_output_prepare-sumstats/Munged-Sumstats/alzheimer_2.sumstats.gz',
             'outputs/version3/01_output_prepare-sumstats/Munged-Sumstats/armfat.sumstats.gz',
-            'outputs/version3/01_output_prepare-sumstats/Munged-Sumstats/asthma_1.sumstats.gz',
-            'outputs/version3/01_output_prepare-sumstats/Munged-Sumstats/asthma_2.sumstats.gz',
             
+            'outputs/version3/01_output_prepare-sumstats/Munged-Sumstats/asthma_2.sumstats.gz',
             'outputs/version3/01_output_prepare-sumstats/Munged-Sumstats/celiac.sumstats.gz',
             'outputs/version3/01_output_prepare-sumstats/Munged-Sumstats/crohn.sumstats.gz',
             'outputs/version3/01_output_prepare-sumstats/Munged-Sumstats/jia.sumstats.gz',
-           
             'outputs/version3/01_output_prepare-sumstats/Munged-Sumstats/pbc.sumstats.gz',
             
             'outputs/version3/01_output_prepare-sumstats/Munged-Sumstats/psc.sumstats.gz', 
-            'outputs/version3/01_output_prepare-sumstats/Munged-Sumstats/ra.sumstats.gz',
+            'outputs/version3/01_output_prepare-sumstats/Munged-Sumstats/ra_okada-2014_only-eu.sumstats.gz',
             'outputs/version3/01_output_prepare-sumstats/Munged-Sumstats/sle.sumstats.gz', 
             'outputs/version3/01_output_prepare-sumstats/Munged-Sumstats/thyro.sumstats.gz',
             'outputs/version3/01_output_prepare-sumstats/Munged-Sumstats/uc.sumstats.gz', 
             
             'outputs/version3/01_output_prepare-sumstats/Munged-Sumstats/t1d_chiou-2021.sumstats.gz' ,
             'outputs/version3/01_output_prepare-sumstats/Munged-Sumstats/derma_sliz-2021.sumstats.gz',
-            'outputs/version3/01_output_prepare-sumstats/Munged-Sumstats/psoriasis_sliz-2021.sumstats.gz'
+            'outputs/version3/01_output_prepare-sumstats/Munged-Sumstats/psoriasis_sliz-2021.sumstats.gz', 
+            'outputs/version3/01_output_prepare-sumstats/Munged-Sumstats/vitiligo_jin-2016.sumstats.gz'
+            
             ) 
 
-trait.names <- c( 'allergies','ms_2','alzheimer_1', 'alzheimer_2', 'armfat', 'asthma_1', 'asthma_2', 
-                 'celiac', 'crohn', 'jia', 'pbc',  
-                 'psc', 'ra', 'sle', 'thyro', 'uc', 
-                 't1d', 'derma', 'psoriasis')
-sample.prev <- round( c(.5, .5, .5, .5, NA, .5, (64538/(64538 + 239321)),
-                        .5, .5, (3305/(3305 + 9196)), .5, 
+trait.names <- c( 'allergies','ms_2','alzheimer_1', 'alzheimer_2', 'armfat',  
+                  'asthma_2', 'celiac', 'crohn', 'jia', 'pbc',  
+                 'psc', 'ra_eu', 'sle', 'thyro', 'uc', 
+                 't1d', 'derma', 'psoriasis', 'vitiligo')
+sample.prev <- round( c(.5, .5, .5, .5, NA,
+                        (64538/(64538 + 239321)),.5, .5, (3305/(3305 + 9196)), .5, 
                         ( 2871 /(2871 + 12019)), .5, .5, .5, .5, 
-                        .5, .5, .5)
+                        .5, .5, .5, .5)
                      ,2)
-population.prev <-  round(c((0.20 ),(35.9/100000), (0.058), (0.058), (NA), (0.0357), (0.0357), 
-                            (0.014), (100/100000), (44.7/100000), (10/100000),
+population.prev <-  round(c((0.20 ),(35.9/100000), (0.058), (0.058), (NA),
+                            (0.0357),  (0.014), (100/100000), (44.7/100000), (10/100000),
                             (5/100000), (460/100000), (50/100000), (0.05), (30/100000), 
-                            (0.095), (0.15), (0.02)
+                            (0.095), (0.15), (0.02), (0.002)
                             ),5)
 
 ld <- "ldscores/eur_w_ld_chr"
@@ -79,29 +79,10 @@ pdf(file = 'outputs/version3/02_output_ldsc-all-traits/correlation-matrix_comple
 corrplot( output2$S_Stand, order = 'hclust', addCoef.col = 'black', is.corr = T)
 dev.off()
 
-qgraph(output2$S_Stand,threshold=0.4,layout="spring")
-
-
-
-#---- remnove m1 that is interacting with everything because of the low h2
-t1 <- output2$S_Stand[-11, -11]
-
-
-pdf(file = 'Graphs/V3/Correlation-matrix_noMS_1.pdf', height = 14, width = 14 )
-corrplot(t1, order = 'hclust', addCoef.col = 'black')
+pdf(file = 'outputs/version3/02_output_ldsc-all-traits/network_complete.pdf', height = 14, width = 14 )
+qgraph(output2$S_Stand,threshold=0.4,layout="spring", diag=F)
 dev.off()
 
-
-#remove autocrrealtion for qraph
-?qgraph
-t_no_auto <- t1
-diag(t_no_auto) <- rep(0, 16)
-
-pdf(file = 'Graphs/V3/Network_noMS_1.pdf', height = 14, width = 14 )
-qgraph(t_no_auto,threshold=0.4,layout="spring")
-dev.off()
-
-#-----------------------------------
 
 
 
