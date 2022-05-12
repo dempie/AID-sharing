@@ -76,7 +76,7 @@ rownames(output2$S_Stand) <- colnames(output2$S_Stand)
 
 
 pdf(file = 'outputs/version3/02_output_ldsc-all-traits/correlation-matrix_complete.pdf', height = 14, width = 14 )
-corrplot( output2$S_Stand, order = 'hclust', addCoef.col = 'black', is.corr = T)
+corrplot( output2$S_Stand, order = 'hclust', addCoef.col = 'black', is.corr = T, type = 'upper')
 dev.off()
 
 pdf(file = 'outputs/version3/02_output_ldsc-all-traits/network_complete.pdf', height = 14, width = 14 )

@@ -30,24 +30,22 @@ rownames(output2$S_Stand) <- colnames(output2$S_Stand)
 #Specify the Genomic confirmatory factor model
 
 
-aid_model <-'F1 =~ NA*crohn + uc  + psc + ms_2
-             F2 =~ NA*jia + pbc + sle + ra_eu + t1d + ms_2 
-F1~~F2'
+
 
 #ok very bello
 aid_model <-'F1 =~ NA*crohn + uc  + psc  
-             F2 =~ NA*jia + pbc + sle + ra_eu + t1d + ms_2 
-             F3 =~ NA*asthma_2 + derma 
-             
-F1~~F2
+F2 =~ NA*jia + sle + ra_eu + t1d 
+F3 =~ NA*asthma_2 + derma 
 
+F1~~F2
+F1~~F3
+F2~~F3
 F1 ~~ 1*F1
 F2 ~~ 1*F2
 F3 ~~ 1*F3
 derma~~a*derma
 a>0.001
 '
-
 #NO
 # aid_model <-'F1 =~ NA*crohn + uc  + psc   
 #              F2 =~ NA*jia + pbc + sle + ra_eu + t1d 

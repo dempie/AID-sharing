@@ -93,46 +93,27 @@ sle <- fread('outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_mun
 head(sle)
 is_se_logB(BETA = sle$effect, SE = sle$se, PVALUE = sle$p) #SE of logistic beta (effect column is beta as there are negative values)
 
-#----- ra SE -------------------------------------------------------------------
+#----- ra eu okada SE -------------------------------------------------------------------
 
-ra <- fread('outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/ra_okada-2014.txt', data.table = F)
-head(ra)
-length(which(ra$effect == 1)) #1324526 this means that they have rounded to 1 and when computing z this causes inf and -inf 
-dim(ra) #9739303  8
-#remove the effects == 1
-ra <- ra[!(ra$effect == 1),]
-dim(ra) #8414777       8
-head(ra)
-
-
-ra <- add_SE( OR = ra$effect, PVALUE = ra$p, use_chi = T, sum_stat = ra,
-                 upper_CI = ra$`OR_95%CIup`, add_se = T)
-
-summary(se_column)
-OR_SE_issue <- ra[which(ra$SE ==0 ), ]
-ra$CHI <-  qchisq(1- (ra$p) , df=1)
+ra <- fread('outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/ra_eu_okada-2014.txt', data.table = F)
 
 head(ra)
-length(which(ra$Beta== 0))
-is_se_logB(BETA = ra_ok$Beta, SE = ra_ok$SE, PVALUE = ra_ok$p) #SE of logistic beta
-dim(ra)
-#remove OD column and CI columns
-ra <- ra %>% select(-c(effect))
-fwrite(ra, file= 'outputs/version3/04_output_sumstats-function/Sumstats_ready_for_munge/ra_okada-2014_SE_RoundIssues.txt',
-       sep = '\t', col.names = T, row.names = F, quote = F)
 
-length(which(ra$SE == 0))
-
-#----ra_ha----------------------------------------------------------------------
-
-ra_ha <- fread('outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/ra_ha_rsID.txt', data.table = F)
-dim(ra_ha)
-is_se_logB(BETA= ra_ha$effect, SE= ra_ha$standard_error, PVALUE = ra_ha$p) #se of logistic beta
+is_se_logB(BETA = ra$effect, SE = ra$SE, PVALUE = ra$p) #SE of logistic beta
 
 #-----t1d SE----------------------------------------------------------------------
 
 t1d <- fread('outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/t1d_chiou-2021.txt')
 a <- is_se_logB(BETA = t1d$effect, SE = t1d$SE, PVALUE = t1d$p) #SE of logistic BETA
+
+
+#------ pbc is to small in terms of SNPS----------------------------------------
+
+ms_and <- fread('outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/ms_andlauer-2016.txt')
+head(ms_and)
+#check in the paper, its logistic regression 
+is_se_logB(BETA = ms_and$effect, SE = ms_and$standard_error, PVALUE = ms_and$p) #SE of logistic BETA
+
 #---- Munge the summary stats --------------------------------------------------
 
 #Function for sample prevalence calculation-------------------------------------
@@ -169,7 +150,9 @@ file_names <- c('outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_
                 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/psc_ji-2016.txt',       
                 'outputs/version3/04_output_sumstats-function/Sumstats_ready_for_munge/jia_lopez-2016_beta_se.txt',
                 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/sle_beta_bentham-2015.txt',
-                'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/ra_ha_rsID.txt' 
+                'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/ra_eu_okada-2014.txt', 
+                'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/pbc_cordell-2015_beta_SE.txt', 
+                ''
                 ) 
 
 crohn_p <- calculate_prevalence('Prevalences/CSV_prevalences/crohn_delange-2017.csv')
@@ -177,7 +160,7 @@ uc_p <- calculate_prevalence('Prevalences/CSV_prevalences/uc_delange-2017.csv')
 psc_p <- 2871 + 12019
 jia_p <- 3305 + 9196 
 sle_p <- calculate_prevalence('Prevalences/CSV_prevalences/sle_benthman-2015.csv')
-ra_p <- 84687
+ra_p <- calculate_prevalence('Prevalences/CSV_prevalences/ra_okada-2014_only-eu.csv')
 
 prevalences <- c(crohn_p, uc_p, psc_p, jia_p, sle_p, ra_p)
 trait.names = c('croh', 'uc', 'psc', 'jia', 'sle', 'ra') 

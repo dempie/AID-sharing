@@ -54,4 +54,3 @@ row.names(GWAS_info) <- GWAS_info$trait.names
 
 saveRDS(GWAS_info, file='/project/aid_sharing/AID_sharing/outputs/version3/GWAS_info_table')
 ```
-

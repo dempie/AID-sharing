@@ -60,7 +60,13 @@ pdf(file = '/project/aid_sharing/AID_sharing/F1_manhattan.pdf',width = 4, height
 manhattan(F1_noNA, chr="CHR", bp="BP", snp="SNP", p="Pval_Estimate", annotateTop = T )
 dev.off()
 
-qq(F1_noNA$Pval_Estimate)
+#-------------------------------------------------------------------------------
+#Q statistics calculation for Factor dependence of the SNPs
+#assmeble the Q statistic summary stats
+
+assemblechunks <- function(path, n_chunks, chunk_name)
+  chunks <- lapply(c(1:n_chunks), function(x)readRDS(paste0('outputs/version3/05_GWAS_results/GWAS_05-05-2022/q_index/chunks_qindex/', x, chunk_name ))) 
+  q_summary_stats <- do.call(rbind, chunksQ)
 
 
 

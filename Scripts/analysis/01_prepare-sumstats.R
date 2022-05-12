@@ -132,6 +132,7 @@ pbc_1 <- prepare_munge(pbc,
                      path = 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/pbc_cordell-2015.txt')
 
 pbc <- fread('Summary_Stats/cordell-2015_pbc_build37_26394269_pbc_efo1001486_1_gwas.sumstats.tsv.gz', data.table = F)
+
 pbc_2 <- prepare_munge(pbc,
                      rsID = 'rsid',
                      the_effect_allele = 'effect_allele', #manually checked from the paper seemed to correspond (when it did not correspond the effect was in the opposite direction) 
@@ -156,22 +157,24 @@ referenceSNP <- fread('SNP/reference.1000G.maf.0.005.txt.gz')
 referenceSNP <- referenceSNP %>% unite(CHR, BP, sep= ':', na.rm = F, remove = T, col = 'chrPosition' ) %>% select(-c(MAF, A1,A2))
 
 #prepare crohn for merging 
-crohn <- crohn %>% separate(col = 'MarkerName', sep = '_|_', remove = T, convert = F, extra = 'warn', into = c('SNP', 'Extra1', 'Extra2') ) %>% select(-c(Extra1, Extra2))  
+crohn <- crohn %>% separate(col = 'MarkerName', sep = '_|_', remove = T, convert = F, extra = 'warn', into = c('SNP', 'Extra1', 'Extra2') ) %>% select(-c(Extra1, Extra2))  %>% separate(col='SNP', sep= ':', convert=F,  into = c('CHR', 'BP'), remove = F)
 crohn <- merge.data.table(crohn, referenceSNP, 
                           by.x = 'SNP', by.y = 'chrPosition', 
                           all.x = T, all.y = F, sort = T)
-dim(crohn) #9570787      16
-colnames(crohn)[1] <- 'Variant_rsID'
+crohn <- crohn %>% select(-c(SNP)) %>%rename( 'SNP'=SNP.y)
+
+dim(crohn) #9570787      18
+
 
 #prepare function
 
 crohn <- prepare_munge(crohn, 
-                       rsID = 'SNP.y',
+                       rsID = 'SNP',
                        the_effect_allele = 'Allele2',    #manually checked on the paper for Risk allele
                        the_non_effect_allele = 'Allele1', 
                        pvalue = 'P.value',
                        effect_size = 'Effect',
-                       to_remove = c('Variant_rsID', 'Min_single_cohort_pval', 'Pval_GWAS3', 'Pval_IIBDGC', 'Pval_IBDseq', 'HetPVal', 'HetDf', 'HetChiSq', 'HetISq'  ),
+                       to_remove = c( 'Min_single_cohort_pval', 'Pval_GWAS3', 'Pval_IIBDGC', 'Pval_IBDseq', 'HetPVal', 'HetDf', 'HetChiSq', 'HetISq'  ),
                        path = 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/crohn_delange-2017.txt')
 head(crohn)
 dim(crohn) #9570787       7
@@ -180,15 +183,15 @@ dim(crohn) #9570787       7
 #---- uc GWAS-------------------------------------------------------------------
 
 head(uc)
-dim(uc) # 9570787      15
+
 
 #prepare uc for merging 
-uc <- uc %>% separate(col = 'MarkerName', sep = '_|_', remove = T, convert = F, extra = 'warn', into = c('Variant_rsID', 'Extra1', 'Extra2') ) %>% select(-c(Extra1, Extra2))  
+uc <- uc %>% separate(col = 'MarkerName', sep = '_|_', remove = F, convert = F, extra = 'warn', into = c('SNP', 'Extra1', 'Extra2') ) %>% select(-c(Extra1, Extra2)) %>% separate(col='SNP', sep= ':', convert=F,  into = c('CHR', 'BP'), remove = F)  
 uc <- merge.data.table(uc, referenceSNP, 
-                          by.x = 'Variant_rsID', by.y = 'chrPosition', 
-                          all.x = T, all.y = F, sort = F )
-dim(uc) # 9570787      16
+                          by.x = 'SNP', by.y = 'chrPosition', 
+                          all.x = T, all.y = F, sort = T)
 
+uc <- uc %>% select(-c(SNP, MarkerName)) %>%rename( 'SNP'=SNP.y)
 #prepare function
 uc <- prepare_munge(uc, 
                        rsID = 'SNP',
@@ -196,7 +199,7 @@ uc <- prepare_munge(uc,
                        the_non_effect_allele = 'Allele1', 
                        pvalue = 'P.value',
                        effect_size = 'Effect',
-                       to_remove = c('Variant_rsID', 'Min_single_cohort_pval', 'Pval_GWAS3', 'Pval_IIBDGC', 'Pval_IBDseq', 'HetPVal', 'HetDf', 'HetChiSq', 'HetISq'  ),
+                       to_remove = c('Min_single_cohort_pval', 'Pval_GWAS3', 'Pval_IIBDGC', 'Pval_IBDseq', 'HetPVal', 'HetDf', 'HetChiSq', 'HetISq'  ),
                        path = 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/uc_delange-2017.txt')
 head(uc)
 
@@ -292,8 +295,9 @@ psc <- fread('Summary_Stats/ji-2016_psc_build37_ipscsg2016.result.combined.full.
 #---- asthma_demeanis GWAS------------------------------------------------------
 
 head(asthma_demeanis)
-dim(asthma_demeanis) #2001280      23
 
+dim(asthma_demeanis) #2001280      23
+asthma_demeanis <- rename(asthma_demeanis, SE= 'European_ancestry_se_fix')
 asthma_demeanis <- prepare_munge(asthma_demeanis,
               rsID = 'rsid',
               the_effect_allele = 'alternate_allele', #manually checked on the paper
@@ -308,11 +312,11 @@ asthma_demeanis <- prepare_munge(asthma_demeanis,
               path = 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/asthma_demeanis-2018.txt')
 
 head(asthma_demeanis)
-dim(asthma_demeanis) #2001280       8
+dim(asthma_demeanis) #2 001 280       8
 
 #---- asthma_han GWAS -----------------------------------------------------------
 head(asthma_han)
-dim(asthma_han) #9572556      12
+dim(asthma_han) #9 572 556      12
 
 asthma_han <- prepare_munge(asthma_han, 
                             rsID = 'SNP',
@@ -368,7 +372,9 @@ psc_ok <- data.frame( 'SNP' = psc$SNP ,
                       'Pos' = psc$pos, 
                       'Effect' = psc$or , 
                       'SE' = psc$se ,
-                      'P' = psc$p )
+                      'P' = psc$p , 
+                      'CHR'= psc$`#chr`, 
+                        'BP'=psc$pos)
 
 fwrite(psc_ok, file='outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/psc_ji-2016.txt',
        col.names = T, row.names = F, sep = '\t', quote = F)
@@ -434,7 +440,11 @@ jia[ grep('rs6679677', jia$variant_id),] # A listed as risk allele in GWAS catal
 jia[ grep('rs7731626', jia$variant_id),] # G listed as risk allele in GWAS catalog and in the paper but with opposite effect
 #allela A interpreted as the effect allele I think
 
-jia <- prepare_munge(jia, 
+#rename SE column
+colnames(jia)[13] <- 'SE'
+jia <- select(jia, -c(alternate_ids))
+
+      prepare_munge(jia, 
                        rsID = 'variant_id',
                        the_effect_allele = 'alleleB', #checked on the paper (when it did not correspond the effect was in the opposite direction)
                        the_non_effect_allele = 'alleleA',
@@ -442,7 +452,17 @@ jia <- prepare_munge(jia,
                        effect_size = 'all_OR' , 
                        path= 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/jia_lopezisac-2020.txt')
 
-head(jia)
+
+           prepare_munge(jia, 
+                           rsID = 'variant_id',
+                           the_effect_allele = 'alleleB', #checked on the paper (when it did not correspond the effect was in the opposite direction)
+                           the_non_effect_allele = 'alleleA',
+                           pvalue = 'p_value', 
+                           effect_size = 'frequentist_add_beta_1' ,
+                            to_remove = c('all_maf'  , 'all_OR', 'all_OR_lower', 'all_OR_upper'),
+                           path= 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/jia_beta_lopezisac-2020.txt')
+
+
 dim(jia) #7461261      13
 
 #---- ra GWAS ------------------------------------------------------------------
@@ -570,6 +590,7 @@ munge(files = traits, hm3 = 'SNP/w_hm3.snplist', N = prevalence_t1d, trait.names
 #----derma GWAS-----------------------------------------------------------------
 derma <- fread('Summary_Stats/sliz-2021_atopic-dermatitis_build38_GCST90027161_buildGRCh38.tsv.gz', data.table = F)
 head(derma) 
+derma <-  rename(derma, SE='standard_error')
 prepare_munge(derma, rsID = 'variant_id',
               effect_size = 'beta',
               the_effect_allele = 'effect_allele', 
@@ -715,7 +736,7 @@ okada_euro<- rename(okada_euro,
        A1_freq_cases =V9,
        A2_freq_controls =V10,
        Beta_allele_1 =V11,
-       SE_of_allele_1 = V12,
+       SE = V12,
        P_of_allele_1 =V13
        )
 head(okada_euro)
@@ -728,12 +749,64 @@ prepare_munge(okada_euro,
               pvalue = 'P_of_allele_1',
               path = 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/ra_eu_okada-2014.txt')
 
+
 prevalence_ra_okada_eu <- calculate_prevalence('Prevalences/CSV_prevalences/ra_okada-2014_only-eu.csv')
 
 munge('outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/ra_eu_okada-2014.txt', 
       hm3 ='SNP/w_hm3.snplist', 
       trait.names = 'ra_okada-2014_only-eu', 
       N =  prevalence_ra_okada_eu)
+
+#----- systemic sclerosis GWAS--------------------------------------------------
+
+# ssc <- fread('Summary_Stats/lopez-2019_ssc_build37_Lopez-Isac_prePMID_META_GWAS_SSc.meta.txt', data.table = F)
+# referenceSNP <- fread('SNP/reference.1000G.maf.0.005.txt.gz')
+# referenceSNP <- referenceSNP %>% select(-c(MAF, BP, CHR))
+# referenceSNP<- rename(referenceSNP, 'refA1'=A1, 'refA2'=A2)
+# 
+# 
+# head(ssc)
+# dim(referenceSNP)
+# 
+# ssc <- merge.data.table(ssc, referenceSNP, 
+#                           by.x = 'SNP', by.y = 'SNP', 
+#                           all.x = F, all.y = F, sort = T)
+# dim(ssc)
+# 
+# assign_a2 <- function(summary_stats){
+#   for(i in (nrow(summary_stats))){
+#     
+#     if(summary_stats[i,]$A1 == summary_stats[i,]$refA1){summary_stats[i,]$A2 <- summary_stats[i, ]$refA2 }  
+#     if(summary_stats[i,]$A1 == summary_stats[i,]$refA2) {summary_stats[i,]$A2 <- summary_stats[i, ]$refA1} 
+#     
+#     
+#   } 
+#   return(summary_stats)
+# }
+# 
+#   
+# ssc_A2 <- assign_a2(ssc) #chek in the paper, use P and OR columns. 
+# 
+# #check in A1 is the same as before the process 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
