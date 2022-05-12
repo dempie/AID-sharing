@@ -643,48 +643,52 @@ system('mv alzheimer_kunkle-2019* jia_lopezisac-2020* thyro_saevarsdottir-2020* 
 
 #---Group 4 load the dataset----------------------------------------------------
 
-t1d <- fread('Summary_Stats/chiou-2021_t1d_build38_GCST90014023_buildGRCh38.tsv', data.table = F)
+t1d <- fread('Summary_Stats/chiou-2021_t1d_build38_GCST90014023_buildGRCh38.tsv', data.table = F, nThread = 32 )
 
 
 #----t1d GWAS-------------------------------------------------------------------
 
 head(t1d)
+median(t1d$p_value)
+median(t1d$beta)
 
 #the p_value column is not properly read by munge function as it is a character
-#So transform it into as.numeric
+#So transform it into as.numeric, with data.table is the only way that works!!!!!
 
 
-t1d_ok <-  data.frame('rsID' = t1d$variant_id,
-                  'Beta' = t1d$beta, 
-                  'A1' = t1d$effect_allele, 
-                  'A2' = t1d$other_allele, 
-                  'p' = as.numeric(t1d$p_value),
-                  'CHR' = t1d$chromosome,
-                  'BP' = t1d$base_pair_location, 
-                  'effect_allele_frequency'= t1d$effect_allele_frequency,
-                  'SE' = t1d$standard_error, 
-                  'sample_size' = t1d$sample_size)
- 
-head(t1d_ok)
-sum(t1d_ok$pvalue <0)
+t1d_ok <-  data.frame(rsID = t1d$variant_id,  
+                      A1 = t1d$effect_allele, 
+                      A2 = t1d$other_allele, 
+                      p = as.double(t1d$p_value),
+                      CHR = t1d$chromosome,
+                      BP = t1d$base_pair_location, 
+                      effect_allele_frequency= t1d$effect_allele_frequency,
+                      SE = t1d$standard_error, 
+                      sample_size = t1d$sample_size, 
+                      effect = as.double(t1d$beta)
+)
 
-qc_summary_stats(t1d_ok, T)
+t1_ok_no_X <- t1d_ok[!(t1d_ok$CHR=='X'),] #remove X chromosome as it will cause the munging to fail!!!!!!!!!!
 
 
-fwrite(t1d_ok,  'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/t1d_chiou-2021.txt',
-       sep = '\t', col.names = T, row.names = F, quote = F)
+
+fwrite(t1_ok_no_X, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/t1d_chiou-2021.txt',
+       sep = '\t', col.names = T, row.names = F)
 
 trait.names <- c('t1d_chiou-2021')
 traits <- c( 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/t1d_chiou-2021.txt') 
-prevalence_t1d <- calculate_prevalence('Prevalences/CSV_prevalences/t1d_chiou-2021.csv')
+prevalence_t1d <- calculate_prevalence('Prevalences/CSV_prevalences/t1d_chiou-2021.csv')  #46453
 munge(files = traits, hm3 = 'SNP/w_hm3.snplist', N = prevalence_t1d, trait.names = trait.names)
+
+#move the file in the output folder
+system('mv t1d* outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/munge_output')
 
 
 #----derma GWAS-----------------------------------------------------------------
 derma <- fread('Summary_Stats/sliz-2021_atopic-dermatitis_build38_GCST90027161_buildGRCh38.tsv.gz', data.table = F)
 head(derma) 
 
-prepare_munge(derma, rsID = 'variant_id',
+derma <- prepare_munge(derma, rsID = 'variant_id',
               effect_size = 'beta',
               the_effect_allele = 'effect_allele', 
               the_non_effect_allele = 'other_allele',
@@ -699,53 +703,22 @@ traits <- c( 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/
 prevalence_derma <- calculate_prevalence('Prevalences/CSV_prevalences/derma_sliz-2021.csv')
 munge(files = traits, hm3 = 'SNP/w_hm3.snplist', N = prevalence_derma, trait.names = trait.names)
 
-#-----ra_ha-------------------------------------------------------------
+#move the file in the output folder
+system('mv derma* outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/munge_output')
 
-ra_ha <- fread('Summary_Stats/ha-2020_ra_build37_GCST90013534_buildGRCh37.tsv', data.table = T)
-head(ra_ha)
-
-#add rsID
-referenceSNP <- fread('SNP/reference.1000G.maf.0.005.txt.gz')
-referenceSNP <- referenceSNP %>% unite(CHR, BP, sep= ':', na.rm = F, remove = T, col = 'chrPosition' ) %>% select(-c(MAF, A1,A2))
-ra_ha <- unite(ra_ha, chromosome, base_pair_location, sep=':', na.rm=F, remove=T, col = 'chrPosition' )
-
-ra_ha_rsID <- merge.data.table(ra_ha, referenceSNP, 
-                               by.x = 'chrPosition', by.y = 'chrPosition', 
-                               all.x = T, all.y = F, sort = F )
-#SE column rename
-
-ra_ha_rsID<- rename(ra_ha_rsID, SE= standard_error )
-
-
-
-ra_ha_rsID[grep('rs6705628', ra_ha_rsID$SNP), ]
-exp(-0.1246) #0.88285, in the paper they reported 0.88 as OR, so it should be a logistic Beta. 
-
-#effect allele checked on the paper ok!
-
-prepare_munge(ra_ha_rsID, 
-              the_effect_allele = 'effect_allele',
-              the_non_effect_allele = 'other_allele',
-              effect_size = 'beta',
-              pvalue = 'p_value',
-              rsID = 'SNP',
-              path=  'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/ra_ha_rsID.txt')
-
-
-trait.names <- c('ra_ha-2021')
-traits <- c( 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/ra_ha_rsID.txt') 
-prevalence_ra_ha <- 84687
-munge(files = traits, hm3 = 'SNP/w_hm3.snplist', N = prevalence_ra_ha, trait.names = trait.names)
-
+qc_summary_stats(derma, T)
 #------- psoriasis -------------------------------------------------------------
 psoriasis <- fread('Summary_Stats/sliz-2021_atopic-dermatitis_build38_GCST90027161_buildGRCh38.tsv.gz')
 head(psoriasis)
 
-prepare_munge(psoriasis, 
+psoriasis <- prepare_munge(psoriasis, 
               the_effect_allele = 'effect_allele',
               the_non_effect_allele = 'other_allele',
               effect_size = 'beta',
               pvalue = 'p_value',
+              the_SE = 'standard_error' ,
+              the_chr = 'chromosome', 
+              the_bp = 'base_pair_location',
               rsID = 'variant_id',
               path =  'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/psoriasis_stuart-2022.txt'
 )
@@ -755,6 +728,10 @@ traits <- c( 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/
 prevalence_psoriasis <- 43401
 munge(files = traits, hm3 = 'SNP/w_hm3.snplist', N = prevalence_psoriasis, trait.names = trait.names)
 
+#move the file in the output folder
+system(' mv pso* outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/munge_output')
+
+qc_summary_stats(psoriasis, T)
 
 #----vitiligo GWAS ------------------------------------------------------------------
 
@@ -800,12 +777,15 @@ dim(vitiligo) # 8721242      12
 length(unique(vitiligo$CHR)) #22 chromosomes
 
 
-prepare_munge(vitiligo, 
+vitiligo <- prepare_munge(vitiligo, 
               rsID = 'SNP', 
               the_effect_allele = 'A1', #checked on the paper and confirmed
               the_non_effect_allele = 'A2', 
               pvalue = 'P', 
-              effect_size = 'ORX', 
+              effect_size = 'ORX',
+              the_SE = 'SE', 
+              the_chr = 'CHR',
+              the_bp = 'BP',
               path =  'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/vitiligo_jin-2016.txt' )
 
 vitiligo_prev<- calculate_prevalence('Prevalences/CSV_prevalences/vitiligo_jin-2016.csv')
@@ -814,6 +794,12 @@ munge( 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_
       hm3 ='SNP/w_hm3.snplist', 
       trait.names = 'vitiligo_jin-2016', 
       N =  vitiligo_prev)
+
+#move to output folder
+system('mv vitiligo* outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/munge_output ')
+ 
+qc_summary_stats(vitiligo, T)
+
 
 #-----okada european -----------------------------------------------------------
 
@@ -836,7 +822,7 @@ okada_euro<- rename(okada_euro,
        P_of_allele_1 =V13
        )
 head(okada_euro)
-
+dim(okada_euro) #8 514 610      13
 prepare_munge(okada_euro, 
               rsID = 'SNPID',
               the_effect_allele = 'A1',
@@ -852,6 +838,8 @@ munge( 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_
       hm3 ='SNP/w_hm3.snplist', 
       trait.names = 'ra_okada-2014_only-eu', 
       N =  prevalence_ra_okada_eu)
+
+system('mv ra_oka* outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/munge_output')
 
 #----- systemic sclerosis GWAS--------------------------------------------------
 
