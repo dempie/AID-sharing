@@ -10,6 +10,8 @@ library(data.table)
 library(GenomicSEM)
 library(tidyr)
 library(dplyr)
+        
+
 
 # Since the dataset are quite heavy in terms of memory I perform the preparation
 # of them in groups of 5 GWAS
@@ -31,31 +33,118 @@ armfat <- fread('Summary_Stats/continuous-23123-both_sexes-irnt.tsv.gz', data.ta
 ##the function changes the name of the columns as required by the genomicSEM package
 #and saves the files in the provided path (if the path is provided)
 
-prepare_munge<- function(sum_stats, rsID, the_effect_allele, the_non_effect_allele, pvalue, effect_size, to_remove=NA, path = NA){
+prepare_munge <- function(sum_stats, rsID, the_effect_allele, the_non_effect_allele, pvalue, effect_size, the_SE=NA, the_chr=NA, the_bp=NA, to_remove=NA, path = NA){
   #an error if arguments are not provided 
   if (missing(sum_stats) | missing(rsID) | missing(the_effect_allele) | missing(the_non_effect_allele) |missing(pvalue) | missing(effect_size) ) {
     stop( 'At least one argument is missing')
     
-  } else {
-    
-    require(dplyr)
-    require(data.table)
-    sum_stats <- sum_stats  %>% rename(c(SNP = rsID, A1 = all_of(the_effect_allele), A2 = all_of(the_non_effect_allele), p = all_of(pvalue), effect = all_of(effect_size)))
-    #conditional remove
-    if(is.na(to_remove[1])){
-      #do nothing 
-    } else {
-      sum_stats <- select(sum_stats,-(all_of(to_remove)))
-    }
-    
-    #save the file if a path is provided
-    if(is.na(path)){
-      return(sum_stats)
-    } else {
-      fwrite(sum_stats, path, sep = '\t', col.names = T, row.names = F, quote = F)
-      return(sum_stats)
-    }
-  }
+      } else {
+        
+          require(dplyr)
+          require(data.table)
+          sum_stats <- sum_stats  %>% rename(c(SNP = all_of(rsID), A1 = all_of(the_effect_allele), A2 = all_of(the_non_effect_allele), p = all_of(pvalue), effect = all_of(effect_size)))
+          sum_stats$SNP <- tolower(sum_stats$SNP)
+          sum_stats$p <- as.numeric(sum_stats$p)
+          sum_stats$effect <- as.numeric(sum_stats$effect)
+          
+          #conditional options 
+                #remove columns
+                if(!is.na(to_remove[1])){sum_stats <- select(sum_stats,-(all_of(to_remove)))} 
+                      
+                #rename SE column
+                if(!is.na(the_SE)){ 
+                      sum_stats <- rename(sum_stats, SE=all_of(the_SE))
+                      sum_stats$SE <- as.numeric(sum_stats$SE)
+                      }
+              
+                #rename the CHR column
+                if(!is.na(the_chr)){ sum_stats <-  rename(sum_stats, CHR=all_of(the_chr))}
+              
+                #rename the BP column
+                if(!is.na(the_bp)){ sum_stats <- rename(sum_stats, BP=all_of(the_bp))}
+          
+                #save the file if a path is provided
+                if(is.na(path)){
+                    invisible(sum_stats)
+                  
+                  
+                } else {
+                  
+                  fwrite(sum_stats, path, sep = '\t', col.names = T, row.names = F, quote = F)
+                  invisible(sum_stats)
+                }
+              }
+}
+
+#----------create a function for QC of the GWAS of the summary stats------------
+#this function expects the sum_stats formatted by prepare_munge function
+
+qc_summary_stats <- function(sum_stats, plots=F){
+          #compute number of SNPs
+          n_SNPs <- nrow(sum_stats)
+          
+          #compute the number of unique rsIDs 
+          sum_stats_rsIDs<- sum_stats[grep('rs',sum_stats$SNP),]
+          n_rsIDs <- length(unique(sum_stats_rsIDs$SNP))
+          
+          SNP_per_chr <- vector(mode='integer', length = 22)
+          rsID_per_chr <-  vector(mode='integer', length = 22)
+          
+          #compute the number of unique rsIDs and SNPs per chromosome 
+          for(i in c(1:22)){
+            
+                SNP_per_chr[i] <- nrow(sum_stats[sum_stats$CHR== i ,]) 
+                rsID_per_chr[i] <- length(unique(sum_stats_rsIDs[sum_stats_rsIDs$CHR == i, ]$SNP))
+          }
+          
+          qc_metrics_SNPs <- cbind(Chromosome = c(1:22) ,n_SNPs = SNP_per_chr )
+          qc_metrics_rsIDs <- cbind(Chromosome = c(1:22) ,n_rsIDs = rsID_per_chr )
+          
+          cat(paste0( 'Total number of SNP  ' , n_SNPs , '\n', 
+                      'Total number of SNP with rsID  ', n_rsIDs, '\n')
+          )
+          
+          output <- list(qc_SNPs = qc_metrics_SNPs, qc_rsIDs=qc_metrics_rsIDs )
+          
+          
+          
+          if(plots==T){
+
+            barplot(t(output$qc_SNPs) , main = 'Number of unique rsID per chromosome',  ylab = 'Number of SNP', 
+                    names.arg = output$qc_SNPs[,1], cex.names = 0.8, 
+                    legend.text =  paste0( 'Total number of SNP with rsID  ', n_rsIDs))
+          }
+          
+          return(output)   
+          
+}
+
+#---- calculate prevalence function --------------------------------------------
+# https://github.com/GenomicSEM/GenomicSEM/wiki/2.1-Calculating-Sum-of-Effective-Sample-Size-and-Preparing-GWAS-Summary-Statistics
+
+#a function for doing it rapidly from csv files (generated by me, from info in the papers)
+calculate_prevalence <- function(path_of_csv){
+  #read the file and remove the NA columns and rows
+  preva_csv <- read.csv(file = path_of_csv , header = T, sep = ';')
+  preva_csv <-  preva_csv[, c('cases', 'controls')]
+  preva_csv_noNA <- preva_csv[complete.cases(preva_csv), ]
+  
+  #calculated effective prevalence 
+  #calculate sample prevalence for each cohort
+  preva_csv_noNA$v <-preva_csv_noNA$cases/(preva_csv_noNA$cases+preva_csv_noNA$controls)
+  #calculate cohort specific effective sample size
+  preva_csv_noNA$EffN<-4*preva_csv_noNA$v*(1-preva_csv_noNA$v)*(preva_csv_noNA$cases+preva_csv_noNA$controls)
+  #calculate sum of effective sample size: 
+  eff_sample_size <- round(sum(preva_csv_noNA$EffN), 3)
+  
+  #print number of cases and controls, and effective sample size
+  cat(paste0( 'Number of cases  ' , sum(preva_csv_noNA$cases), '\n', 
+              'Number of contros  ', sum(preva_csv_noNA$controls), '\n', 
+              'Effective sample size  ', round(sum(preva_csv_noNA$EffN)), '\n')
+  )
+  
+  #output the prevalenc when assigned to a variable 
+  invisible(round(eff_sample_size, 3))
 }
 
 
@@ -64,19 +153,21 @@ prepare_munge<- function(sum_stats, rsID, the_effect_allele, the_non_effect_alle
 #----- ms GWAS -----------------------------------------------------------------
 
 head(ms_1)
-dim(ms_1) # 472086     11
 ms <- prepare_munge(ms_1,  
                     rsID = 'rsid' , 
                     the_effect_allele = 'effect_allele' , ##manually checked from the paper seemed to correspond (when it did not correspond the effect was in the opposite direction)   
                     the_non_effect_allele = 'other_allele', 
                     pvalue = 'p',
-                    effect_size = 'OR' , 
-                    to_remove = c('beta', 'se' ),
-                    path = 'outputs/version3/01_output_prepare-sumstats/01_output_prepare-sumstats/Sumstats_ready_for_munge/ms_imsgc-2011.txt'
+                    effect_size = 'beta' , 
+                    the_SE = 'se',
+                    the_chr = 'chrom', 
+                    the_bp = 'pos',
+                    to_remove = c('OR'),
+                    path = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma-asthma-derma/01_qc_sumstats/ready_for_munge/ms_imsgc-2011.txt'
                     )
                     
-head(ms_1)
-dim(ms_1) #472086      8
+head(ms)
+qc_summary_stats(ms, T) #very few SNPs, not
 
 #---- ms_2 GWAS ----------------------------------------------------------------
 
@@ -88,62 +179,50 @@ ms_x<- prepare_munge(ms_2,
                     the_non_effect_allele = 'effect_allele', 
                     pvalue = 'p_value',
                     effect_size = 'beta' , 
-                    path = 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/ms_andlauer-2016.txt'
+                    the_SE = 'standard_error',
+                    the_chr = 'chromosome', 
+                    the_bp = 'base_pair_location',
+                    path = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/ms_andlauer-2016.txt'
                     )
 head(ms_x)
+qc_summary_stats(ms_x, T)
 #---- sle GWAS -----------------------------------------------------------------
 
-head(sle)
-dim(sle) #7915251      11
-sle <- prepare_munge(sle,
-                     rsID = 'rsid', 
-                     the_effect_allele = 'effect_allele', #manually confirmed on the paper 
-                     the_non_effect_allele = 'other_allele', 
-                     pvalue = 'p',
-                     effect_size = 'OR', 
-                     to_remove = c('beta', 'se'),
-                     path = 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/sle_bentham-2015.txt') 
-
-head(sle)
-dim(sle) #7915251       9
-
 # the same sumstats but with betas and SE
-prepare_munge(sle,
+head(sle)
+sle <- prepare_munge(sle,
               rsID = 'rsid', 
               the_effect_allele = 'effect_allele', #manually confirmed on the paper 
               the_non_effect_allele = 'other_allele', 
               pvalue = 'p',
               effect_size = 'beta', 
+              the_SE = 'se',
+              the_chr = 'chrom', 
+              the_bp = 'pos',
               to_remove = c('OR', 'OR_lower', 'OR_upper'),
-              path = 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/sle_beta_bentham-2015.txt') 
+              path =  'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/sle_beta_bentham-2015.txt') 
 
+qc_summary_stats(sle, T)
 
 #---- pbc GWAS -----------------------------------------------------------------
 head(pbc)
 dim(pbc) #1134141      11
 
-pbc_1 <- prepare_munge(pbc,
-                     rsID = 'rsid',
-                     the_effect_allele = 'effect_allele', #manually checked from the paper seemed to correspond (when it did not correspond the effect was in the opposite direction) 
-                     the_non_effect_allele = 'other_allele', 
-                     pvalue = 'p', 
-                     effect_size = 'OR',
-                     to_remove = c('se', 'beta'), 
-                     path = 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/pbc_cordell-2015.txt')
-
-pbc <- fread('Summary_Stats/cordell-2015_pbc_build37_26394269_pbc_efo1001486_1_gwas.sumstats.tsv.gz', data.table = F)
-
-pbc_2 <- prepare_munge(pbc,
+pbc <- prepare_munge(pbc,
                      rsID = 'rsid',
                      the_effect_allele = 'effect_allele', #manually checked from the paper seemed to correspond (when it did not correspond the effect was in the opposite direction) 
                      the_non_effect_allele = 'other_allele', 
                      pvalue = 'p', 
                      effect_size = 'beta',
+                     the_SE = 'se',
+                     the_chr = 'chrom', 
+                     the_bp = 'pos',
                      to_remove = c('OR', 'OR_lower', 'OR_upper'), 
-                     path = 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/pbc_cordell-2015_beta_SE.txt')
+                     path =  'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/pbc_cordell-2015.txt')
 
 head(pbc)
-dim(pbc) #1134141       8
+
+qc_summary_stats(pbc, T) #very small study, not ok 
 
 
 #---- crohn GWAS----------------------------------------------------------------
@@ -174,11 +253,16 @@ crohn <- prepare_munge(crohn,
                        the_non_effect_allele = 'Allele1', 
                        pvalue = 'P.value',
                        effect_size = 'Effect',
+                       the_SE = 'StdErr',
+                       the_chr = 'CHR', 
+                       the_bp = 'BP',
                        to_remove = c( 'Min_single_cohort_pval', 'Pval_GWAS3', 'Pval_IIBDGC', 'Pval_IBDseq', 'HetPVal', 'HetDf', 'HetChiSq', 'HetISq'  ),
-                       path = 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/crohn_delange-2017.txt')
+                       path =  'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/crohn_delange-2017.txt')
+
 head(crohn)
 dim(crohn) #9570787       7
 
+qc_summary_stats(crohn, T)
 
 #---- uc GWAS-------------------------------------------------------------------
 
@@ -194,14 +278,20 @@ uc <- merge.data.table(uc, referenceSNP,
 uc <- uc %>% select(-c(SNP, MarkerName)) %>%rename( 'SNP'=SNP.y)
 #prepare function
 uc <- prepare_munge(uc, 
-                       rsID = 'SNP',
-                       the_effect_allele = 'Allele2', #  manual check seemed to indicate Allele 2 as risk, but not 100% sure
-                       the_non_effect_allele = 'Allele1', 
-                       pvalue = 'P.value',
-                       effect_size = 'Effect',
-                       to_remove = c('Min_single_cohort_pval', 'Pval_GWAS3', 'Pval_IIBDGC', 'Pval_IBDseq', 'HetPVal', 'HetDf', 'HetChiSq', 'HetISq'  ),
-                       path = 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/uc_delange-2017.txt')
+                      rsID = 'SNP',
+                      the_effect_allele = 'Allele2', #  manual check seemed to indicate Allele 2 as risk, but not 100% sure
+                      the_non_effect_allele = 'Allele1', 
+                      pvalue = 'P.value',
+                      effect_size = 'Effect',
+                      the_SE = 'StdErr',
+                      the_chr = 'CHR', 
+                      the_bp = 'BP',
+                      to_remove = c('Min_single_cohort_pval', 'Pval_GWAS3', 'Pval_IIBDGC', 'Pval_IBDseq', 'HetPVal', 'HetDf', 'HetChiSq', 'HetISq'  ),
+                      path =  'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/uc_delange-2017.txt')
+
+
 head(uc)
+qc_summary_stats(uc, T)
 
 
 #---- armfat GWAS --------------------------------------------------------------
@@ -222,65 +312,47 @@ armfat <- prepare_munge(armfat,
               the_non_effect_allele = 'ref',
               pvalue = 'pval_meta', 
               effect_size = 'beta_meta',
-              path = 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/armfat.txt'
+              path =  'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/armfat.txt'
               )
 
-#----calculate sample prevalence of group 1-------------------------------------
-# https://github.com/GenomicSEM/GenomicSEM/wiki/2.1-Calculating-Sum-of-Effective-Sample-Size-and-Preparing-GWAS-Summary-Statistics
+armfat_p <- 492874
+armfat <-  'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/armfat.txt'
+munge(armfat, c('armfat'),   hm3 = 'SNP/w_hm3.snplist', N= c(armfat_p))
 
-#a function for doing it rapidly from csv files (generated by me, from info in the papers)
-calculate_prevalence <- function(path_of_csv){
-  #read the file and remove the NA columns and rows
-  preva_csv <- read.csv(file = path_of_csv , header = T, sep = ';')
-  preva_csv <-  preva_csv[, c('cases', 'controls')]
-  preva_csv_noNA <- preva_csv[complete.cases(preva_csv), ]
-  
-  #calculated effective prevalence 
-  #calculate sample prevalence for each cohort
-  preva_csv_noNA$v <-preva_csv_noNA$cases/(preva_csv_noNA$cases+preva_csv_noNA$controls)
-  #calculate cohort specific effective sample size
-  preva_csv_noNA$EffN<-4*preva_csv_noNA$v*(1-preva_csv_noNA$v)*(preva_csv_noNA$cases+preva_csv_noNA$controls)
-  #calculate sum of effective sample size: 
-  eff_sample_size <- round(sum(preva_csv_noNA$EffN), 3)
-  
-  #print number of cases and controls, and effective sample size
-  cat(paste0( 'Number of cases  ' , sum(preva_csv_noNA$cases), '\n', 
-              'Number of contros  ', sum(preva_csv_noNA$controls), '\n', 
-              'Effective sample size  ', round(sum(preva_csv_noNA$EffN), 3)
-  ))
-  
-  #output the prevalenc when assigned to a variable 
-  invisible(round(eff_sample_size, 3))
-}
+#move output to its folder 
+system('mv armfat.sumstats.gz armfat_munge.log /outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/munge_output ')
+
+#----calculate sample prevalence of group 1-------------------------------------
+
 
 # calculate the prevalence 
 ms_1_p <- 9772 + 16849
-ms_2_p <- calculate_prevalence('Prevalences/CSV_prevalences/ms_andlauer-2016.csv')
-sle_p <- calculate_prevalence('Prevalences/CSV_prevalences/sle_benthman-2015.csv')
-pbc_p <- calculate_prevalence('Prevalences/CSV_prevalences/pbc_cordell-2015.csv')
-crohn_p <- calculate_prevalence('Prevalences/CSV_prevalences/crohn_delange-2017.csv')
-uc_p <- calculate_prevalence('Prevalences/CSV_prevalences/uc_delange-2017.csv')
+ms_2_p <- calculate_prevalence('Prevalences/CSV_prevalences/ms_andlauer-2016.csv') #13297.26
+sle_p <- calculate_prevalence('Prevalences/CSV_prevalences/sle_benthman-2015.csv') #13218.73
+pbc_p <- calculate_prevalence('Prevalences/CSV_prevalences/pbc_cordell-2015.csv') #8380
+crohn_p <- calculate_prevalence('Prevalences/CSV_prevalences/crohn_delange-2017.csv') #3923.98
+uc_p <- calculate_prevalence('Prevalences/CSV_prevalences/uc_delange-2017.csv') #36082.15
+
 
 
 #---- Group 1 munge function  --------------------------------------------------
 
 Prevalences <- c(ms_1_p, ms_2_p, sle_p, pbc_p, crohn_p, uc_p)
-vector_files <- c('outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/ms_imsgc-2011.txt',
-                  'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/ms_andlauer-2016.txt',
-                  'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/sle_bentham-2015.txt',
-                  'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/pbc_cordell-2015.txt',
-                  'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/crohn_delange-2017.txt', 
-                  'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/uc_delange-2017.txt'
+vector_files <- c( 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/ms_imsgc-2011.txt',
+                   'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/ms_andlauer-2016.txt',
+                   'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/sle_beta_bentham-2015.txt',
+                   'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/pbc_cordell-2015.txt',
+                   'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/crohn_delange-2017.txt', 
+                   'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/uc_delange-2017.txt'
                   )
 
 munge(vector_files, 
-      trait.names = c('ms_1', 'ms_2' , 'sle', 'pbc', 'crohn', 'uc', 'armfat'), 
+      trait.names = c('ms_imgsc-2011', 'ms_andlauer' , 'sle_bentham-2015', 'pbc_cordell-2015', 'crohn_delange-2017', 'uc_delange-2017'), 
       hm3 = 'SNP/w_hm3.snplist', 
       N = Prevalences)
 
-armfat_p <- 492874
-armfat <- 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/armfat.txt'
-munge(armfat, c('armfat'),   hm3 = 'SNP/w_hm3.snplist', N= c(armfat_p))
+#move output into its folder
+system('mv ms_imgsc-2011.sumstats.gz ms_andlauer.sumstats.gz  sle_bentham-2015.sumstats.gz pbc_cordell-2015.sumstats.gz crohn_delange-2017.sumstats.gz uc_delange-2017.sumstats.gz ms_imgsc-2011_ms* outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/munge_output')
 
 #---- END of Group1 ------------------------------------------------------------
 
@@ -296,7 +368,7 @@ psc <- fread('Summary_Stats/ji-2016_psc_build37_ipscsg2016.result.combined.full.
 
 head(asthma_demeanis)
 
-dim(asthma_demeanis) #2001280      23
+dim(asthma_demeanis) #2 001 280      23
 asthma_demeanis <- rename(asthma_demeanis, SE= 'European_ancestry_se_fix')
 asthma_demeanis <- prepare_munge(asthma_demeanis,
               rsID = 'rsid',
@@ -304,30 +376,79 @@ asthma_demeanis <- prepare_munge(asthma_demeanis,
               the_non_effect_allele = 'reference_allele',
               pvalue = 'European_ancestry_pval_fix',
               effect_size = 'European_ancestry_beta_fix',
+              the_chr = 'chr',
+              the_bp = 'position', 
+              the_SE = 'European_ancestry_se_fix',
               to_remove = c("Multiancestry_beta_fix","Multiancestry_se_fix","Multiancestry_pval_fix" ,"Multiancestry_beta_rand" ,
                              "Multiancestry_se_rand","Multiancestry_pval_rand","Multiancestry_HetQtest","Multiancestry_df_HetQtest",
                              "Multiancestry_pval_HetQtest","European_ancestry_beta_rand","European_ancestry_se_rand",
                              "European_ancestry_pval_rand","European_ancestry_HetQtest","European_ancestry_df_HetQtest",
                              "European_ancestry_pval_HetQtest"),
-              path = 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/asthma_demeanis-2018.txt')
+              path =  'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/asthma_demeanis-2018.txt')
 
+qc_summary_stats(asthma_demeanis, T)
 head(asthma_demeanis)
 dim(asthma_demeanis) #2 001 280       8
 
 #---- asthma_han GWAS -----------------------------------------------------------
 head(asthma_han)
 dim(asthma_han) #9 572 556      12
-
-asthma_han <- prepare_munge(asthma_han, 
+    
+ prepare_munge(asthma_han, 
                             rsID = 'SNP',
                             the_effect_allele = 'EA', #manually checked from the paper seemed to correspond (when it did not correspond the effect was in the opposite direction
                             the_non_effect_allele = 'NEA',
                             pvalue = 'P',
                             effect_size = 'OR',
-                            path = 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/asthma_ban-2020.txt'
+                            the_chr = 'CHR',
+                            the_bp = 'BP',
+                            path =  'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/asthma_ban-2020.txt'
                             )
 head(asthma_han)
 dim(asthma_han) #9572556      12
+
+
+#add SE of logistic beta to Han-2020 for GWAS estimation
+
+asthma_han$SE <- (log(asthma_han$OR_95U) - log(asthma_han$OR) )/qnorm(0.975)
+
+sum(is.na(asthma_han$SE))
+sum(asthma_han$SE==0)
+summary(asthma_han$SE) #the calculated standard errors stay in the range between 0.005788 and 0.050769 , and no there are no NA or 0 values
+
+summary(log(asthma_han$OR)/asthma_han$SE) #also the ranges of the z scores are acceptable 
+
+
+
+#function to caluclate p values and ocmpare with the reported ones
+is_se_logB <- function(BETA,SE, PVALUE) {
+  p_calculated <- 2*pnorm((abs(BETA) / SE),lower.tail = F)
+  p_reported <- PVALUE
+  data.frame(p_calculated, p_reported)
+}
+
+#check if the pvalues correspond with the new calcualted SE
+a <- runif(1, min=1, max=nrow(asthma_han)) #take a randow selection of the dataset and compare the p-values
+
+is_se_logB(log(asthma_han$OR), asthma_han$SE, asthma_han$P) [a:(a+20), ]
+
+#save the asthma_han dataset with Standar errors
+
+asthma_han_SE <- prepare_munge(asthma_han, 
+                            rsID = 'SNP',
+                            the_effect_allele = 'EA', #manually checked from the paper seemed to correspond (when it did not correspond the effect was in the opposite direction
+                            the_non_effect_allele = 'NEA',
+                            pvalue = 'P',
+                            effect_size = 'OR',
+                            the_chr = 'CHR',
+                            the_SE = 'SE',
+                            the_bp = 'BP',
+                            path =  'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/asthma_han-2020_SE.txt'
+)
+
+head(asthma_han_SE)
+qc_summary_stats(asthma_han_SE, T)
+
 
 #-----celiac GWAS---------------------------------------------------------------
 
@@ -339,10 +460,15 @@ celiac <- prepare_munge(celiac,
                           the_effect_allele = 'effect_allele', #manually checked from the paper seemed to correspond
                           the_non_effect_allele = 'other_allele',
                           pvalue = 'p',
+                          the_SE = 'se', 
+                          the_chr = 'chrom', 
+                          the_bp = 'pos',
                           effect_size = 'beta', 
                           to_remove = c('OR','OR_lower', 'OR_upper'),
-                          path = 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/celiac_dubois-2020.txt'
+                          path =  'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/celiac_dubois-2020.txt'
                           )
+
+qc_summary_stats(celiac, T) #very small study, not
 head(celiac)
 dim(celiac) #523398      8
 
@@ -353,10 +479,21 @@ dim(allergies) #8307659      13
 
 #renmae the SNP column in order not to have the same name with the SNP. 
 colnames(allergies)[1] <- 'position'
-colnames(allergies)[10] <- 'rsID'
 
-fwrite(allergies, 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/allergies_ferreira-2017.txt',
-       col.names = T, row.names = F, sep = '\t', quote = F)
+
+allergies <- prepare_munge(allergies,
+          rsID = 'RS_ID', 
+          the_effect_allele = 'EFFECT_ALLELE', #manually checked from the paper seemed to correspond
+          the_non_effect_allele = 'OTHER_ALLELE',
+          pvalue = 'PVALUE',
+          the_SE = 'SE', 
+          the_chr = 'CHR', 
+          the_bp = 'BP',
+          effect_size = 'BETA', 
+          path = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/allergies_ferreira-2017.txt'
+) 
+
+qc_summary_stats(allergies, T)
 
 
 #----- psc GWAS ----------------------------------------------------------------
@@ -376,31 +513,34 @@ psc_ok <- data.frame( 'SNP' = psc$SNP ,
                       'CHR'= psc$`#chr`, 
                         'BP'=psc$pos)
 
-fwrite(psc_ok, file='outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/psc_ji-2016.txt',
+fwrite(psc_ok, file= 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/psc_ji-2016.txt',
        col.names = T, row.names = F, sep = '\t', quote = F)
 
+qc_summary_stats(psc_ok, T)
 
 #----calculate sample prevalence of group 2-------------------------------------
 
-asthma_deme_1_p <- calculate_prevalence('Prevalences/CSV_prevalences/asthma_demeanis-2018.csv') #only the Europeans
+asthma_deme_1_p <- calculate_prevalence('Prevalences/CSV_prevalences/asthma_demeanis-2018.csv') #only the Europeans 54627.63
 asthma_han_2_p <- 64538 + 239321 
-celiac_p <- calculate_prevalence('Prevalences/CSV_prevalences/celiac_dubois-2010.csv')
-allergies_p <- calculate_prevalence('Prevalences/CSV_prevalences/allergies_ferreira-2017.csv')
+celiac_p <- calculate_prevalence('Prevalences/CSV_prevalences/celiac_dubois-2010.csv') #12656.83
+allergies_p <- calculate_prevalence('Prevalences/CSV_prevalences/allergies_ferreira-2017.csv') # 206237.7
 psc_p <- 2871 + 12019
 
 #---- Group2 munge function ----------------------------------------------------
 
 Prevalences_group2 <- c(asthma_deme_1_p, asthma_han_2_p, celiac_p, allergies_p, psc_p )
-vector_files <- c('outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/asthma_demeanis-2018.txt',
-                  'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/asthma_ban-2020.txt',
-                  'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/celiac_dubois-2020.txt',
-                  'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/allergies_ferreira-2017.txt', 
-                  'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/psc_ji-2016.txt')
+vector_files <- c( 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/asthma_demeanis-2018.txt',
+                   'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/asthma_ban-2020.txt',
+                   'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/celiac_dubois-2020.txt',
+                   'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/allergies_ferreira-2017.txt', 
+                   'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/psc_ji-2016.txt')
 
 munge(vector_files, 
-      trait.names = c('asthma_1', 'asthma_2', 'celiac', 'allergies', 'psc'), 
+      trait.names = c('asthma_demeanis-2018', 'asthma_han-2020', 'celiac_dubois-2010', 'allergies_ferreira-2017', 'psc_ji-2016'), 
       hm3 = 'SNP/w_hm3.snplist', 
       N = Prevalences_group2)
+
+system('mv asthma_demeanis-2018.sumstats.gz asthma_han-2020.sumstats.gz celiac_dubois-2010.sumstats.gz allergies_ferreira-2017.sumstats.gz psc_ji-2016.sumstats.gz asthma_deme* outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/munge_output')
 
 #---- END of Group2 ------------------------------------------------------------
 
@@ -409,10 +549,7 @@ munge(vector_files,
 
 alzh_kunkle <- fread('Summary_Stats/kunkle-2019_alzheimer_build37_Kunkle_etal_Stage1_results.txt', data.table = F)
 jia <- fread('Summary_Stats/lopezisac-2020_jia_build37_GCST90010715_buildGRCh37.tsv', data.table = F)
-ra <- fread('Summary_Stats/okada-2014_RA_build37_RA_GWASmeta_TransEthnic_v2.txt.gz.gz', data.table = F)
 thyro <- fread('Summary_Stats/saevarsdottir_auto-thyroid_build37_AITD2020', data.table = F)
-alzh_wightman <- fread('Summary_Stats/wightman-2021_alzheimer_build37_PGCALZ2sumstatsExcluding23andMe.txt.gz', data.table = F)
-ssc_loper <- fread('Summary_Stats/lopez-2019_ssc_build37_Lopez-Isac_prePMID_META_GWAS_SSc.meta.txt')
 
 #---- alzheimer_kunkle GWAS-----------------------------------------------------
 
@@ -424,11 +561,14 @@ alzh_kunkle <- prepare_munge(alzh_kunkle,
                                the_effect_allele = 'Effect_allele',  #checked in the paper and also in the readme file
                                the_non_effect_allele = 'Non_Effect_allele', 
                                effect_size = 'Beta', 
+                                the_SE = 'SE', 
+                                the_chr = 'Chromosome', 
+                                the_bp = 'Position',
                                pvalue = 'Pvalue',
-                               path = 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/alzheimer_kunkle-2019.txt')
+                               path =  'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/alzheimer_kunkle-2019.txt')
 head(alzh_kunkle)
 dim(alzh_kunkle) #11480632        8
-
+qc_summary_stats(alzh_kunkle, T)
 #---- jia GWAS -----------------------------------------------------------------
 
 head(jia)
@@ -436,50 +576,28 @@ dim(jia) #7461261      13
 #no information about the effect or non-effect allele
 #so I checked some rsID as they were reported risk/nonrisk in the paper and on GWAS catalog
 
-jia[ grep('rs6679677', jia$variant_id),] # A listed as risk allele in GWAS catalog and in the paper
-jia[ grep('rs7731626', jia$variant_id),] # G listed as risk allele in GWAS catalog and in the paper but with opposite effect
-#allela A interpreted as the effect allele I think
-
-#rename SE column
-colnames(jia)[13] <- 'SE'
-jia <- select(jia, -c(alternate_ids))
-
-      prepare_munge(jia, 
-                       rsID = 'variant_id',
-                       the_effect_allele = 'alleleB', #checked on the paper (when it did not correspond the effect was in the opposite direction)
-                       the_non_effect_allele = 'alleleA',
-                       pvalue = 'p_value', 
-                       effect_size = 'all_OR' , 
-                       path= 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/jia_lopezisac-2020.txt')
+jia[ grep('rs6679677', jia$variant_id),] # A listed as risk allele in GWAS catalog and in the paper with OR 1.36, so alleleB is the effect
+jia[ grep('rs7731626', jia$variant_id),] # G listed as risk allele in GWAS catalog and in the paper but with opposite effect (in the paper 1.22)
+#allela B interpreted as the effect allele
 
 
-           prepare_munge(jia, 
-                           rsID = 'variant_id',
-                           the_effect_allele = 'alleleB', #checked on the paper (when it did not correspond the effect was in the opposite direction)
-                           the_non_effect_allele = 'alleleA',
-                           pvalue = 'p_value', 
-                           effect_size = 'frequentist_add_beta_1' ,
-                            to_remove = c('all_maf'  , 'all_OR', 'all_OR_lower', 'all_OR_upper'),
-                           path= 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/jia_beta_lopezisac-2020.txt')
+
+jia <- prepare_munge(jia, 
+                    rsID = 'variant_id',
+                    the_effect_allele = 'alleleB', #checked on the paper (when it did not correspond the effect was in the opposite direction)
+                    the_non_effect_allele = 'alleleA',
+                    pvalue = 'p_value', 
+                    effect_size = 'frequentist_add_beta_1' ,
+                    the_SE = 'frequentist_add_se_1', 
+                    the_chr = 'chromosome', 
+                    the_bp = 'position', 
+                    to_remove = c('all_maf'  , 'all_OR', 'all_OR_lower', 'all_OR_upper'),
+                    path=  'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/jia_beta_lopezisac-2020.txt')
 
 
 dim(jia) #7461261      13
 
-#---- ra GWAS ------------------------------------------------------------------
-
-head(ra)
-dim(ra) #9739303       8
-
-ra <- prepare_munge(ra,
-                      rsID = 'SNPID', 
-                      the_effect_allele = 'A1', #checked on the paper (when it did not correspond the effect was in the opposite direction)
-                      the_non_effect_allele = 'A2' ,
-                      effect_size = 'OR(A1)',
-                      pvalue = 'P-val', 
-                      path= 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/ra_okada-2014.txt',
-                      )
-head(ra)
-dim(ra) #9739303       8
+qc_summary_stats(jia, T)
 
 #---- thyro GWAS ---------------------------------------------------------------
 
@@ -490,62 +608,36 @@ thyro_ok <- data.frame('SNP'= thyro$rsID,
                             'A2'= thyro$A0, 
                             'P' = thyro$P, 
                             'effect' = thyro$`OR-A1`, 
-                            'pos' = thyro$Pos)
+                            'BP' = thyro$Pos, 
+                              'CHR'=thyro$Chr )
 
 #the file is big, remove the rows without rsID
 thyro_ok <- thyro_ok[(!is.na(thyro_ok$SNP)),]
 
-fwrite(thyro_ok, file='outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/thyro_saevarsdottir-2020.txt',
+fwrite(thyro_ok, file= 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/thyro_saevarsdottir-2020.txt',
        col.names = T, row.names = F, sep = '\t', quote = F)
 
-#---- alzheimer wightman GWAS --------------------------------------------------
 
-head(alzh_wightman)
-dim(alzh_wightman)
-
-#add rsID
-
-##load the file with the reference SNP and prepare it for merging
-#referenceSNP <- fread('SNP/reference.1000G.maf.0.005.txt.gz')
-#referenceSNP <- referenceSNP %>% unite(CHR, BP, sep= ':', na.rm = F, remove = T, col = 'chrPosition' ) %>% select(-c(MAF, A1,A2))
-
-alzh_wightman <- unite(alzh_wightman, chr, PosGRCh37, sep = ':', col = 'chrPosition', remove = T, na.rm = F)
-alzh_wightman <- merge.data.table(alzh_wightman, referenceSNP,
-                                  by.x = 'chrPosition', by.y = 'chrPosition', 
-                                  all.x = T, all.y = F, sort = F)
-
-length(grep('rs',alzh_wightman$SNP)) #9103904 SNPs with an rsID now
-
-alzh_wightman <- prepare_munge(alzh_wightman, 
-                                 rsID = 'SNP', 
-                                 the_effect_allele = 'testedAllele', #still I am not convinced that this is the effect
-                                 the_non_effect_allele = 'otherAllele', 
-                                 pvalue = 'p',
-                                 effect_size = 'z',
-                                 path = 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/alzh_wightman-2021.txt')
-head(alzh_wightman)
 
 #----calculate sample prevalence of group 3-------------------------------------
 
-alzh_kunkle_1_p <- calculate_prevalence('Prevalences/CSV_prevalences/ad_kunkle-2019.csv')
+alzh_kunkle_1_p <- calculate_prevalence('Prevalences/CSV_prevalences/ad_kunkle-2019.csv') #51911
 jia_p <- 3305 + 9196 
-ra_p <- calculate_prevalence('Prevalences/CSV_prevalences/ra_okada-2014.csv')
-thyro_p <- calculate_prevalence('Prevalences/CSV_prevalences/atd_saevrasdpttir-2017.csv')
-alzh_wightman_2_p <- calculate_prevalence('Prevalences/CSV_prevalences/ad_wightmn-2019.csv')
+thyro_p <- calculate_prevalence('Prevalences/CSV_prevalences/atd_saevrasdpttir-2017.csv') #114296.2
 
-Prevalences_group3 <- c(alzh_kunkle_1_p, jia_p, ra_p, thyro_p, alzh_wightman_2_p)
+Prevalences_group3 <- c(alzh_kunkle_1_p, jia_p, thyro_p)
 #---- Group 3 munge ------------------------------------------------------------
 
-vector_files <- c('outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/alzheimer_kunkle-2019.txt',
-                  'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/jia_lopezisac-2020.txt',
-                  'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/ra_okada-2014.txt',
-                  'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/thyro_saevarsdottir-2020.txt', 
-                  'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/alzh_wightman-2021.txt')
+vector_files <- c( 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/alzheimer_kunkle-2019.txt',
+                   'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/jia_beta_lopezisac-2020.txt',
+                   'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/thyro_saevarsdottir-2020.txt')
 
 munge(vector_files, 
-      trait.names = c('alzheimer_1', 'jia', 'ra', 'thyro', 'alzheimer_2'), 
+      trait.names = c('alzheimer_kunkle-2019', 'jia_lopezisac-2020', 'thyro_saevarsdottir-2020'), 
       hm3 = 'SNP/w_hm3.snplist', 
       N = Prevalences_group3)
+
+system('mv alzheimer_kunkle-2019* jia_lopezisac-2020* thyro_saevarsdottir-2020*  outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/munge_output')
 
 #---END of group 3--------------------------------------------------------------
 
@@ -567,22 +659,23 @@ t1d_ok <-  data.frame('rsID' = t1d$variant_id,
                   'A1' = t1d$effect_allele, 
                   'A2' = t1d$other_allele, 
                   'p' = as.numeric(t1d$p_value),
-                  'chr' = t1d$chromosome,
-                  'position' = t1d$base_pair_location, 
+                  'CHR' = t1d$chromosome,
+                  'BP' = t1d$base_pair_location, 
                   'effect_allele_frequency'= t1d$effect_allele_frequency,
                   'SE' = t1d$standard_error, 
-                  'sample_size' = t1d$sample_size
-)
+                  'sample_size' = t1d$sample_size)
  
 head(t1d_ok)
 sum(t1d_ok$pvalue <0)
 
+qc_summary_stats(t1d_ok, T)
 
-fwrite(t1d_ok, 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/t1d_chiou-2021.txt',
+
+fwrite(t1d_ok,  'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/t1d_chiou-2021.txt',
        sep = '\t', col.names = T, row.names = F, quote = F)
 
 trait.names <- c('t1d_chiou-2021')
-traits <- c('outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/t1d_chiou-2021.txt') 
+traits <- c( 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/t1d_chiou-2021.txt') 
 prevalence_t1d <- calculate_prevalence('Prevalences/CSV_prevalences/t1d_chiou-2021.csv')
 munge(files = traits, hm3 = 'SNP/w_hm3.snplist', N = prevalence_t1d, trait.names = trait.names)
 
@@ -590,16 +683,19 @@ munge(files = traits, hm3 = 'SNP/w_hm3.snplist', N = prevalence_t1d, trait.names
 #----derma GWAS-----------------------------------------------------------------
 derma <- fread('Summary_Stats/sliz-2021_atopic-dermatitis_build38_GCST90027161_buildGRCh38.tsv.gz', data.table = F)
 head(derma) 
-derma <-  rename(derma, SE='standard_error')
+
 prepare_munge(derma, rsID = 'variant_id',
               effect_size = 'beta',
               the_effect_allele = 'effect_allele', 
-              the_non_effect_allele = 'other_allele', 
+              the_non_effect_allele = 'other_allele',
+              the_SE = 'standard_error', 
+              the_chr = 'chromosome', 
+              the_bp = 'base_pair_location', 
               pvalue = 'p_value', 
-              path = 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/derma_sliz-2021.txt')
+              path =  'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/derma_sliz-2021.txt')
 
 trait.names <- c('derma_sliz-2021')
-traits <- c('outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/derma_sliz-2021.txt') 
+traits <- c( 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/derma_sliz-2021.txt') 
 prevalence_derma <- calculate_prevalence('Prevalences/CSV_prevalences/derma_sliz-2021.csv')
 munge(files = traits, hm3 = 'SNP/w_hm3.snplist', N = prevalence_derma, trait.names = trait.names)
 
@@ -633,11 +729,11 @@ prepare_munge(ra_ha_rsID,
               effect_size = 'beta',
               pvalue = 'p_value',
               rsID = 'SNP',
-              path= 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/ra_ha_rsID.txt')
+              path=  'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/ra_ha_rsID.txt')
 
 
 trait.names <- c('ra_ha-2021')
-traits <- c('outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/ra_ha_rsID.txt') 
+traits <- c( 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/ra_ha_rsID.txt') 
 prevalence_ra_ha <- 84687
 munge(files = traits, hm3 = 'SNP/w_hm3.snplist', N = prevalence_ra_ha, trait.names = trait.names)
 
@@ -651,11 +747,11 @@ prepare_munge(psoriasis,
               effect_size = 'beta',
               pvalue = 'p_value',
               rsID = 'variant_id',
-              path = 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/psoriasis_stuart-2022.txt'
+              path =  'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/psoriasis_stuart-2022.txt'
 )
 
 trait.names <- c('psoriasis_sliz-2021')
-traits <- c('outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/psoriasis_stuart-2022.txt') 
+traits <- c( 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/psoriasis_stuart-2022.txt') 
 prevalence_psoriasis <- 43401
 munge(files = traits, hm3 = 'SNP/w_hm3.snplist', N = prevalence_psoriasis, trait.names = trait.names)
 
@@ -710,11 +806,11 @@ prepare_munge(vitiligo,
               the_non_effect_allele = 'A2', 
               pvalue = 'P', 
               effect_size = 'ORX', 
-              path = 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/vitiligo_jin-2016.txt' )
+              path =  'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/vitiligo_jin-2016.txt' )
 
 vitiligo_prev<- calculate_prevalence('Prevalences/CSV_prevalences/vitiligo_jin-2016.csv')
 
-munge('outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/vitiligo_jin-2016.txt',
+munge( 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/vitiligo_jin-2016.txt',
       hm3 ='SNP/w_hm3.snplist', 
       trait.names = 'vitiligo_jin-2016', 
       N =  vitiligo_prev)
@@ -747,47 +843,18 @@ prepare_munge(okada_euro,
               the_non_effect_allele = 'A2', 
               effect_size = 'Beta_allele_1', 
               pvalue = 'P_of_allele_1',
-              path = 'outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/ra_eu_okada-2014.txt')
+              path =  'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/ra_eu_okada-2014.txt')
 
 
 prevalence_ra_okada_eu <- calculate_prevalence('Prevalences/CSV_prevalences/ra_okada-2014_only-eu.csv')
 
-munge('outputs/version3/01_output_prepare-sumstats/Sumstats_ready_for_munge/ra_eu_okada-2014.txt', 
+munge( 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/ra_eu_okada-2014.txt', 
       hm3 ='SNP/w_hm3.snplist', 
       trait.names = 'ra_okada-2014_only-eu', 
       N =  prevalence_ra_okada_eu)
 
 #----- systemic sclerosis GWAS--------------------------------------------------
 
-# ssc <- fread('Summary_Stats/lopez-2019_ssc_build37_Lopez-Isac_prePMID_META_GWAS_SSc.meta.txt', data.table = F)
-# referenceSNP <- fread('SNP/reference.1000G.maf.0.005.txt.gz')
-# referenceSNP <- referenceSNP %>% select(-c(MAF, BP, CHR))
-# referenceSNP<- rename(referenceSNP, 'refA1'=A1, 'refA2'=A2)
-# 
-# 
-# head(ssc)
-# dim(referenceSNP)
-# 
-# ssc <- merge.data.table(ssc, referenceSNP, 
-#                           by.x = 'SNP', by.y = 'SNP', 
-#                           all.x = F, all.y = F, sort = T)
-# dim(ssc)
-# 
-# assign_a2 <- function(summary_stats){
-#   for(i in (nrow(summary_stats))){
-#     
-#     if(summary_stats[i,]$A1 == summary_stats[i,]$refA1){summary_stats[i,]$A2 <- summary_stats[i, ]$refA2 }  
-#     if(summary_stats[i,]$A1 == summary_stats[i,]$refA2) {summary_stats[i,]$A2 <- summary_stats[i, ]$refA1} 
-#     
-#     
-#   } 
-#   return(summary_stats)
-# }
-# 
-#   
-# ssc_A2 <- assign_a2(ssc) #chek in the paper, use P and OR columns. 
-# 
-# #check in A1 is the same as before the process 
 
 
 
