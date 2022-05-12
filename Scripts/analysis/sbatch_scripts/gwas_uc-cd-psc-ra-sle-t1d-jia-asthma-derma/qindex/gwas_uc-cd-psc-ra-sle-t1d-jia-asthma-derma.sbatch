@@ -1,8 +1,8 @@
 #!/bin/bash
 
-#SBATCH --job-name=gwas_3f
+#SBATCH --job-name=qindex_3f
 #SBATCH --partition=cpuq
-#SBATCH --array=1-450
+#SBATCH --array=1-335
 #SBATCH --cpus-per-task=1
 #SBATCH --time=24:00:00
 #SBATCH --output=gwas_10-05-2022-%A-%a.log
@@ -25,5 +25,5 @@ echo '----------------------------'
 
 module load R/4.1.0
 echo "My SLURM_ARRAY_TASK_ID: " $SLURM_ARRAY_TASK_ID 
-Rscript gwas_two_factor_1.R  $SLURM_ARRAY_TASK_ID
+Rscript qindex_uc_cd_psc_ra_sle_t1d_jia_asthma_derma.script.R  $SLURM_ARRAY_TASK_ID
 
