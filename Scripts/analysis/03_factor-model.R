@@ -20,7 +20,7 @@ library(semPlot)
 library(lavaan)
 
 
-output2 <- readRDS('outputs/version3/02_output_ldsc-all-traits/ldsc_output_02')
+output2 <- readRDS('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/02_ldsc_alltraits/ldsc_output_all-traits.RDS')
 rownames(output2$S_Stand) <- colnames(output2$S_Stand)
 
 
@@ -35,7 +35,7 @@ rownames(output2$S_Stand) <- colnames(output2$S_Stand)
 #ok very bello
 aid_model <-'F1 =~ NA*crohn + uc  + psc  
 F2 =~ NA*jia + sle + ra_eu + t1d 
-F3 =~ NA*asthma_2 + derma 
+F3 =~ NA*asthma + derma 
 
 F1~~F2
 F1~~F3
@@ -64,6 +64,8 @@ aid_factor <-usermodel(output2, estimation = "DWLS", model = aid_model, CFIcalc 
 
 #print the two factor model results
 aid_factor
+
+saveRDS(aid_factor, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/03_factor-model/model_uc-cd-psc-ra-sle-t1d-jia-asthma-derma.RDS')
 
 
 #----Nicola's function for plotting SEM-----------------------------------------
@@ -111,7 +113,7 @@ semPlotModel_GSEM=function(gsem.object=GWISoutput , est.label="STD_All"){
   
 }
 
-pdf('outputs/version3/03_output_prepare-sumstats/three_factor_model.pdf', height = 7, width = 14)
+pdf('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/03_factor-model/path_uc-cd-psc-ra-sle-t1d-jia-asthma-derm_factor.pdf', height = 7, width = 14)
 semPaths(semPlotModel_GSEM(aid_factor) , what = 'est' , residuals = T, edge.color = 'black',
          sizeMan = 7, sizeLat = 7, label.cex=1, edge.label.cex = 0.8)
 dev.off()
