@@ -1,6 +1,6 @@
 #  LD score regression on auotoimmunity GWAS
-## version3  will be a replication of the version 2 that might be wrong in the 
-## allele orientation 
+## this script is for running ldsc on all the traits prepared in script 01_prepare-sumstats.R
+## 
 
 #The tutorial and info on the package and how to run the code are here:  
 # https://github.com/GenomicSEM/GenomicSEM/wiki/3.-Models-without-Individual-SNP-effects

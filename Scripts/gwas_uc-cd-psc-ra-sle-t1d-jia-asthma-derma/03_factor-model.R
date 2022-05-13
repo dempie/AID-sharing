@@ -1,11 +1,10 @@
 #  LD score regression on auotoimmunity GWAS
-## version3  will be a replication of the version 2 that might be wrong in the 
-## allele orientation 
+##  this script is for testing the factor models on the genetic correlation matrix obtained in 02_ldsc-alltraits.R
 
 #The tutorial and info on the package and how to run the code are here:  
 # https://github.com/GenomicSEM/GenomicSEM/wiki/3.-Models-without-Individual-SNP-effects
 
-# in this script I do the LD score regreeion of the summary stats munged in V3_step1 
+# in this script I do the LD score regression of the summary stats munged in V3_step1 
 # with only the studies we want to put into the factor model
 
 #--- Load the libraries--------------------------------------
