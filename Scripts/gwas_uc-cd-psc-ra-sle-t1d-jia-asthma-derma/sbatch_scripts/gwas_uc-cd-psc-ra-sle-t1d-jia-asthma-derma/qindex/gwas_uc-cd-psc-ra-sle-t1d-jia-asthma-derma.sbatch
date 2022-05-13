@@ -5,7 +5,7 @@
 #SBATCH --array=1-335
 #SBATCH --cpus-per-task=1
 #SBATCH --time=24:00:00
-#SBATCH --output=gwas_10-05-2022-%A-%a.log
+#SBATCH --output=qindex_gwas_uc_cd_psc_ra_sle_t1d_jia_asthma_derma-%A-%a.log
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=pietro.demela@fht.org
 #SBATCH --mem=64000

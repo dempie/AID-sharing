@@ -1,7 +1,7 @@
 Subfolders of Scripts/
 
   a) test/ contains script with tests and script where I was learning how to use the package
-  b) GWAS_info/ contains a script which outputs a table with info on the GWAS used here
+  b) summary_stats_info/ contains a script which outputs a table with info on the GWAS used here
   c) functions/ contains scripts to store my functions
   
   d) gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/ in this folder the code for running and assemblying this GWAS, this is the important one!!!

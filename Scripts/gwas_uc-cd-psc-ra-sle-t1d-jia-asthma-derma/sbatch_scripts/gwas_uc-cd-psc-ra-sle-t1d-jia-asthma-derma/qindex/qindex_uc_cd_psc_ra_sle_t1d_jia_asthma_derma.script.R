@@ -60,12 +60,12 @@ a>0.001'
 chunk_to_use <- split_sum_stats(aid_sumstats, 10000, counter )
 
 output <- userGWAS(covstruc = ldsc_model, 
-         SNPs = aid_sumstats, 
+         SNPs = chunk_to_use, 
          model = aid_model, 
          sub = c('F1~~F2') )
 
 
-saveRDS(output, file.path('/project/aid_sharing/AID_sharing/outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_gwas_ouput/qindex/', paste0(counter, '_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma.RDS')))
+saveRDS(output, file.path('/project/aid_sharing/AID_sharing/outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_gwas_ouput/qindex/', paste0(counter, '_qindex_uc-cd-psc-ra-sle-t1d-jia-asthma-derma.RDS')))
 
 
 
