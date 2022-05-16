@@ -843,13 +843,36 @@ munge( 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_
 
 system('mv ra_oka* outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/munge_output')
 
-#----- systemic sclerosis GWAS--------------------------------------------------
+#-------------------------------------------------------------------------------
 
+#liftover of T1D to build37
 
+referenceSNP <- fread('SNP/reference.1000G.maf.0.005.txt.gz')
+referenceSNP <- referenceSNP  %>% select(-c(MAF, A1,A2)) %>% rename(BP_37 = BP, CHR_37 = CHR)
 
+t1d <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/t1d_chiou-2021.txt', data.table = F, nThread = 32 )
+head(t1d)
 
+t1d_37 <- merge.data.table(t1d, referenceSNP, 
+                          by.x = 'rsID', by.y = 'SNP', 
+                          all.x = F, all.y = F, sort = F)
 
+sum(t1d_37$BP!=t1d_37$BP_37) # 9175513 
 
+#save
+
+fwrite(t1d_37, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/t1d_chiou-2021_build37.txt', 
+       col.names = T, row.names = F, sep = '\t', quote = F)
+
+#liftover of atopic derma to build37
+
+derma <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/derma_sliz-2021.txt' , data.table = F, nThread = 32) 
+
+derma_37 <-  merge.data.table(derma, referenceSNP, 
+                              by.x = 'SNP', by.y = 'SNP', 
+                              all.x = F, all.y = F, sort = F)
+fwrite(derma_37, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/derma_sliz-2021_build37.txt', 
+       col.names = T, row.names = F, sep = '\t', quote = F)
 
 
 
