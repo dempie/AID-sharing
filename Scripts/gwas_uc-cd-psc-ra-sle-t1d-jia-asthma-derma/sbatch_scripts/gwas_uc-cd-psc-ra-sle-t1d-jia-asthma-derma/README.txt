@@ -28,4 +28,4 @@ The reason for the computationally singular error we think is due for issues est
 
 I just ignore the subchunks that give an error after the subsplitting of the chunks 12,25,87,131,194,203.
 
-The reason for the error 'Error in unserialize(socklist[[n]]) : error reading from connection. for this just sent the job again' is because the hpc, so it's sufficient to re-run again the chunks
+The reason for the error 'Error in unserialize(socklist[[n]]) : error reading from connection' for this just sent the job again is because the hpc, so it's sufficient to re-run again the chunks
