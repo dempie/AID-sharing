@@ -7,7 +7,7 @@
 
 library(data.table)
 library(qqman)
-
+library(dplyr)
 
 #----- fucntion for loading chunks and assembly---------------------------------
 
@@ -156,7 +156,7 @@ append_chunk <- function(list_complete, n_factors ){
 #------ Assemble, what chunks are missing ---------------------------------------
 
 #there are 335 chunks in the folder, I decided this number in the job array
-chunks_1_335<- assemble_3f(1:335, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_gwas_ouput/chunks/', '_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma.RDS' , 3)
+chunks_1_335<- assemble_f(1:335, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_gwas_ouput/chunks/', '_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma.RDS' , 3)
 
 # 329 chunks were found!
 # 6 chunks were NOT found!
@@ -184,21 +184,21 @@ chunk_131 <- assemble_f(1:10, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derm
 # 1 chunks were NOT found!
 # The missing chunks are the 7
 
-chunk_194 <-  assemble_3f(194, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_gwas_ouput/chunks/chunk_194/', '_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma.RDS', 3) 
-chunk_203 <-  assemble_3f(1:10, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_gwas_ouput/chunks/chunk_203/chunk_203_1-10/203_', '_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma.RDS', 3) 
+chunk_194 <-  assemble_f(194, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_gwas_ouput/chunks/chunk_194/', '_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma.RDS', 3) 
+chunk_203 <-  assemble_f(1:10, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_gwas_ouput/chunks/chunk_203/chunk_203_1-10/203_', '_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma.RDS', 3) 
 
 
 #put all the chunks together and save the output 
-all_chunks <- append_chunk(list(chunks_1_335[1:3], chunk_12[1:3], chunk_25[1:3], chunk_87[1:3], chunk_131[1:3], chunk_194[1:3], chunk_203[1:3]))
+all_chunks <- append_chunk(list(chunks_1_335, chunk_12, chunk_25, chunk_87, chunk_131, chunk_194, chunk_203), 3) #The number of unique SNPs in F123 is 3343158
 
 saveRDS(all_chunks, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_gwas_ouput/factors_summary_stats.RDS')
 
-#all_chunks <- readRDS( 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_gwas_ouput/factors_summary_stats.RDS')
+all_chunks <- readRDS( 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_gwas_ouput/factors_summary_stats.RDS')
 
 #-------- plot the results -----------------------------------------------------
-F1 <- all_chunks$sumstats_F1
-F2 <- all_chunks$sumstats_F2
-F3 <- all_chunks$sumstats_F3
+F1 <- all_chunks$factor1
+F2 <- all_chunks$factor2
+F3 <- all_chunks$factor3
 #prepare F1 fro plotting
 F1_noNA <- F1[(which(!is.na(F1$Pval_Estimate))),]
 dim(F1_noNA)
@@ -234,15 +234,66 @@ dev.off()
 
 #check the chunks that are there and the ones that must be re-estimated 
 
-chunks_found <- lapply(c(1:335), function(x)file.exists(paste0('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_gwas_ouput/qindex/', x,'_qindex_uc-cd-psc-ra-sle-t1d-jia-asthma-derma.RDS' ))) 
-which(unlist(chunks_found)==F)# 53 and 93 were not estimated.  
+q_1_335 <- assemble_f(1:335, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_gwas_ouput/qindex/', '_qindex_uc-cd-psc-ra-sle-t1d-jia-asthma-derma.RDS', 1) #The number of unique SNPs is 3324158
 
 #Error in serverSocket(port = port) : creation of server socket failed: port 11274 cannot be opened
 #Error in serverSocket(port = port) : creation of server socket failed: port 11304 cannot be opened
 #assmeble the Q statistic summary stats
 
+q_53 <- assemble_f(53, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_gwas_ouput/qindex/chunk_53/', '_qindex_uc-cd-psc-ra-sle-t1d-jia-asthma-derma.RDS', 1)
+q_93 <- assemble_f(93, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_gwas_ouput/qindex/chunk_93/', '_qindex_uc-cd-psc-ra-sle-t1d-jia-asthma-derma.RDS', 1)
 
-q_1_335 <- assemble_3f(1:335, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_gwas_ouput/qindex/', '_qindex_uc-cd-psc-ra-sle-t1d-jia-asthma-derma.RDS') 
+#assemble evetyhing together
+qindex <- append_chunk(list(q_1_335, q_53, q_93),1) #3344158
+
+saveRDS(qindex, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_gwas_ouput/qindex_summary_stats.RDS')
+qindex <- readRDS('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_gwas_ouput/qindex_summary_stats.RDS')
+
+
+#---------calculate the proper qindex-------------------------------------------
+#there is a difference of 1000 SNPs between the qindex and the GWAS because 1000 SNP could not be estimated for singulatiry of the matrix in the gwas.
+#first create a qindex sumstats that matches the SNPs in sumstats
+
+qindex_f1 <- qindex[[1]]
+f1 <- all_chunks[[1]]
+
+dim(qindex_f1) #3 344 158      21
+dim(f1) #3 343 158      21
+
+qindex_to_remove <- chmatch(qindex_f1$SNP, f1$SNP, nomatch = NA)  
+
+qindex_ok <- qindex_f1[ which(!is.na(qindex_to_remove)), ]
+dim(qindex_ok) #3 343 158 , 1000 less than the original qindex
+
+
+length(qindex_ok$SNP)==length(f1$SNP) #TRUE
+
+#are there any NA left?
+sum(is.na(chmatch(qindex_ok$SNP, f1$SNP, nomatch = NA)))  #0
+
+
+#chmatch returns a vector of the positions of (first) matches of its first argument in its second.
+#reorder qindex as the order of rows in f1
+qindex_ok <- qindex_ok[ chmatch( f1$SNP, qindex_ok$SNP,nomatch  = NA) , ]
+dim(qindex_ok) #3343158
+
+#check if the order is the same between qindex and SNP
+sum(qindex_ok$SNP == f1$SNP) #3 343 158
+
+#calculate Q index
+Q_chisq <- f1$chisq - qindex_ok$chisq
+Q_df <- f1$chisq_df - qindex_ok$chisq_df
+Q_chisq_pval <- pchisq(Q_chisq,Q_df,lower.tail=FALSE)
+
+#add the columns to the sumstats
+for(i in c(1:3)){
+  all_chunks[[i]]$Q_chisq <- Q_chisq
+  all_chunks[[i]]$Q_df <- Q_df
+  all_chunks[[i]]$Q_chisq_pval <- Q_chisq_pval 
+}
+
+
+saveRDS(all_chunks, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_gwas_ouput/gwas_final_withQindex.RDS')
 
 
 
