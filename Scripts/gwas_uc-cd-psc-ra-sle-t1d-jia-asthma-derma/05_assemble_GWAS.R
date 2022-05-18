@@ -200,6 +200,7 @@ F1 <- all_chunks$factor1
 F2 <- all_chunks$factor2
 F3 <- all_chunks$factor3
 #prepare F1 fro plotting
+
 F1_noNA <- F1[(which(!is.na(F1$Pval_Estimate))),]
 dim(F1_noNA)
 F1_plot <- F1_noNA[F1_noNA$Pval_Estimate<0.005,]
@@ -215,7 +216,35 @@ dim(F2_noNA)
 F3_plot <- F3_noNA[F3_noNA$Pval_Estimate<0.005,]
 
 
+#save the factor gwas individually for fuma 
+for( i in c(1:length( list(F1_noNA, F2_noNA, F3_noNA)))){
+  to_save <- list(F1_noNA, F2_noNA, F3_noNA)[[i]]
+  to_save <- to_save[,c('SNP', 'CHR', 'BP', 'A1', 'A2', 'est', 'SE', 'Pval_Estimate')]
+  to_save <- rename(to_save, Beta ='est', P = 'Pval_Estimate')
+  fwrite(to_save, paste0('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_gwas_ouput/gwas_f',i,'_only_fuma.txt'), 
+         col.names = T, row.names = F, sep = '\t', quote = F)
+  rm(to_save)
+}
 
+
+#output form
+
+#------- calculate effective sample size of the individual factors -------------
+
+
+#restrict to MAF of 40% and 10%
+N_hat <- vector()
+for( i in c(1:length( list(F1_noNA, F2_noNA, F3_noNA)))){
+      to_use <- list(F1_noNA, F2_noNA, F3_noNA)[[i]]
+      maf_filtered <-subset(to_use , to_use$MAF <= .4 & to_use$MAF >= .1)
+      N_hat[i]<-mean(1/((2*to_use$MAF*(1-to_use$MAF))*to_use$SE^2))
+      names(N_hat)[i] <- paste0('N_hat F', i)
+}
+
+saveRDS(N_hat,'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_gwas_ouput/effective_sample_size_factors.RDS')
+
+
+#---plot the manatthan plot 
 jpeg(file='outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_gwas_ouput/miamiF1_F2_F3.jpeg', width = 800, height = 400, units='mm', res = 600)
 par(mfrow=c(3,1))
 par(mar=c(5,5,3,3))
@@ -294,11 +323,26 @@ for(i in c(1:3)){
 
 
 saveRDS(all_chunks, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_gwas_ouput/gwas_final_withQindex.RDS')
+all_chunks<- readRDS('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_gwas_ouput/gwas_final_withQindex.RDS')
 
 
+#QSNP is a χ2-distributed test statistic, with larger values indexing a violation of the null hypothesis that the SNP acts entirely through the common factor(s)
 
 
+#plot the Q value
 
+jpeg(file='outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_gwas_ouput/miami_Qindex.jpeg', width = 800, height = 400, units='mm', res = 600)
+par(mfrow=c(3,1))
+par(mar=c(5,5,3,3))
+manhattan(F1_plot, chr="CHR", bp="BP", snp="SNP", p="Pval_Estimate" ,ylim=c(0,30), main='F1 =~ crohn + uc  + psc', 
+          col = c("cornflowerblue", "coral2"), highlight = c(F1_plot[F1_plot$Q_chisq_pval<0.005,]$SNP) )  
+par(mar=c(5,5,3,3))
+manhattan(F2_plot, chr="CHR", bp="BP", snp="SNP", p="Pval_Estimate" ,ylim=c(0,30), main='F2 =~ jia + sle + ra + t1d', 
+          col = c("cornflowerblue", "coral2"), highlight = c(F2_plot[F2_plot$Q_chisq_pval<0.005,]$SNP))
+par(mar=c(5,5,3,3))
+manhattan(F3_plot, chr="CHR", bp="BP", snp="SNP", p="Pval_Estimate" ,ylim=c(0,30), main='F3 =~ asthma + derma', 
+          col =  c("cornflowerblue", "coral2"), highlight = c(F3_plot[F3_plot$Q_chisq_pval<0.005,]$SNP) )
+dev.off()
 
 
 

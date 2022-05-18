@@ -439,3 +439,41 @@ append_chunk <- function(list_complete, n_factors ){
 
 ```
 
+## test_overlap
+
+This function test the overlapp between two datasets. You need to provide the two datasest and the number of chromosomes where you want to perform the overalpp test. It expects the columns to be named CHR, start, end. It outputs a vector of overlapping loci. 
+
+```{r test_overlap}
+test_overlap <-function(input_a, input_b, n_chr){     
+      require(data.table)
+    
+      a <-as.data.table(input_a)
+      b <- as.data.table(input_b)
+  
+      a$CHR <- as.numeric(a$chr)
+      a$start <- as.numeric(a$start)
+      a$end <- as.numeric(a$end)
+      
+      b$CHR <- as.numeric(b$chr)
+      b$start <- as.numeric(b$start)
+      b$end <- as.numeric(b$end)
+  
+      output <- list()
+      overlapping_rsIDs <- list()
+      
+      for(i in c(1:n_chr)){
+              setkey(b,start, end)
+              output[[i]] <- foverlaps(a[a$CHR==i,], b[b$CHR==i,], type = 'any', which = TRUE, nomatch =NULL)
+              names(output)[[i]] <- paste0('CHR',i)
+              
+              #return the ovelapping SNPs
+              overlapping_rsIDs[[i]] <- input_b[output[[i]]$yid, 'SNP' ]
+              
+      }
+      
+    #return the overlapping loci defined by rsIDs
+    invisible(unlist(overlapping_rsIDs))
+   
+  }
+```
+
