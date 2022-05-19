@@ -1,5 +1,6 @@
 #in this scirpt I will perform downstrean analysis of the GWAS results.
 library(data.table)
+library(stringr)
 
 #----locus.breaker function by Nicola, it identifies loci-----------------------
 locus.breaker=function(res,p.sig=5e-8, p.limit=1e-5,hole.size=250000
@@ -84,11 +85,11 @@ test_overlap <-function(input_a, input_b, n_chr){
         a <-as.data.table(input_a)
         b <- as.data.table(input_b)
         
-        a$CHR <- as.numeric(a$chr)
+        a$chr <- as.numeric(a$chr)
         a$start <- as.numeric(a$start)
         a$end <- as.numeric(a$end)
         
-        b$CHR <- as.numeric(b$chr)
+        b$chr <- as.numeric(b$chr)
         b$start <- as.numeric(b$start)
         b$end <- as.numeric(b$end)
         
@@ -97,7 +98,7 @@ test_overlap <-function(input_a, input_b, n_chr){
         
                 for(i in c(1:n_chr)){
                   setkey(b,start, end)
-                  output[[i]] <- foverlaps(a[a$CHR==i,], b[b$CHR==i,], type = 'any', which = TRUE, nomatch =NULL)
+                  output[[i]] <- foverlaps(a[a$chr==i,], b[b$chr==i,], type = 'any', which = TRUE, nomatch =NULL)
                   names(output)[[i]] <- paste0('CHR',i)
                   
                   #return the ovelapping SNPs
@@ -152,8 +153,6 @@ dim(f2_lb_output) #65
 dim(f3_lb_output) #62
 
 
-a<- f1_lb_output$SNP
-b <- f2_lb_output$SNP
 
 #--------crohn locus breaker----------------------------------------------------
 
@@ -181,20 +180,126 @@ derma <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstat
   
 #---- hypercoloc ---------------------------------------------------------------
 
+f1_overlapp <- test_overlap(f1_lb_output, f1_lb_output, 22)
 
 
 
-library(hyprcoloc)
-vignette('hyprcoloc')
+dim(f1_lb_output)
+length(f1_overlapp)
+
+
+test_overlap <-function(input_a, input_b=NA, auto_overlapp=F){     
+            require(data.table)
+            require(stringr)
+  
+            if(auto_overlapp==T){ 
+             
+              #allocate the lists
+              output <- list()
+              colnames(input_a) <- tolower(colnames(input_a))
+              overlapping_rsIDs <- list()
+              
+              #loop through each chromosome 
+              for(i in c(unique(as.numeric(input_a$chr)))){
+                      #make sure everyhting is numeric
+                      a <-as.data.table(input_a)
+                      b <- as.data.table(input_a)
+                      
+                      a$chr <- as.numeric(a$chr)
+                      a$start <- as.numeric(a$start)
+                      a$end <- as.numeric(a$end)
+                      
+                      #allocate the lists
+                      overlapping_rsIDs[[i]] <-  list()
+                      overlapping_rsIDs[[i]][[1]] <- data.frame('iteration'=NA,'Overlapp_with_query'=NA,'Query_SNP'=NA)
+                      output[[i]] <- list()
+                      
+                      #loop for checking the overlapp between each element and the rest of the list
+                      for(k in c(1:nrow(a[a$chr==i, ]))){
+                  
+                  
+                              setkey(a,start, end)
+                              output[[i]][[k]] <- foverlaps(a[a$chr==i, ][k,], a[a$chr==i,][-k,], type = 'any', which = TRUE, nomatch =NULL)
+                              
+                              #put the results in a list
+                              overlapping_rsIDs[[i]][[1]][k, 1] <-  paste0(i,'-', k)
+                              overlapping_rsIDs[[i]][[1]][k, 2] <-  ifelse(str_detect(paste0(a[a$chr==i,][-k,'snp'][output[[i]][[k]]$yid,]), 'character'), NA , paste0(unlist(a[a$chr==i,][-k,'snp'][output[[i]][[k]]$yid,]), collapse = '-'))
+                              overlapping_rsIDs[[i]][[1]][k, 3] <-  paste0(as.character(a[a$chr==i, ][k,]$snp))
+                          
+                }
+                
+              #remove NA
+              overlapping_rsIDs[sapply( overlapping_rsIDs , is.null)] <- NULL
+                
+                
+              }
+              
+              
+              # #prepare the list for merging
+              for(i in (1:length(overlapping_rsIDs))){
+                overlapping_rsIDs[[i]] <- overlapping_rsIDs[[i]][[1]]
+              }
+              
+              #merge and return
+              end_data  <-do.call(rbind, overlapping_rsIDs)
+              return(end_data)
+              
+              
+              } else {
+              
+                a <-as.data.table(input_a)
+                b <- as.data.table(input_b)
+                
+                a$chr <- as.numeric(a$chr)
+                a$start <- as.numeric(a$start)
+                a$end <- as.numeric(a$end)
+                
+                b$chr <- as.numeric(b$chr)
+                b$start <- as.numeric(b$start)
+                b$end <- as.numeric(b$end)
+                
+                output <- list()
+                overlapping_rsIDs <- list()
+                
+                for(i in c(1:22)){
+                            overlapping_rsIDs[[i]] <-  list()
+                            overlapping_rsIDs[[i]][[1]] <- data.frame('iteration'=NA,'SNP_A'=NA,'SNP_B'=NA)
+                            
+                            
+                            setkey(b,start, end)
+                            output[[i]] <- foverlaps(a[a$chr==i,], b[b$chr==i,], type = 'any', which = TRUE, nomatch =NULL)
+                            names(output)[[i]] <- paste0('CHR',i)
+                            
+                            #save the overlapping
+                            overlapping_rsIDs[[i]][[1]] <- data.frame(
+                              'iteration'=rep(i, length(output[[i]]$yid)),
+                              'SNP_input_a'=input_a[output[[i]]$xid, 'SNP' ],
+                              'SNP_input_b'= input_b[output[[i]]$yid, 'SNP' ]
+                            ) 
+                            #keep truck of the iteration that return a positive hit
+                            index[i] <- (length(output[[i]]$yid) > 0)
+                
+                }
+                
+                end_data <- list()
+                
+                #prepare for return
+                for(q in c(1:length(overlapping_rsIDs[c(index)])) ){
+                  end_data[[q]] <- overlapping_rsIDs[c(index)][[q]][[1]]
+                }
+                
+                #merge and return
+                end_data  <-do.call(rbind, end_data)
+                return(end_data)
+                
+              
+        }
+  
+}
 
 
 
-
-
-
-
-
-
+ test_overlap(input_a = f2_lb_output,input_b = f2_lb_output, auto_overlapp = F)
 
 
 
