@@ -1,11 +1,12 @@
 #in this scirpt I will perform downstrean analysis of the GWAS results.
 library(data.table)
 library(GenomicRanges)
+library(dplyr)
+library(qqman)
 
 #----locus.breaker function by Nicola, it identifies loci-----------------------
 locus.breaker=function(res,p.sig=5e-8, p.limit=1e-5,hole.size=250000
                        ,p.label="p",chr.label="chr",pos.label="pos"){
-  require(data.table)
   
   res = res[order(res[, chr.label], res[,pos.label]),]
   
@@ -79,12 +80,16 @@ locus.breaker=function(res,p.sig=5e-8, p.limit=1e-5,hole.size=250000
 
 #------- overlapp function -----------------------------------------------------
 #a function that tests for overlap between two datasets and outputs a vector of overlapping rsIDs. 
-
-
-
-
-
-
+prepare_plot <-  function(res, Pval_col,plimit=0.005, BP='BP', CHR='CHR') {
+  require(dplyr)
+  res[,Pval_col] <- as.numeric(res[, Pval_col])
+  res[, CHR] <- as.numeric(res[, CHR])
+  res <- res[res[, CHR] %in% c(1:22),]
+  output <- res[(which(!is.na(res[,Pval_col]))),]
+  output <- output[which(output[, Pval_col] <  plimit),]
+  output <- rename(output, BP=all_of(BP), CHR=all_of(CHR), p=all_of(Pval_col) )
+  return(output)
+}
 
 #------ run locus breaker function----------------------------------------------
 
@@ -109,28 +114,20 @@ nrow(f1_gwas_ok) #3294140
 nrow(f2_gwas_ok) #3294140
 nrow(f3_gwas_ok) #3294140
 
-#run the locus breaker function
 
-f1_lb_output <- locus.breaker(res= f1_gwas_ok, p.label = 'Pval_Estimate', 
-                              chr.label = 'CHR', pos.label = 'BP'  )
+#-----------------------
+#save a copy for running cheers, all the SNPS
+for( i in c(1:length( list(F1_noNA, F2_noNA, F3_noNA)))){
+  to_save <- list(F1_noNA, F2_noNA, F3_noNA)[[i]]
+  to_save <- to_save[,c('SNP', 'CHR', 'BP')]
+  to_save$CHR <- paste0('chr', to_save$CHR)
+  to_save <- rename(to_save, SNPID ='SNP')
+  fwrite(to_save, paste0('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_gwas_ouput/for_CHEERS/f',i,'_full_cheers.txt'), 
+         col.names = T, row.names = F, sep = '\t', quote = F)
+  rm(to_save)
+}
 
-
-
-f2_lb_output <- locus.breaker(res= f2_gwas_ok, p.label = 'Pval_Estimate', 
-                              chr.label = 'CHR', pos.label = 'BP'  )
-
-
-f3_lb_output <- locus.breaker(res= f3_gwas_ok, p.label = 'Pval_Estimate', 
-                              chr.label = 'CHR', pos.label = 'BP'  )
-
-dim(f1_lb_output) #70
-dim(f2_lb_output) #65
-dim(f3_lb_output) #62
-
-
-
-#--------crohn locus breaker----------------------------------------------------
-
+#save only the infex one
 
 
 #------------------------------------------------------------------------------
@@ -146,37 +143,149 @@ ra <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/r
 derma <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/derma_sliz-2021_build37.txt', data.table = F)
 
 
+f1_lb_output <- locus.breaker(res= f1_gwas_ok, p.label = 'Pval_Estimate', chr.label = 'CHR', pos.label = 'BP'  )
+f2_lb_output <- locus.breaker(res= f2_gwas_ok, p.label = 'Pval_Estimate', chr.label = 'CHR', pos.label = 'BP'  )
+f3_lb_output <- locus.breaker(res= f3_gwas_ok, p.label = 'Pval_Estimate',  chr.label = 'CHR', pos.label = 'BP'  )
 cd_lb_output <- locus.breaker(res = cd, p.label='p', chr.label ='CHR',  pos.label = 'BP' )
-
 uc_lb_output <- locus.breaker(res = uc, p.label='p', chr.label ='CHR',  pos.label = 'BP' )
 psc_lb_oputput <-  locus.breaker(res = psc, p.label='P', chr.label ='CHR',  pos.label = 'BP' )
 jia_lb_output <-  locus.breaker(res = jia, p.label='p', chr.label ='CHR',  pos.label = 'BP' )
 sle_lb_output <-  locus.breaker(res = sle, p.label='p', chr.label ='CHR',  pos.label = 'BP' )
-t1d_lb_output <-  locus.breaker(res =t1d,  p.label='p', chr.label ='CHR',  pos.label = 'BP_37' )
+t1d_lb_output <-  locus.breaker(res =t1d,  p.label='p', chr.label ='CHR_37',  pos.label = 'BP_37' )
 asthma_lb_output <-  locus.breaker(res =asthma,  p.label='p', chr.label ='CHR',  pos.label = 'BP' )
 ra_lb_output <-  locus.breaker(res = ra,  p.label='p', chr.label ='CHR',  pos.label = 'BP' )
-derma_lb_output <-  locus.breaker(res = derma,  p.label='p', chr.label ='CHR',  pos.label = 'BP' )
+derma_lb_output <-  locus.breaker(res = derma,  p.label='p', chr.label ='CHR_37',  pos.label = 'BP_37' )
   
-#-------------------------------------------------------------------------------
 
-#find the overlapping loci!
+loci_all_gwas <- list(f1=f1_lb_output, f2=f2_lb_output, f3=f3_lb_output, cd=cd_lb_output, uc=uc_lb_output, 
+                         psc= psc_lb_oputput, jia=jia_lb_output, sle=sle_lb_output, t1d= t1d_lb_output, asthma= asthma_lb_output, 
+                          ra=ra_lb_output,derma= derma_lb_output ) 
+
+saveRDS(loci_all_gwas, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/06_gwas_analysis/loci_all_gwas.RDS' )
+
+loci_all_gwas <- readRDS('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/06_gwas_analysis/loci_all_gwas.RDS')
 
 
-create_range <- function(res, chr='CHR', start='start', end='end', w=F ) {
-  
+#save only the infex one for running CHEERS
+for( i in c(1:length( list(loci_all_gwas$f1, loci_all_gwas$f2, loci_all_gwas$f3)))){
+  to_save <- list(loci_all_gwas$f1, loci_all_gwas$f2, loci_all_gwas$f3)[[i]]
+  to_save <- to_save[,c('SNP', 'chr', 'BP')]
+  to_save$chr <- paste0('chr', to_save$chr)
+  to_save <- rename(to_save, SNPID ='SNP')
+  fwrite(to_save, paste0('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/06_gwas_analysis/for_CHEERS/f',i,'_index_cheers.txt'), 
+         col.names = T, row.names = F, sep = '\t', quote = F)
+  rm(to_save)
+}
+
+
+
+#--------find the overlapp between the loci-------------------------------------
+
+#function to create a genomic ranges object useful to find overlapps between loci 
+
+create_range <- function(res, chr='CHR', start='start', end='end', w=T ) {
   obj <-GRanges( seqnames =  res$chr ,IRanges(names = res$chr ,start = as.numeric(res$start), end = as.numeric(res$end))) 
-  ifelse(w, return(ranges(obj, use.names = T) ), return(data.frame(names= obj@ranges@NAMES ,start=obj@ranges@start, width=obj@ranges@width))) 
+      
+  if( sum(obj@ranges@width> 2000000) >0 ) { warning(paste0( sum(obj@ranges@width> 2000000)) ,' ranges are wider than 2 MB') 
+          print(obj[which(obj@ranges@width> 2000000),])
+    }
+  ifelse(w, return(obj), return(data.frame(names= obj@ranges@NAMES ,start=obj@ranges@start, width=obj@ranges@width))) 
   
 }
 
 
 
-f1_range <- create_range(f1_lb_output, w = F ) 
-f2_range <- create_range(f2_lb_output, w=F)
-f3_range <- create_range(f3_lb_output, w=F)
-cd_ranges <- create_range()
-uc_ranges <- create_range(uc_lb_output, w=F)
-#------------------something is wrong with locus breaker 
+f1_range <- reduce(create_range(loci_all_gwas$f1)) 
+f2_range <- reduce(create_range(loci_all_gwas$f2))
+f3_range <- reduce(create_range(loci_all_gwas$f3))
+cd_ranges <- reduce(create_range(loci_all_gwas$cd))
+uc_ranges <- reduce(create_range(loci_all_gwas$uc))
+psc_ranges <- reduce(create_range(loci_all_gwas$psc))
+jia_ranges <- reduce(create_range(loci_all_gwas$jia))
+sle_ranges <- reduce(create_range(loci_all_gwas$sle))
+t1d_ranges <- reduce(create_range(loci_all_gwas$t1d))
+asthma_ranges <- reduce(create_range(loci_all_gwas$asthma))
+ra_ranges <- reduce(create_range(loci_all_gwas$ra))
+derma_ranges <- reduce(create_range(loci_all_gwas$derma))
+
+
+#---f1 test coloc --------------------------------------------------------------
+
+#define unique loci and merge the overlapping ones
+f1_all <- reduce(c(f1_range, cd_ranges, uc_ranges, psc_ranges)) #136
+f2_all <- reduce(c(f2_range, jia_ranges, sle_ranges, t1d_ranges, ra_ranges, sle_ranges )) #142
+f3_all <- reduce(c(f3_range,derma_ranges, asthma_ranges)) #152
+
+
+#search for loci that are present only in the factors and not in the unique traits
+
+#f1
+f1_traits <- reduce(c(cd_ranges, uc_ranges, psc_ranges))
+f1_not_unique <- findOverlaps(f1_traits, f1_range)
+f1_new_unique <- f1_range[- f1_not_unique@to, ]
+
+#which are the most significative SNP?
+f1_not_reduce <- create_range(loci_all_gwas$f1)
+filter1 <- findOverlaps(f1_not_reduce, f1_new_unique)
+loci_all_gwas$f1[filter1@from,][,c('SNP', 'BP', "chr", "start", "end", "est", "Pval_Estimate")] #new SNPs F1 "rs395157"  "rs9367849"
+
+
+#f2
+f2_traits <- reduce(c(jia_ranges, sle_ranges, t1d_ranges, ra_ranges, sle_ranges ))
+f2_not_unique <- findOverlaps(f2_traits, f2_range)
+f2_new_unique <- f2_range[-f2_not_unique@to,]
+
+#which are the most significative SNP in F"?
+f2_not_reduce <- create_range(loci_all_gwas$f2)
+filter2<- findOverlaps(f2_not_reduce, f2_new_unique)
+loci_all_gwas$f2[filter2@from,][,c('SNP', 'BP', "chr", "start", "end", "est", "Pval_Estimate")]  #new SNPs F2 "rs7511656" "rs2366644" "rs4269168" "rs2746432" "rs6582578"
+
+
+#f3
+f3_traits <- reduce(c(derma_ranges, asthma_ranges))
+f3_not_unique <- findOverlaps(f3_traits, f3_range) 
+f3_new_unique <- f3_range[-f3_not_unique@to,]
+
+#which are the most significative SNP in F3?
+f3_not_reduce <- create_range(loci_all_gwas$f3)
+filter3 <- findOverlaps(f3_not_reduce, f3_new_unique)
+loci_all_gwas$f3[filter3@from,][,c('SNP', 'BP', "chr", "start", "end", "est", "Pval_Estimate")]  #new SNPs F3  "rs11265449"
+
+
+
+
+#-------------------------------------------------------------------------------
+
+
+
+all <- reduce(c(f1_all, f2_all, f3_all)) #339
+
+f1_plot <- prepare_plot(f1_gwas, 'Pval_Estimate', CHR = 'CHR' , plimit = 0.5) 
+cd_plot <- prepare_plot(uc, 'p', plimit = 0.5)
+uc_plot <- prepare_plot(uc, 'p', plimit = 0.5)
+psc_plot <- prepare_plot(psc, 'P', plimit = 0.5)
+
+f1_all
+
+lim=c(38865916,38867732)
+k=5
+
+par(mfrow=c(4,1))
+par(mar=c(5,5,3,3))
+manhattan(f1_plot[f1_plot$CHR==5, ], chr="CHR", bp="BP", snp="SNP", p="p" ,ylim=c(0,30), xlim=lim, main='F1', 
+          col = c("darksalmon", "darkseagreen4"))  
+par(mar=c(5,5,3,3))
+manhattan(cd_plot[cd_plot$CHR==k, ], chr="CHR", bp="BP", snp="SNP", p="p" ,ylim=c(0,30),xlim=lim, main='cd', 
+          col = c("darksalmon", "darkseagreen4"))
+par(mar=c(5,5,3,3))
+manhattan(uc_plot[uc_plot$CHR==k, ], chr="CHR", bp="BP", snp="SNP", p='p' ,ylim=c(0,30),xlim=lim, main='uc', 
+          col = c("darksalmon", "darkseagreen4"))
+par(mar=c(5,5,3,3))
+manhattan(psc_plot[psc_plot$CHR==k, ], chr="CHR", bp="BP", snp="SNP", p='p' ,ylim=c(0,30), xlim=lim, main='psc', 
+          col = c("darksalmon", "darkseagreen4"))
+
+
+
 
 
 
