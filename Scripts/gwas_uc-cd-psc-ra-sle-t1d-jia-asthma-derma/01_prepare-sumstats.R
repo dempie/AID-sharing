@@ -809,20 +809,23 @@ qc_summary_stats(vitiligo, T)
 okada_euro <- fread('Summary_Stats/okada-2014_ra-european_build37_MegaGWAS_summary_European.txt.gz', data.table = F)
 head(okada_euro)
 okada_euro<- rename(okada_euro, 
-      SNPID = V1,
-       BP =V2,
-       Neighboring_gene =V3,
-       A1 = V4,
-       A2 = V5,
-       No.studies =V6,
-       No.RAcases =V7,
-       No.controls =V8,
-       A1_freq_cases =V9,
-       A2_freq_controls =V10,
-       Beta_allele_1 =V11,
-       SE = V12,
-       P_of_allele_1 =V13
+      SNPID = 'V1',
+       BP ='V2',
+       Neighboring_gene ='V3',
+       A1 = 'V4',
+       A2 = 'V5',
+       No.studies ='V6',
+       No.RAcases ='V7',
+       No.controls ='V8',
+       A1_freq_cases ='V9',
+       A2_freq_controls ='V10',
+       Beta_allele_1 ='V11',
+       SE = 'V12',
+       P_of_allele_1 ='V13'
        )
+
+
+#prepare for munge
 head(okada_euro)
 dim(okada_euro) #8 514 610      13
 prepare_munge(okada_euro, 
@@ -843,8 +846,52 @@ munge( 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_
 
 system('mv ra_oka* outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/munge_output')
 
-#-------------------------------------------------------------------------------
+#---------------add chr column okada--------------------------------------------
 
+okada_normal <- fread('Summary_Stats/okada-2014_RA_build37_RA_GWASmeta_TransEthnic_v2.txt.gz.gz', data.table = F)
+
+okada_euro <- fread('Summary_Stats/okada-2014_ra-european_build37_MegaGWAS_summary_European.txt.gz', data.table = F)
+head(okada_euro)
+dim(okada_euro) #8514610      13
+
+okada_euro<- rename(okada_euro, 
+                    SNPID = 'V1',
+                    BP ='V2',
+                    Neighboring_gene ='V3',
+                    A1 = 'V4',
+                    A2 = 'V5',
+                    No.studies ='V6',
+                    No.RAcases ='V7',
+                    No.controls ='V8',
+                    A1_freq_cases ='V9',
+                    A2_freq_controls ='V10',
+                    Beta_allele_1 ='V11',
+                    SE = 'V12',
+                    P_of_allele_1 ='V13'
+)
+
+#add CHR column, the format of the Base pair column makes things difficult. Just merge the Bp and CHR position from okada published
+okada_normal <- select(okada_normal, c('Chr', 'Position(hg19)', 'SNPID')) 
+okada_chr <- merge.data.table(okada_euro, okada_normal, 
+                              by.x = 'SNPID', by.y = 'SNPID', 
+                              all.x = F , all.y = F, sort = F) #put false so we are sure that each has a positon and chr
+
+head(okada_chr)
+dim(okada_chr) #8514610 
+prepare_munge(okada_chr, 
+              rsID = 'SNPID',
+              the_effect_allele = 'A1',
+              the_non_effect_allele = 'A2', 
+              the_Beta = 'Beta_allele_1', 
+              the_chr = 'Chr', 
+              the_bp = 'Position(hg19)',
+              the_SE = 'SE', 
+              pvalue = 'P_of_allele_1',
+              path =  'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/ra_eu_okada-2014_chr_bp.txt')
+
+
+
+#------------------
 #liftover of T1D to build37
 
 referenceSNP <- fread('SNP/reference.1000G.maf.0.005.txt.gz')
