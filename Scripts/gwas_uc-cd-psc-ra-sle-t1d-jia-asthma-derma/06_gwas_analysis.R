@@ -3,6 +3,8 @@ library(data.table)
 library(GenomicRanges)
 library(dplyr)
 library(qqman)
+library(ChIPpeakAnno)
+library(RColorBrewer)
 
 #----locus.breaker function by Nicola, it identifies loci-----------------------
 locus.breaker=function(res,p.sig=5e-8, p.limit=1e-5,hole.size=250000
@@ -117,17 +119,29 @@ nrow(f3_gwas_ok) #3294140
 
 #-----------------------
 #save a copy for running cheers, all the SNPS
-for( i in c(1:length( list(F1_noNA, F2_noNA, F3_noNA)))){
-  to_save <- list(F1_noNA, F2_noNA, F3_noNA)[[i]]
+for( i in c(1:length(list(f1_gwas_ok, f2_gwas_ok, f3_gwas_ok)))){
+  to_save <- list(f1_gwas_ok, f2_gwas_ok, f3_gwas_ok)[[i]]
   to_save <- to_save[,c('SNP', 'CHR', 'BP')]
+  to_save <- to_save[base::order(to_save [, 'CHR'], to_save[,'BP']), ]
   to_save$CHR <- paste0('chr', to_save$CHR)
   to_save <- rename(to_save, SNPID ='SNP')
-  fwrite(to_save, paste0('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_gwas_ouput/for_CHEERS/f',i,'_full_cheers.txt'), 
+  fwrite(to_save, paste0('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/06_gwas_analysis/for_CHEERS/f',i,'_full_cheers.txt'), 
          col.names = T, row.names = F, sep = '\t', quote = F)
   rm(to_save)
 }
 
-#save only the infex one
+#save only the signficant ones  
+for( i in c(1:length( list(f1_gwas_ok, f2_gwas_ok, f3_gwas_ok)))){
+  to_save <- list(f1_gwas_ok, f2_gwas_ok, f3_gwas_ok)[[i]]
+  to_save <- to_save[to_save$Pval_Estimate<5*10^-8,]
+  to_save <- to_save[,c('SNP', 'CHR', 'BP')]
+  to_save <- to_save[base::order(to_save [, 'CHR'], to_save[,'BP']), ]
+  to_save$CHR <- paste0('chr', to_save$CHR)
+  to_save <- rename(to_save, SNPID ='SNP')
+  fwrite(to_save, paste0('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/06_gwas_analysis/for_CHEERS/f',i,'_all_significant_cheers.txt'), 
+         col.names = T, row.names = F, sep = '\t', quote = F)
+  rm(to_save)
+}
 
 
 #------------------------------------------------------------------------------
@@ -166,7 +180,7 @@ saveRDS(loci_all_gwas, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/06_gw
 loci_all_gwas <- readRDS('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/06_gwas_analysis/loci_all_gwas.RDS')
 
 
-#save only the infex one for running CHEERS
+#save only the index one for running CHEERS
 for( i in c(1:length( list(loci_all_gwas$f1, loci_all_gwas$f2, loci_all_gwas$f3)))){
   to_save <- list(loci_all_gwas$f1, loci_all_gwas$f2, loci_all_gwas$f3)[[i]]
   to_save <- to_save[,c('SNP', 'chr', 'BP')]
@@ -183,9 +197,8 @@ for( i in c(1:length( list(loci_all_gwas$f1, loci_all_gwas$f2, loci_all_gwas$f3)
 
 #function to create a genomic ranges object useful to find overlapps between loci 
 
-create_range <- function(res, chr='CHR', start='start', end='end', w=T ) {
+create_range <- function(res, chr='CHR', start='start', end='end', w=T, tag=NA ) {
   obj <-GRanges( seqnames =  res$chr ,IRanges(names = res$chr ,start = as.numeric(res$start), end = as.numeric(res$end))) 
-      
   if( sum(obj@ranges@width> 2000000) >0 ) { warning(paste0( sum(obj@ranges@width> 2000000)) ,' ranges are wider than 2 MB') 
           print(obj[which(obj@ranges@width> 2000000),])
     }
@@ -194,7 +207,7 @@ create_range <- function(res, chr='CHR', start='start', end='end', w=T ) {
 }
 
 
-
+#reduce function collapses the overlapping intervals into one single range
 f1_range <- reduce(create_range(loci_all_gwas$f1)) 
 f2_range <- reduce(create_range(loci_all_gwas$f2))
 f3_range <- reduce(create_range(loci_all_gwas$f3))
@@ -255,34 +268,48 @@ loci_all_gwas$f3[filter3@from,][,c('SNP', 'BP', "chr", "start", "end", "est", "P
 
 
 #-------------------------------------------------------------------------------
+#venn diagram of factor loci, to see which overlapp anche which do not 
+
+
+myCol <- brewer.pal(3, "Pastel2")
+
+pdf(width = 14, height = 14, file = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/06_gwas_analysis/venn_f1_f2_f3_loci.pdf')
+venn_f1_f2_f3_loci<- makeVennDiagram(Peaks=list(f1=f1_range, f2=f2_range, f3=f3_range),connectedPeaks = 'keepAll',
+                      NameOfPeaks=c("F1", "F2", "F3"),
+                # Circles
+                lwd = 2,
+                #lty = 'blank',
+                fill = myCol,
+                
+                # Numbers
+                cex = 2,
+                fontface = "bold",
+                fontfamily = "sans",
+                
+                # Set names
+                cat.cex = 2,
+                cat.fontface = "bold",
+                cat.default.pos = "outer",
+                cat.pos = c(-27, 27, 135),
+                cat.dist = c(0.055, 0.055, 0.085),
+                cat.fontfamily = "sans",
+                rotation = 1
+                      )
+
+dev.off()
 
 
 
-all <- reduce(c(f1_all, f2_all, f3_all)) #339
 
-f1_plot <- prepare_plot(f1_gwas, 'Pval_Estimate', CHR = 'CHR' , plimit = 0.5) 
-cd_plot <- prepare_plot(uc, 'p', plimit = 0.5)
-uc_plot <- prepare_plot(uc, 'p', plimit = 0.5)
-psc_plot <- prepare_plot(psc, 'P', plimit = 0.5)
 
-f1_all
 
-lim=c(38865916,38867732)
-k=5
 
-par(mfrow=c(4,1))
-par(mar=c(5,5,3,3))
-manhattan(f1_plot[f1_plot$CHR==5, ], chr="CHR", bp="BP", snp="SNP", p="p" ,ylim=c(0,30), xlim=lim, main='F1', 
-          col = c("darksalmon", "darkseagreen4"))  
-par(mar=c(5,5,3,3))
-manhattan(cd_plot[cd_plot$CHR==k, ], chr="CHR", bp="BP", snp="SNP", p="p" ,ylim=c(0,30),xlim=lim, main='cd', 
-          col = c("darksalmon", "darkseagreen4"))
-par(mar=c(5,5,3,3))
-manhattan(uc_plot[uc_plot$CHR==k, ], chr="CHR", bp="BP", snp="SNP", p='p' ,ylim=c(0,30),xlim=lim, main='uc', 
-          col = c("darksalmon", "darkseagreen4"))
-par(mar=c(5,5,3,3))
-manhattan(psc_plot[psc_plot$CHR==k, ], chr="CHR", bp="BP", snp="SNP", p='p' ,ylim=c(0,30), xlim=lim, main='psc', 
-          col = c("darksalmon", "darkseagreen4"))
+
+
+
+
+
+
 
 
 
