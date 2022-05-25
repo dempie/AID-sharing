@@ -222,20 +222,14 @@ ra_ranges <- reduce(create_range(loci_all_gwas$ra))
 derma_ranges <- reduce(create_range(loci_all_gwas$derma))
 
 
-#---f1 test coloc --------------------------------------------------------------
-
-#define unique loci and merge the overlapping ones
-f1_all <- reduce(c(f1_range, cd_ranges, uc_ranges, psc_ranges)) #136
-f2_all <- reduce(c(f2_range, jia_ranges, sle_ranges, t1d_ranges, ra_ranges, sle_ranges )) #142
-f3_all <- reduce(c(f3_range,derma_ranges, asthma_ranges)) #152
-
+#---------------- unique new loci ----------------------------------------------
 
 #search for loci that are present only in the factors and not in the unique traits
 
 #f1
 f1_traits <- reduce(c(cd_ranges, uc_ranges, psc_ranges))
 f1_not_unique <- findOverlaps(f1_traits, f1_range)
-f1_new_unique <- f1_range[- f1_not_unique@to, ]
+f1_new_unique <- f1_range[-f1_not_unique@to, ]
 
 #which are the most significative SNP?
 f1_not_reduce <- create_range(loci_all_gwas$f1)
@@ -244,7 +238,7 @@ loci_all_gwas$f1[filter1@from,][,c('SNP', 'BP', "chr", "start", "end", "est", "P
 
 
 #f2
-f2_traits <- reduce(c(jia_ranges, sle_ranges, t1d_ranges, ra_ranges, sle_ranges ))
+f2_traits <- reduce(c(jia_ranges, sle_ranges, t1d_ranges, ra_ranges, sle_ranges))
 f2_not_unique <- findOverlaps(f2_traits, f2_range)
 f2_new_unique <- f2_range[-f2_not_unique@to,]
 
@@ -265,38 +259,75 @@ filter3 <- findOverlaps(f3_not_reduce, f3_new_unique)
 loci_all_gwas$f3[filter3@from,][,c('SNP', 'BP', "chr", "start", "end", "est", "Pval_Estimate")]  #new SNPs F3  "rs11265449"
 
 
-
-
 #-------------------------------------------------------------------------------
 #venn diagram of factor loci, to see which overlapp anche which do not 
 
 
-myCol <- brewer.pal(3, "Pastel2")
+myCol <- brewer.pal(1:3, "Set2")
+
+
 
 pdf(width = 14, height = 14, file = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/06_gwas_analysis/venn_f1_f2_f3_loci.pdf')
 venn_f1_f2_f3_loci<- makeVennDiagram(Peaks=list(f1=f1_range, f2=f2_range, f3=f3_range),connectedPeaks = 'keepAll',
                       NameOfPeaks=c("F1", "F2", "F3"),
-                # Circles
-                lwd = 2,
-                #lty = 'blank',
-                fill = myCol,
-                
-                # Numbers
-                cex = 2,
-                fontface = "bold",
-                fontfamily = "sans",
-                
-                # Set names
-                cat.cex = 2,
-                cat.fontface = "bold",
-                cat.default.pos = "outer",
-                cat.pos = c(-27, 27, 135),
-                cat.dist = c(0.055, 0.055, 0.085),
-                cat.fontfamily = "sans",
-                rotation = 1
+                      imagetype="png" ,
+                      height = 480 , 
+                      width = 480 , 
+                      resolution = 300,
+                      compression = "lzw",
+                      lwd = 1,
+                      col=myCol,
+                      fill = myCol,
+                      cex = 1.5,
+                      fontfamily = "sans",
+                      cat.cex = 2,
+                      cat.default.pos = "outer",
+                      cat.pos = c(-27, 27, 135),
+                      cat.dist = c(0.055, 0.055, 0.085),
+                      cat.fontfamily = "sans",
+                      cat.col = myCol,
+                      rotation = 1
                       )
 
 dev.off()
+
+
+#-------loci that are shared by all factors------------------------------------
+ol <- findOverlapsOfPeaks(f1_range, f2_range, f3_range )
+
+#extrract the info on the 4 loci that are overlapping with everyhting 
+
+ol$peaklist$`f1_range///f2_range///f3_range` 
+# F1 SHARED 20, 34, 54, 56
+#F2 SHARED 13, 24, 47, 52
+#F3 SHARED 16, 25, 48, 50
+
+ol$all.peaks$f1_range
+
+F1_shared <- loci_all_gwas$f1[c(20, 34,54, 56),]$SNP
+F2_shared <- loci_all_gwas$f2[c(13, 24, 47, 52),]$SNP
+F3_shared <- loci_all_gwas$f3[c(16,25,48,50),]$SNP
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

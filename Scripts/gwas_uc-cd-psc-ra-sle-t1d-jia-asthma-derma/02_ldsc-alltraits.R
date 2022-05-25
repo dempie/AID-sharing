@@ -42,7 +42,7 @@ traits <- c('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/m
             ) 
 
 trait.names <- c( 'allergies','ms', 'alzheimer', 'armfat',  
-                  'asthma', 'celiac', 'crohn', 'jia', 'pbc',  
+                  'asthma', 'celiac', 'crohn', 'jia', 'pbc',     
                  'psc', 'ra_eu', 'sle', 'thyro', 'uc', 
                  't1d', 'derma', 'psoriasis', 'vitiligo')
 sample.prev <- round( c(.5, .5, .5, NA,

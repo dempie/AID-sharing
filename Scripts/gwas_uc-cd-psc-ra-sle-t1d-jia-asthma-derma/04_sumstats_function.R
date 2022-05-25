@@ -29,7 +29,14 @@ library(corrplot)
 is_se_logB <- function(BETA,SE, PVALUE) {
   p_calculated <- 2*pnorm((abs(BETA) / SE),lower.tail = F)
   p_reported <- PVALUE
-  data.frame(p_calculated, p_reported)
+  #data.frame(p_calculated, p_reported), 
+  a <- lm(p_calculated~p_reported) #fit a linear model to see if they are perfectly correlated 
+  print(summary(a))
+  
+  rand <- sample(1:length(BETA), 10000)
+  plot(p_reported[rand], p_calculated[rand]) 
+  abline(a, col="red") # regression line (y~x)
+  abline(0, 1, col='blue', lty= 4 )
 }
 
 
@@ -78,7 +85,7 @@ is_se_logB(BETA = t1d$effect, SE = t1d$SE, PVALUE = t1d$p) #SE of logistic BETA
 
 asthma <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/asthma_ban-2020.txt', data.table = F)
 head(asthma)
-is_se_logB(asthma$Beta, asthma$SE, asthma$p) #SE of logistic BETA, the analysis is logfistic regression
+is_se_logB(log(asthma$OR), asthma$SE, asthma$p) #SE of logistic BETA, the analysis is logfistic regression
 
 #----derma SE ---------------------------------------------------------------
 derma <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/derma_sliz-2021.txt', data.table = F)
