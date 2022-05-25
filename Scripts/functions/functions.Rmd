@@ -191,37 +191,10 @@ A function to calculate the sanple prevalence from a csv which has three columns
 
 https://github.com/GenomicSEM/GenomicSEM/wiki/2.1-Calculating-Sum-of-Effective-Sample-Size-and-Preparing-GWAS-Summary-Statistics
 ```{r calculate_prevalence}
-calculate_prevalence <- function(path_of_csv){
-  #read the file and remove the NA columns and rows
-  preva_csv <- read.csv(file = path_of_csv , header = T, sep = ';')
-  preva_csv <-  preva_csv[, c('cases', 'controls')]
-  preva_csv_noNA <- preva_csv[complete.cases(preva_csv), ]
-  
-  #calculated effective prevalence 
-  #calculate sample prevalence for each cohort
-  preva_csv_noNA$v <-preva_csv_noNA$cases/(preva_csv_noNA$cases+preva_csv_noNA$controls)
-  #calculate cohort specific effective sample size
-  preva_csv_noNA$EffN<-4*preva_csv_noNA$v*(1-preva_csv_noNA$v)*(preva_csv_noNA$cases+preva_csv_noNA$controls)
-  #calculate sum of effective sample size: 
-  eff_sample_size <- round(sum(preva_csv_noNA$EffN), 3)
-  
-  #print number of cases and controls, and effective sample size
-  cat(paste0( 'Number of cases  ' , sum(preva_csv_noNA$cases), '\n', 
-              'Number of contros  ', sum(preva_csv_noNA$controls), '\n', 
-              'Effective sample size  ', round(sum(preva_csv_noNA$EffN), 3)
-  ))
-  
-  #output the prevalenc when assigned to a variable 
-  invisible(round(eff_sample_size, 3))
-}
-```
-
-## locus.breaker
-
-this function identifies loci in GWAS results, you nee to specify pvalue, chr and positon columns. 
-```{r locus.breaker}
 locus.breaker=function(res,p.sig=5e-8, p.limit=1e-5,hole.size=250000
-                      ,p.label="p",chr.label="chr",pos.label="pos"){
+                       ,p.label="p",chr.label="chr",pos.label="pos"){
+  
+  res = res[order(as.numeric(res[, chr.label]), as.numeric(res[,pos.label])),]
   
   res=res[which(res[,p.label]<p.limit),]
   trait.res=c()
@@ -700,4 +673,3 @@ prepare_plot <-  function(res, Pval_col,plimit=0.005, BP='BP', CHR='CHR') {
   return(output)
 }
 ```
-
