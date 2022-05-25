@@ -166,14 +166,22 @@ split_sum_stats <- function(summary_stats, chunk_size, which_chunk) {
 
 
 ## is_se_logB
-This function is for checking if the standard error reported in GWAS summary stats is a standard error of logistic beta. If the calculated and reported are almost identical that it is a selogB.  
+This function is for checking if the standard error reported in GWAS summary stats is a standard error of logistic beta. If the calculated and reported are almost identical that it is a selogB.  It plots 10000 randomly selected pvalues andruns a linear model between pcalcualte and reported. I look at the r squared from the linea regression. If >0.99 than we can confidently say the pvalues are identical and thus we are looking at a SE of log(beta)
 
 ```{r is_se_logB}
 is_se_logB <- function(BETA,SE, PVALUE) {
   p_calculated <- 2*pnorm((abs(BETA) / SE),lower.tail = F)
   p_reported <- PVALUE
-  data.frame(p_calculated, p_reported)
+  #data.frame(p_calculated, p_reported), 
+  a <- lm(p_calculated~p_reported) #fit a linear model to see if they are perfectly correlated 
+  print(summary(a))
+  
+  rand <- sample(1:length(BETA), 10000)
+  plot(p_reported[rand], p_calculated[rand]) 
+  abline(a, col="red") # regression line (y~x)
+  abline(0, 1, col='blue', lty= 4 )
 }
+
 ```
 
 
@@ -674,5 +682,22 @@ test_overlap_each <-function(input_a, input_b=NA, auto_overlapp=F){
   
 }
 
+```
+
+##prepare_plot
+
+a functio to prepare sumary stats to be plotted
+
+```{r prepare_plot}
+prepare_plot <-  function(res, Pval_col,plimit=0.005, BP='BP', CHR='CHR') {
+  require(dplyr)
+  res[,Pval_col] <- as.numeric(res[, Pval_col])
+  res[, CHR] <- as.numeric(res[, CHR])
+  res <- res[res[, CHR] %in% c(1:22),]
+  output <- res[(which(!is.na(res[,Pval_col]))),]
+  output <- output[which(output[, Pval_col] <  plimit),]
+  output <- rename(output, BP=all_of(BP), CHR=all_of(CHR), p=all_of(Pval_col) )
+  return(output)
+}
 ```
 

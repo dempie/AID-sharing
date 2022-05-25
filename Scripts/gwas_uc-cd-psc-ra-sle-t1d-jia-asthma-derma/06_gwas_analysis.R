@@ -10,7 +10,7 @@ library(RColorBrewer)
 locus.breaker=function(res,p.sig=5e-8, p.limit=1e-5,hole.size=250000
                        ,p.label="p",chr.label="chr",pos.label="pos"){
   
-  res = res[order(res[, chr.label], res[,pos.label]),]
+  res = res[order(as.numeric(res[, chr.label]), as.numeric(res[,pos.label])),]
   
   res=res[which(res[,p.label]<p.limit),]
   trait.res=c()
