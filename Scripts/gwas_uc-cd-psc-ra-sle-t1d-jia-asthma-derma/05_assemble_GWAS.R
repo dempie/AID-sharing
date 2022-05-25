@@ -323,7 +323,14 @@ for(i in c(1:3)){
 
 
 saveRDS(all_chunks, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_gwas_ouput/gwas_final_withQindex.RDS')
-all_chunks<- readRDS('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_gwas_ouput/gwas_final_withQindex.RDS')
+
+#save FACTOR GWAS individually 
+for(i in c(1:3)){
+  fwrite(all_chunks[[i]], paste0('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_gwas_ouput/factor',i,'_gwas_final_withQindex.txt' ),
+         sep = '\t', col.names = T, row.names = F, quote = F)
+}
+
+#all_chunks<- readRDS('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_gwas_ouput/gwas_final_withQindex.RDS')
 
 
 #QSNP is a χ2-distributed test statistic, with larger values indexing a violation of the null hypothesis that the SNP acts entirely through the common factor(s)
@@ -343,11 +350,6 @@ par(mar=c(5,5,3,3))
 manhattan(F3_plot, chr="CHR", bp="BP", snp="SNP", p="Pval_Estimate" ,ylim=c(0,30), main='F3 =~ asthma + derma', 
           col =  c("cornflowerblue", "coral2"), highlight = c(F3_plot[F3_plot$Q_chisq_pval<0.005,]$SNP) )
 dev.off()
-
-
-
-
-
 
 
 
