@@ -364,7 +364,6 @@ create_range <- function(res, chr='CHR', start='start', end='end', w=T, tag=NA )
 #-------------------------------------------------------------------------------
 
 
-
 sstats_names <- list.files('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/prepare_for_munge/')
 sstats_names  <- sstats_names [-10]
 my_paths <- as.list(paste0('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/prepare_for_munge/', sstats_names))
