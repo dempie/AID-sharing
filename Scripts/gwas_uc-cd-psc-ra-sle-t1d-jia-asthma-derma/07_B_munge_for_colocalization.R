@@ -1,11 +1,13 @@
 #08_munge_for_colocalization 
 
+
+
 #in this script only one function will be run, since I requested to the function to output a log file
 #when outputting a log file no warnings will be emitted, SO run this script as local job. 
 
-#RESTART R AT THE END OF THE SCRIPT, ALWAYS!
+#RESTART R AT THE END OF THE SCRIPT, ALWAYS! OTHERWISE YOU WILL NOT SEE WARNINGS!!!!
 
-library(MungeSumstats)
+library(MungeSumstats) #Summary statistics here were prepared for being munged by the package MungeSumstats (https://neurogenomics.github.io/MungeSumstats/articles/MungeSumstats.html#overview).
 library('BSgenome.Hsapiens.NCBI.GRCh38')
 library('SNPlocs.Hsapiens.dbSNP144.GRCh38')
 library("SNPlocs.Hsapiens.dbSNP144.GRCh37")
@@ -35,7 +37,7 @@ for( i in c(1:length(a1))){
   
 }
 
-data('sumstatsColHeaders') #load reference file 
+data('sumstatsColHeaders') #load reference file coming from the package  MungeSumstats
 
 for(i in c(1:12)){
   
@@ -67,7 +69,7 @@ for(i in c(1:12)){
     remove_multi_rs_snp = FALSE,
     frq_is_maf = TRUE,
     sort_coordinates = TRUE,
-    nThread = 2,
+    nThread = 12,
     save_path = paste0('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/munged/', gwas_names[[i]], '_munged_build38.txt' ),
     write_vcf = FALSE,
     tabix_index = FALSE,
@@ -75,8 +77,8 @@ for(i in c(1:12)){
     return_format = "data.table",
     ldsc_format = FALSE,
     log_folder_ind = FALSE,
-    # log_folder = NA,
-    log_mungesumstats_msgs = F,
+    log_folder = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/munged/',
+    log_mungesumstats_msgs = TRUE,
     imputation_ind = FALSE,
     force_new = FALSE,
     mapping_file = sumstatsColHeaders

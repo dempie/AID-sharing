@@ -2,6 +2,7 @@
 library(data.table)
 library(dplyr)
 library(MungeSumstats)
+library(GenomicRanges)
 library('BSgenome.Hsapiens.NCBI.GRCh38')
 library('SNPlocs.Hsapiens.dbSNP144.GRCh38')
 library("SNPlocs.Hsapiens.dbSNP144.GRCh37")
@@ -273,6 +274,137 @@ names(my_paths) <- a1 #give names
 
 builds <- get_genome_builds(my_paths) #check the genome build, only t1d and derma are build 38
 
+
+
+
+
+#----------------
+locus.breaker=function(res,p.sig=5e-8, p.limit=1e-5,hole.size=250000
+                       ,p.label="P",chr.label="CHR",pos.label="BP"){
+  
+  res = res[order(as.numeric(res[, chr.label]), as.numeric(res[,pos.label])),]
+  
+  res=res[which(res[,p.label]<p.limit),]
+  trait.res=c()
+  for(j in 1:22){
+    
+    res.chr=res[which(res[,chr.label]==j),]
+    if(nrow(res.chr)>1){
+      holes=res.chr[,pos.label][-1]-res.chr[,pos.label][-length(res.chr[,pos.label])] 
+      gaps=which(holes>hole.size)
+      if(length(gaps)>0){
+        for(k in 1:(length(gaps)+1)){
+          
+          if(k==1){
+            res.loc=res.chr[1:(gaps[k]),]  
+          }else if(k==(length(gaps)+1)){
+            res.loc=res.chr[(gaps[k-1]+1):nrow(res.chr),]  
+          }else{
+            res.loc=res.chr[(gaps[k-1]+1):(gaps[k]),]
+          }
+          if(min(res.loc[,p.label])<p.sig){
+            
+            start.pos=min(res.loc[,pos.label],na.rm=T)
+            end.pos=max(res.loc[,pos.label],na.rm=T)
+            chr=j
+            best.snp=res.loc[which.min(res.loc[,p.label]),]
+            line.res=c(chr,start.pos,end.pos,unlist(best.snp))
+            trait.res=rbind(trait.res,line.res)
+          }
+          
+          
+        }
+      }else{
+        res.loc=res.chr
+        if(min(res.loc[,p.label])<p.sig)  {
+          
+          start.pos=min(res.loc[,pos.label],na.rm=T)
+          end.pos=max(res.loc[,pos.label],na.rm=T)
+          chr=j
+          best.snp=res.loc[which.min(res.loc[,p.label]),]
+          line.res=c(chr,start.pos,end.pos,unlist(best.snp))
+          trait.res=rbind(trait.res,line.res)
+        }
+        
+      }
+      
+    }else if(nrow(res.chr)==1){
+      
+      res.loc=res.chr
+      if(min(res.loc[,p.label])<p.sig){
+        start.pos=min(res.loc[,pos.label],na.rm=T)
+        end.pos=max(res.loc[,pos.label],na.rm=T)
+        chr=j
+        best.snp=res.loc[which.min(res.loc[,p.label]),]
+        line.res=c(chr,start.pos,end.pos,unlist(best.snp))
+        trait.res=rbind(trait.res,line.res)
+      }
+      
+      
+    }
+  }
+  
+  print(trait.res)
+  trait.res=as.data.frame(trait.res,stringsAsFactors=FALSE)
+  trait.res=trait.res[,-(which(names(trait.res)==chr.label))]
+  names(trait.res)[1:3]=c("chr","start","end")
+  trait.res
+}
+
+#-------------------------------------------------------------------------------
+
+create_range <- function(res, chr='CHR', start='start', end='end', w=T, tag=NA ) {
+  obj <-GRanges( seqnames =  res$chr ,IRanges(names = res$chr ,start = as.numeric(res$start), end = as.numeric(res$end))) 
+  if( sum(obj@ranges@width> 2000000) >0 ) { warning(paste0( sum(obj@ranges@width> 2000000)) ,' ranges are wider than 2 MB') 
+    print(obj[which(obj@ranges@width> 2000000),])
+  }
+  ifelse(w, return(obj), return(data.frame(names= obj@ranges@NAMES ,start=obj@ranges@start, width=obj@ranges@width))) 
+  
+}
+#-------------------------------------------------------------------------------
+
+
+
+sstats_names <- list.files('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/prepare_for_munge/')
+sstats_names  <- sstats_names [-10]
+my_paths <- as.list(paste0('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/prepare_for_munge/', sstats_names))
+
+gwas_names <- list()
+for( i in c(1:length(sstats_names ))){
+  gwas_names[i] <- strsplit(sstats_names , '_')[[i]][[1]]
+  
+}
+
+#------------------------------------
+loci <- list()
+for(i in c(1:length(my_paths))){
+  sstats <- fread(my_paths[[i]], data.table = F)
+  colnames(sstats) <- toupper(colnames(sstats))
+  
+  sstats <- select(sstats, c(SNP, CHR,BP,EFFECT_ALLELE, NON_EFFECT_ALLELE, BETA,SE, P))
+  loci[[i]] <-  locus.breaker(sstats)
+  names(loci[i]) <- gwas_names[[i]]
+  loci[[i]]$trait <- rep(gwas_names[i], nrow(loci[[i]]))
+}
+
+
+
+all_loci <- do.call(rbind, loci)
+
+pan_loci <- reduce(create_range(all_loci))
+pan_loci_non_reduced <- create_range(all_loci)
+
+
+overlapping <- findOverlaps(pan_loci_non_reduced, pan_loci) #find overlaps between all the loci and use it as an index of the unique non overlapping loci
+overlapping
+all_loci$pan_locus <- rep(0, nrow(all_loci)) #allocale the column 
+all_loci[overlapping@from,]$pan_locus <- overlapping@to
+
+
+
+
+
+all_loci[all_loci$pan_locus==300,]
 
 
 
