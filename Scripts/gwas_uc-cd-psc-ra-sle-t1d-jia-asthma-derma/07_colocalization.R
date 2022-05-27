@@ -125,14 +125,14 @@ f3 <- prepare_munge(f3,
 uc <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/uc_delange-2017.txt', data.table = F)
 head(uc)
 
-uc <- prepare_munge(uc, 
+    prepare_munge(uc, 
                     rsID = 'SNP', 
                     the_effect_allele = 'A1', 
                     the_non_effect_allele = 'A2', 
                     pvalue = 'p',
                     the_Beta = 'Beta',
                     the_SE = 'SE',
-                    path = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/prepare_for_munge/uc_ready_for_munge.txt'
+                    path = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/prepare_for_munge/uc_ready_for_munge_build37.txt'
                     )
 head(uc)
 
@@ -147,7 +147,7 @@ prepare_munge(cd,
               pvalue = 'p',
               the_Beta = 'Beta',
               the_SE = 'SE',
-              path = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/prepare_for_munge/cd_ready_for_munge.txt'
+              path = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/prepare_for_munge/cd_ready_for_munge_build37.txt'
 )
 
 head(cd)
@@ -167,7 +167,7 @@ prepare_munge(psc,
               pvalue = 'P',
               the_Beta = 'beta',
               the_SE = 'SE',
-              path = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/prepare_for_munge/psc_ready_for_munge.txt'
+              path = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/prepare_for_munge/psc_ready_for_munge_build37.txt'
 )
 
 
@@ -182,7 +182,7 @@ prepare_munge(jia,
               pvalue = 'p',
               the_Beta = 'Beta',
               the_SE = 'SE',
-              path = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/prepare_for_munge/jia_ready_for_munge.txt'
+              path = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/prepare_for_munge/jia_ready_for_munge_build37.txt'
 )
 
 #-----sle prepare gwas ---------------------------------------------------------
@@ -196,7 +196,7 @@ prepare_munge(sle,
               pvalue = 'p',
               the_Beta = 'Beta',
               the_SE = 'SE',
-              path = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/prepare_for_munge/sle_ready_for_munge.txt'
+              path = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/prepare_for_munge/sle_ready_for_munge_build37.txt'
 )
 
 #-----t1d prepare gwas ---------------------------------------------------------
@@ -209,9 +209,11 @@ prepare_munge(t1d,
               pvalue = 'p',
               the_Beta = 'effect',
               the_SE = 'SE',
-              path = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/prepare_for_munge/t1d_ready_for_munge.txt'
+              to_remove = c('CHR_37','BP_37'),
+              path = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/prepare_for_munge/t1d_ready_for_mung_build38.txt'
 )
 
+head(t1d)
 #-----asthma prepare GWAS-------------------------------------------------------
 asthma <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/asthma_ban-2020.txt', data.table = F)
 asthma$beta <- log(asthma$OR)
@@ -224,7 +226,7 @@ prepare_munge(asthma,
               pvalue = 'p',
               the_Beta = 'beta',
               the_SE = 'SE',
-              path = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/prepare_for_munge/asthma_ready_for_munge.txt'
+              path = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/prepare_for_munge/asthma_ready_for_munge_build37.txt'
 )
 
 
@@ -238,7 +240,7 @@ prepare_munge(ra,
               pvalue = 'p',
               the_Beta = 'Beta',
               the_SE = 'SE',
-              path = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/prepare_for_munge/ra_ready_for_munge.txt'
+              path = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/prepare_for_munge/ra_ready_for_munge_build37.txt'
 )
 
 
@@ -252,11 +254,16 @@ prepare_munge(derma,
               pvalue = 'p',
               the_Beta = 'Beta',
               the_SE = 'SE',
-              path = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/prepare_for_munge/derma_ready_for_munge.txt'
+              to_remove = c('CHR_37',  'BP_37'),
+              path = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/prepare_for_munge/derma_ready_for_munge_build38.txt'
 )
   
-  
 
+#---------- MungeSumstats ------------------------------------------------------
+#check the build
+a <- list.files('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/prepare_for_munge/')
+a <- list(paste0('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/prepare_for_munge/', a))
+get_genome_builds("outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/prepare_for_munge/outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/prepare_for_munge/asthma_ready_for_munge_build37.txt", )
 
 
 
