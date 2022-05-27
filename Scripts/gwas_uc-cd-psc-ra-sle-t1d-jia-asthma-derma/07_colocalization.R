@@ -1,6 +1,4 @@
 # in this script all the necessary steps for the colocalizzation will be performed 
-
-library(GenomicSEM)
 library(data.table)
 library(dplyr)
 library(MungeSumstats)
@@ -10,142 +8,265 @@ library(MungeSumstats)
 
 #all the sumstats in the gwas have Beta, except for psc and asthma that has OR, just had the beta column
 
-#psc
-psc <-  fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/psc_ji-2016.txt', data.table = F)
-head(psc)
-psc$beta <- log(psc$OR)
-psc <- rename(psc, the_effect_in_OR=OR )
-fwrite(psc,'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/summary_stats_with_beta/psc_ji-2016_withBeta.txt',
-       sep = '\t', col.names = T, row.names = F, quote = F)
-
-#asthma
-asthma <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/asthma_ban-2020.txt', data.table = F)
-head(asthma)
-asthma$beta <- log(asthma$OR)
-asthma <- rename(asthma, the_effect_in_OR=OR)
-fwrite(psc,'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/summary_stats_with_beta/asthma_han-2020_withBeta.txt',
-       sep = '\t', col.names = T, row.names = F, quote = F)
-
-
-#prepare the  factor GWAS
-f1 <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_gwas_ouput/factor1_gwas_final_withQindex.txt', data.table = F)
-f1 <- rename(f1, c(beta='est', p='Pval_Estimate')) %>% select(c('beta', 'p', 'SE', 'SNP', 'CHR', 'BP'))
-f2 <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_gwas_ouput/factor2_gwas_final_withQindex.txt', data.table = F)
-f2 <- rename(f2, c(beta='est', p='Pval_Estimate')) %>% select(c('beta', 'p', 'SE', 'SNP', 'CHR', 'BP'))
-f3 <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_gwas_ouput/factor3_gwas_final_withQindex.txt', data.table = F)
-f3 <- rename(f3, c(beta='est', p='Pval_Estimate')) %>% select(c('beta', 'p', 'SE', 'SNP', 'CHR', 'BP'))
-
-f<- list(f1,f2,f3) 
-for(i in c(1:3)){
-  fwrite(f[i], paste0('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/summary_stats_with_beta/f',i,'_summary_stats_for_munge.txt'), 
-         sep = '\t', col.names = T, row.names = F, quote = F)
-}
 
 #-------------------------------------------------------------------------------
 
+#---- Create a function to prepare the summary stats ---------------------------
+## create a function to prepare the GWAS for the munging depends on dplyr and data.table
+##the function changes the name of the columns as required by the library(MungeSumstats) package
+#and saves the files in the provided path (if the path is provided)
 
-file_names_ok <- c('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/summary_stats_with_beta/f1_summary_stats_for_munge.txt', 
-                   'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/summary_stats_with_beta/f2_summary_stats_for_munge.txt', 
-                   'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/summary_stats_with_beta/f3_summary_stats_for_munge.txt', 
-                    'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/t1d_chiou-2021.txt', 
-                   'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/crohn_delange-2017.txt', 
-                   'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/uc_delange-2017.txt',
-                   'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/summary_stats_with_beta/psc_ji-2016_withBeta.txt',
-                   'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/jia_beta_lopezisac-2020.txt',
-                   'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/sle_beta_bentham-2015.txt',
-                   'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/ra_eu_okada-2014.txt',
-                   'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/summary_stats_with_beta/asthma_han-2020_withBeta.txt',
-                   'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/derma_sliz-2021.txt'
+prepare_munge <- function(sum_stats, rsID, the_effect_allele, the_non_effect_allele, pvalue, the_OR=NA, the_Beta=NA, the_SE=NA, the_chr=NA, the_bp=NA, to_remove=NA, path = NA){
+  #an error if arguments are not provided 
+  if (missing(sum_stats) | missing(rsID) | missing(the_effect_allele) | missing(the_non_effect_allele) |missing(pvalue) ) {
+    
+    stop( 'At least one argument is missing')
+    
+  } else {
+    
+    require(dplyr)
+    require(data.table)
+    sum_stats <- sum_stats  %>% rename(c(SNP = all_of(rsID), EFFECT_ALLELE  = all_of(the_effect_allele), NON_EFFECT_ALLELE = all_of(the_non_effect_allele), p = all_of(pvalue) ))
+    sum_stats$SNP <- tolower(sum_stats$SNP)
+    sum_stats$p <- as.numeric(sum_stats$p)
+    
+    
+    #conditional options 
+    #remove columns
+    if(!is.na(to_remove[1])){sum_stats <- select(sum_stats,-(all_of(to_remove)))} 
+    
+    #rename SE column
+    if(!is.na(the_SE)){ 
+      sum_stats <- rename(sum_stats, SE=all_of(the_SE))
+      sum_stats$SE <- as.numeric(sum_stats$SE)
+    }
+    
+    #rename the effect column
+    if(!is.na(the_OR)){
+      sum_stats <- rename(sum_stats, OR=all_of(the_OR))
+      sum_stats$OR <- as.numeric(sum_stats$OR)
+    }
+    
+    if (!is.na(the_Beta)){
+      sum_stats <- rename(sum_stats, Beta=all_of(the_Beta))
+      sum_stats$Beta <- as.numeric(sum_stats$Beta)
+    } 
+    
+    if(is.na(the_OR) & is.na(the_Beta) ) {stop('Effect column not specified ')}
+    
+    
+    #rename the CHR column
+    if(!is.na(the_chr)){ sum_stats <-  rename(sum_stats, CHR=all_of(the_chr))}
+    
+    #rename the BP column
+    if(!is.na(the_bp)){ sum_stats <- rename(sum_stats, BP=all_of(the_bp))}
+    
+    #save the file if a path is provided
+    if(is.na(path)){
+      invisible(sum_stats)
+      
+      
+    } else {
+      
+      fwrite(sum_stats, path, sep = '\t', col.names = T, row.names = F, quote = F)
+      invisible(sum_stats)
+    }
+  }
+}
+ 
+#-------f1 prepare GWAS -------------------------------------------------------
+f1 <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_gwas_ouput/factor1_gwas_final_withQindex.txt', data.table = F)
+head(f1)
+
+f1 <- prepare_munge(f1, 
+                    rsID = 'SNP', 
+                    the_effect_allele = 'A1', 
+                    the_non_effect_allele = 'A2', 
+                    pvalue = 'Pval_Estimate',
+                    the_Beta = 'est',
+                    the_SE = 'SE', 
+                    to_remove = c('op', 'free', 'label', 'Z_Estimate', 'chisq', 'chisq_df' , 'chisq_pval', 'AIC', 'error', 'warning' , 'Q_chisq', 'Q_df', 'Q_chisq_pval'),
+                    path = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/prepare_for_munge/f1_ready_for_munge.txt'
+                    )
+
+head(f1)
+#-------f2 prepare GWAS -------------------------------------------------------
+f2 <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_gwas_ouput/factor2_gwas_final_withQindex.txt', data.table = F)
+head(f2)
+
+f2 <- prepare_munge(f2, 
+                    rsID = 'SNP', 
+                    the_effect_allele = 'A1', 
+                    the_non_effect_allele = 'A2', 
+                    pvalue = 'Pval_Estimate',
+                    the_Beta = 'est',
+                    the_SE = 'SE', 
+                    to_remove = c('op', 'free', 'label', 'Z_Estimate', 'chisq', 'chisq_df' , 'chisq_pval', 'AIC', 'error', 'warning' , 'Q_chisq', 'Q_df', 'Q_chisq_pval'),
+                    path = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/prepare_for_munge/f2_ready_for_munge.txt'
+)
+head(f2)
+
+#-------f3 prepare GWAS -------------------------------------------------------
+f3 <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_gwas_ouput/factor3_gwas_final_withQindex.txt', data.table = F)
+head(f3)
+
+f3 <- prepare_munge(f3, 
+                    rsID = 'SNP', 
+                    the_effect_allele = 'A1', 
+                    the_non_effect_allele = 'A2', 
+                    pvalue = 'Pval_Estimate',
+                    the_Beta = 'est',
+                    the_SE = 'SE', 
+                    to_remove = c('op', 'free', 'label', 'Z_Estimate', 'chisq', 'chisq_df' , 'chisq_pval', 'AIC', 'error', 'warning' , 'Q_chisq', 'Q_df', 'Q_chisq_pval'),
+                    path = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/prepare_for_munge/f3_ready_for_munge.txt'
 )
 
-
-res <- sumstats(files = file_names_ok , ref = 'SNP/reference.1000G.maf.0.005.txt.gz',
-         trait.names = c('f1','f2','f3','t1d','crohn', 'uc', 'psc', 'jia', 'sle', 'ra',  'asthma', 'derma') ,
-         se.logit =  c(F,F,F,F,F,F,F,F,F),  
-         OLS = c(T,T,T,T,T,T,T,T,T), 
-         linprob = c(F,F,F,F,F,F,F,F,F), 
-         N = c(NA, NA, NA, NA, NA, NA, NA, NA, NA), 
-         parallel = T,
-         keep.indel= F 
-)
-
-saveRDS(res, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/sumstats_output/intermediate_sumstats.RDS')
-res <- readRDS('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/sumstats_output/intermediate_sumstats.RDS')
-system('mv *log /project/aid_sharing/AID_sharing/outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/sumstats_output')
-
-
-
-
-
-#----------------check if the betas are identical and add the standard errors from the original GWAS
-
-f1 <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/summary_stats_with_beta/f1_summary_stats_for_munge.txt', data.table = F)
-f2 <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/summary_stats_with_beta/f2_summary_stats_for_munge.txt', data.table = F)
-f3 <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/summary_stats_with_beta/f3_summary_stats_for_munge.txt', data.table = F)
+#----------uc prepare GWAS -----------------------------------------------------
 uc <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/uc_delange-2017.txt', data.table = F)
+head(uc)
+
+uc <- prepare_munge(uc, 
+                    rsID = 'SNP', 
+                    the_effect_allele = 'A1', 
+                    the_non_effect_allele = 'A2', 
+                    pvalue = 'p',
+                    the_Beta = 'Beta',
+                    the_SE = 'SE',
+                    path = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/prepare_for_munge/uc_ready_for_munge.txt'
+                    )
+head(uc)
+
+#-----crohn prepare GWAS -------------------------------------------------------
 cd <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/crohn_delange-2017.txt', data.table = F)
+
+
+prepare_munge(cd, 
+              rsID = 'SNP', 
+              the_effect_allele = 'A1', 
+              the_non_effect_allele = 'A2', 
+              pvalue = 'p',
+              the_Beta = 'Beta',
+              the_SE = 'SE',
+              path = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/prepare_for_munge/cd_ready_for_munge.txt'
+)
+
+head(cd)
+
+#-----psc prepare GWAS----------------------------------------------------------
 psc <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/psc_ji-2016.txt', data.table = F)
+head(psc)
+
+
+psc$beta <- log(psc$OR)
+psc <- rename(psc, the_effect_in_OR=OR )
+
+prepare_munge(psc, 
+              rsID = 'SNP', 
+              the_effect_allele = 'A1', 
+              the_non_effect_allele = 'A2', 
+              pvalue = 'P',
+              the_Beta = 'beta',
+              the_SE = 'SE',
+              path = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/prepare_for_munge/psc_ready_for_munge.txt'
+)
+
+
+#----jia prepare GWAS ----------------------------------------------------------
 jia <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/jia_beta_lopezisac-2020.txt', data.table = F)
+head(jia)
+
+prepare_munge(jia, 
+              rsID = 'SNP', 
+              the_effect_allele = 'A1', 
+              the_non_effect_allele = 'A2', 
+              pvalue = 'p',
+              the_Beta = 'Beta',
+              the_SE = 'SE',
+              path = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/prepare_for_munge/jia_ready_for_munge.txt'
+)
+
+#-----sle prepare gwas ---------------------------------------------------------
 sle <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/sle_beta_bentham-2015.txt', data.table = F)
-t1d <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/t1d_chiou-2021_build37.txt', data.table=F) 
+head(sle)
+
+prepare_munge(sle, 
+              rsID = 'SNP', 
+              the_effect_allele = 'A1', 
+              the_non_effect_allele = 'A2', 
+              pvalue = 'p',
+              the_Beta = 'Beta',
+              the_SE = 'SE',
+              path = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/prepare_for_munge/sle_ready_for_munge.txt'
+)
+
+#-----t1d prepare gwas ---------------------------------------------------------
+t1d <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/t1d_chiou-2021_build37.txt', data.table=F)
+
+prepare_munge(t1d, 
+              rsID = 'rsID', 
+              the_effect_allele = 'A1', 
+              the_non_effect_allele = 'A2', 
+              pvalue = 'p',
+              the_Beta = 'effect',
+              the_SE = 'SE',
+              path = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/prepare_for_munge/t1d_ready_for_munge.txt'
+)
+
+#-----asthma prepare GWAS-------------------------------------------------------
 asthma <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/asthma_ban-2020.txt', data.table = F)
+asthma$beta <- log(asthma$OR)
+asthma <- rename(asthma, the_effect_in_OR=OR)
+
+prepare_munge(asthma, 
+              rsID = 'SNP', 
+              the_effect_allele = 'A1', 
+              the_non_effect_allele = 'A2', 
+              pvalue = 'p',
+              the_Beta = 'beta',
+              the_SE = 'SE',
+              path = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/prepare_for_munge/asthma_ready_for_munge.txt'
+)
+
+
+#----------ra preare GWAS ------------------------------------------------------
 ra <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/ra_eu_okada-2014_chr_bp.txt', data.table = F)
+
+prepare_munge(ra, 
+              rsID = 'SNP', 
+              the_effect_allele = 'A1', 
+              the_non_effect_allele = 'A2', 
+              pvalue = 'p',
+              the_Beta = 'Beta',
+              the_SE = 'SE',
+              path = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/prepare_for_munge/ra_ready_for_munge.txt'
+)
+
+
+#-------------derma prepare GWAS
 derma <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/derma_sliz-2021_build37.txt', data.table = F)
 
-#check if the betas in res are equal to the original gwas is abs() values as they should have been flipped and munged
-
-dim(res)#3344679      24
-
-head(res)
-
-
-
-psc <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/summary_stats_with_beta/psc_ji-2016_withBeta.txt', data.table = F)
-
-
-
-
-
-for(i in c(1:7)){
+prepare_munge(derma, 
+              rsID = 'SNP', 
+              the_effect_allele = 'A1', 
+              the_non_effect_allele = 'A2', 
+              pvalue = 'p',
+              the_Beta = 'Beta',
+              the_SE = 'SE',
+              path = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/prepare_for_munge/derma_ready_for_munge.txt'
+)
   
-trait <- gwas[i]
-colnames(trait) <- toupper(colnames(trait))
-
-trait <- (trait[(trait$SNP %in% res$SNP),  ])
-
-res <- res[order(as.numeric(res$CHR), as.numeric(res$BP)),]
-trait <- trait[order(as.numeric(unlist(select(trait, 'CHR')), as.numeric(unlist(select(trait,'BP'))))) ,]
-num_row[i] <- nrow(trait)==nrow(res)
- 
- 
-beta_identical[i] <- mean(abs(res$beta.psc)==abs(select(trait, 'BETA')))
-summary[[i]][[1]] <- summary(abs(res$beta.psc))
-summary[[i]][[2]] <- summary(abs(select(trait, 'BETA')))
-res$se.psc <-select(trait, 'SE')
- 
-se_identical[[i]] <- mean(res$se.psc == select(trait, 'SE') )
-
-}
-
- head(res)
- head(trait)
-
-
- 
- 
- 
- 
- 
- 
- 
- 
- 
+  
 
 
 
 
-
-
+  
+  
+  
+  
+  
+  
+  
 
 
 
