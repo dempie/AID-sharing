@@ -43,7 +43,7 @@ for(i in c(1:12)){
   
   format_sumstats(
     path= my_paths[[i]],
-    convert_ref_genome = 'GRCH38',
+    convert_ref_genome = 'GRCH37',
     convert_small_p = TRUE,
     compute_z = FALSE,
     force_new_z = FALSE,
@@ -69,8 +69,8 @@ for(i in c(1:12)){
     remove_multi_rs_snp = FALSE,
     frq_is_maf = TRUE,
     sort_coordinates = TRUE,
-    nThread = 12,
-    save_path = paste0('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/munged/', gwas_names[[i]], '_munged_build38.txt' ),
+    nThread = 10,
+    save_path = paste0('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/munged/', gwas_names[[i]], '_munged_build37.txt' ),
     write_vcf = FALSE,
     tabix_index = FALSE,
     return_data = FALSE,

@@ -3,6 +3,7 @@ library(data.table)
 library(dplyr)
 library(MungeSumstats)
 library(GenomicRanges)
+library(liftOver)
 library('BSgenome.Hsapiens.NCBI.GRCh38')
 library('SNPlocs.Hsapiens.dbSNP144.GRCh38')
 library("SNPlocs.Hsapiens.dbSNP144.GRCh37")
@@ -218,7 +219,35 @@ prepare_munge(t1d,
               path = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/prepare_for_munge/t1d_ready_for_mung_build38.txt'
 )
 
-head(t1d)
+#liftover to GhR37
+t1d_38 <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/prepare_for_munge/t1d_ready_for_mung_build38.txt', data.table=F)
+t1d_37 <- t1d_38 
+t1d_38_granges <- GRanges(seqnames = paste0('chr',t1d_38$CHR), IRanges(start = t1d_38$BP , end = t1d_38$BP)) 
+path = system.file(package="liftOver", "extdata", "hg38ToHg19.over.chain") #the file that will be used to perform the liftover of the annotation 
+ch = import.chain(path) 
+
+seqlevelsStyle(t1d_38_granges) = "UCSC"  # necessar
+t1d_37_granges <- liftOver(t1d_38_granges, ch)
+t1d_37_granges<- unlist(t1d_37_granges)
+
+t1d_37$BP <-  t1d_37_granges@ranges@start
+SNP_ref <- fread('SNP/reference.1000G.maf.0.005.txt.gz', data.table = F)
+
+ 
+ ref <- SNP_ref[base::match(t1d_37$SNP, SNP_ref$SNP),]
+ 
+ table(t1d_37$CHR==ref$CHR)
+ 
+ t1d_37[! t1d_37$CHR==ref$CHR,]
+ ref[! ref$CHR==t1d_37$CHR,]
+ 
+ ref[132978,]
+ t1d_37[132978,]
+
+
+
+    mean(t1d_38$BP==ref$BP)
+ 
 #-----asthma prepare GWAS-------------------------------------------------------
 asthma <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/asthma_ban-2020.txt', data.table = F)
 asthma$beta <- log(asthma$OR)
@@ -274,83 +303,6 @@ names(my_paths) <- a1 #give names
 
 builds <- get_genome_builds(my_paths) #check the genome build, only t1d and derma are build 38
 
-
-
-
-
-#----------------
-locus.breaker=function(res,p.sig=5e-8, p.limit=1e-5,hole.size=250000
-                       ,p.label="P",chr.label="CHR",pos.label="BP"){
-  
-  res = res[order(as.numeric(res[, chr.label]), as.numeric(res[,pos.label])),]
-  
-  res=res[which(res[,p.label]<p.limit),]
-  trait.res=c()
-  for(j in 1:22){
-    
-    res.chr=res[which(res[,chr.label]==j),]
-    if(nrow(res.chr)>1){
-      holes=res.chr[,pos.label][-1]-res.chr[,pos.label][-length(res.chr[,pos.label])] 
-      gaps=which(holes>hole.size)
-      if(length(gaps)>0){
-        for(k in 1:(length(gaps)+1)){
-          
-          if(k==1){
-            res.loc=res.chr[1:(gaps[k]),]  
-          }else if(k==(length(gaps)+1)){
-            res.loc=res.chr[(gaps[k-1]+1):nrow(res.chr),]  
-          }else{
-            res.loc=res.chr[(gaps[k-1]+1):(gaps[k]),]
-          }
-          if(min(res.loc[,p.label])<p.sig){
-            
-            start.pos=min(res.loc[,pos.label],na.rm=T)
-            end.pos=max(res.loc[,pos.label],na.rm=T)
-            chr=j
-            best.snp=res.loc[which.min(res.loc[,p.label]),]
-            line.res=c(chr,start.pos,end.pos,unlist(best.snp))
-            trait.res=rbind(trait.res,line.res)
-          }
-          
-          
-        }
-      }else{
-        res.loc=res.chr
-        if(min(res.loc[,p.label])<p.sig)  {
-          
-          start.pos=min(res.loc[,pos.label],na.rm=T)
-          end.pos=max(res.loc[,pos.label],na.rm=T)
-          chr=j
-          best.snp=res.loc[which.min(res.loc[,p.label]),]
-          line.res=c(chr,start.pos,end.pos,unlist(best.snp))
-          trait.res=rbind(trait.res,line.res)
-        }
-        
-      }
-      
-    }else if(nrow(res.chr)==1){
-      
-      res.loc=res.chr
-      if(min(res.loc[,p.label])<p.sig){
-        start.pos=min(res.loc[,pos.label],na.rm=T)
-        end.pos=max(res.loc[,pos.label],na.rm=T)
-        chr=j
-        best.snp=res.loc[which.min(res.loc[,p.label]),]
-        line.res=c(chr,start.pos,end.pos,unlist(best.snp))
-        trait.res=rbind(trait.res,line.res)
-      }
-      
-      
-    }
-  }
-  
-  print(trait.res)
-  trait.res=as.data.frame(trait.res,stringsAsFactors=FALSE)
-  trait.res=trait.res[,-(which(names(trait.res)==chr.label))]
-  names(trait.res)[1:3]=c("chr","start","end")
-  trait.res
-}
-
 #-------------------------------------------------------------------------------
 
 create_range <- function(res, chr='CHR', start='start', end='end', w=T, tag=NA ) {
@@ -366,46 +318,55 @@ create_range <- function(res, chr='CHR', start='start', end='end', w=T, tag=NA )
 
 sstats_names <- list.files('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/prepare_for_munge/')
 sstats_names  <- sstats_names [-10]
-my_paths <- as.list(paste0('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/prepare_for_munge/', sstats_names))
+mypaths <- as.list(paste0('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/prepare_for_munge/', sstats_names))
 
-gwas_names <- list()
+trait_names <- list()
 for( i in c(1:length(sstats_names ))){
-  gwas_names[i] <- strsplit(sstats_names , '_')[[i]][[1]]
+  trait_names[i] <- strsplit(sstats_names , '_')[[i]][[1]]
   
 }
 
 #------------------------------------
-loci <- list()
-for(i in c(1:length(my_paths))){
-  sstats <- fread(my_paths[[i]], data.table = F)
-  colnames(sstats) <- toupper(colnames(sstats))
+
+#this function identifies significant loci with the locus.breaker fuction
+#then creates a table of all the loci for all traits and puts them togehter.
+#then looks at the overlapps between the loci and creates a macro loci that do not overlapp among them and assigns them a unique number (column pan_loci)
+#the function requires the sumstatsto have the columns: SNP, CHR,BP,EFFECT_ALLELE, NON_EFFECT_ALLELE, BETA,SE, P
+
+locus_lister <- function(my_paths, gwas_names) {
+    require(data.table)
+    require(dplyr)
+    require(GenomicRanges)
+      loci <- list()
+      for(i in c(1:length(my_paths))){
+                sstats <- fread(my_paths[[i]], data.table = F)
+                colnames(sstats) <- toupper(colnames(sstats))
+                
+                sstats <- select(sstats, c(SNP, CHR,BP,EFFECT_ALLELE, NON_EFFECT_ALLELE, BETA,SE, P))
+                loci[[i]] <-  locus.breaker(sstats)  #locus breaker function is in my R profile
+                names(loci[i]) <- gwas_names[[i]]
+                loci[[i]]$trait <- rep(gwas_names[i], nrow(loci[[i]]))
+      }
+      
+      all_loci <- do.call(rbind, loci) #create the listof all the loci
+      
+      pan_loci <- reduce(create_range(all_loci)) #create the genomic ranges object with my function create_range
+      pan_loci_non_reduced <- create_range(all_loci)
+      
+      overlapping <- findOverlaps(pan_loci_non_reduced, pan_loci) #find overlaps between all the loci and use it as an index of the unique non overlapping loci
+      overlapping
+      all_loci$pan_locus <- rep(0, nrow(all_loci)) #allocate the column 
+      all_loci[overlapping@from,]$pan_locus <- overlapping@to  #assing the number as index of which macro loci is overlapping 
+      
+      return(all_loci)
   
-  sstats <- select(sstats, c(SNP, CHR,BP,EFFECT_ALLELE, NON_EFFECT_ALLELE, BETA,SE, P))
-  loci[[i]] <-  locus.breaker(sstats)
-  names(loci[i]) <- gwas_names[[i]]
-  loci[[i]]$trait <- rep(gwas_names[i], nrow(loci[[i]]))
 }
 
 
+#---------generate the list of all loci---------------------------------------------------
 
-all_loci <- do.call(rbind, loci)
-
-pan_loci <- reduce(create_range(all_loci))
-pan_loci_non_reduced <- create_range(all_loci)
-
-
-overlapping <- findOverlaps(pan_loci_non_reduced, pan_loci) #find overlaps between all the loci and use it as an index of the unique non overlapping loci
-overlapping
-all_loci$pan_locus <- rep(0, nrow(all_loci)) #allocale the column 
-all_loci[overlapping@from,]$pan_locus <- overlapping@to
-
-
-
-
-
-all_loci[all_loci$pan_locus==300,]
-
-
+loci <- locus_lister(mypaths, trait_names)
+dim(loci)
 
 
 

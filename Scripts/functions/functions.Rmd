@@ -673,3 +673,43 @@ prepare_plot <-  function(res, Pval_col,plimit=0.005, BP='BP', CHR='CHR') {
   return(output)
 }
 ```
+
+
+
+```{r locus_lister}
+
+
+locus_lister <- function(my_paths, gwas_names) {
+    require(data.table)
+    require(dplyr)
+    require(GenomicRanges)
+      loci <- list()
+      for(i in c(1:length(my_paths))){
+                sstats <- fread(my_paths[[i]], data.table = F)
+                colnames(sstats) <- toupper(colnames(sstats))
+                
+                sstats <- select(sstats, c(SNP, CHR,BP,EFFECT_ALLELE, NON_EFFECT_ALLELE, BETA,SE, P))
+                loci[[i]] <-  locus.breaker(sstats)  #locus breaker function is in my R profile
+                names(loci[i]) <- gwas_names[[i]]
+                loci[[i]]$trait <- rep(gwas_names[i], nrow(loci[[i]]))
+      }
+      
+      all_loci <- do.call(rbind, loci) #create the listof all the loci
+      
+      pan_loci <- reduce(create_range(all_loci)) #create the genomic ranges object with my function create_range
+      pan_loci_non_reduced <- create_range(all_loci)
+      
+      overlapping <- findOverlaps(pan_loci_non_reduced, pan_loci) #find overlaps between all the loci and use it as an index of the unique non overlapping loci
+      overlapping
+      all_loci$pan_locus <- rep(0, nrow(all_loci)) #allocate the column 
+      all_loci[overlapping@from,]$pan_locus <- overlapping@to  #assing the number as index of which macro loci is overlapping 
+      
+      return(all_loci)
+  
+}
+```
+
+
+
+
+
