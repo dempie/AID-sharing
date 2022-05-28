@@ -274,6 +274,8 @@ my_paths <- my_paths [-10] #remove README
 a1 <- a1[-10] #remove README
 names(my_paths) <- a1 #give names
 
+my_paths <- my_paths[-c(2,12)] #uc and cd do not have rsID and genome build cannot be inferred by the function, I checked in the paper and it is build37
+
 builds <- get_genome_builds(my_paths) #check the genome build, only t1d and derma are build 38
 
 #-------------------------------------------------------------------------------

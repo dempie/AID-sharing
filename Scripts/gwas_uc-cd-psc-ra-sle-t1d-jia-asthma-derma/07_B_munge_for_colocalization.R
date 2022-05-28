@@ -28,8 +28,8 @@ a1 <- list.files('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocali
 my_paths <- as.list(paste0('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/prepare_for_munge/', a1)) #create paths
 my_paths <- my_paths [-10] #remove README
 a1 <- a1[-10] #remove README
-names(my_paths) <- a1 #give names
 
+builds <- c("GRCH37" ,"GRCH37","GRCH38" ,"GRCH37", "GRCH37" ,"GRCH37" ,"GRCH37" ,"GRCH37" ,"GRCH37" ,"GRCH37" ,"GRCH38","GRCH37" )
 
 gwas_names <- list()
 for( i in c(1:length(a1))){
@@ -37,25 +37,29 @@ for( i in c(1:length(a1))){
   
 }
 
+names(my_paths) <- gwas_names #give names just for checking
+
 data('sumstatsColHeaders') #load reference file coming from the package  MungeSumstats
+output <- list()
 
 for(i in c(1:12)){
   
-  format_sumstats(
+output[[i]] <-  format_sumstats(
     path= my_paths[[i]],
     convert_ref_genome = 'GRCH37',
-    convert_small_p = TRUE,
+    ref_genome = builds[i],
+    convert_small_p = F,
     compute_z = FALSE,
     force_new_z = FALSE,
     compute_n = 0L,
-    convert_n_int = TRUE,
+    convert_n_int = F,
     analysis_trait = NULL,
-    INFO_filter = 0.9,
+    INFO_filter = 0,
     FRQ_filter = 0,
-    pos_se = TRUE,
+    pos_se = F,
     effect_columns_nonzero = FALSE,
     N_std = 5,
-    N_dropNA = TRUE,
+    N_dropNA = F,
     rmv_chr = c("X", "Y", "MT"),
     rmv_chrPrefix = TRUE,
     on_ref_genome = TRUE,
@@ -69,7 +73,7 @@ for(i in c(1:12)){
     remove_multi_rs_snp = FALSE,
     frq_is_maf = TRUE,
     sort_coordinates = TRUE,
-    nThread = 10,
+    nThread = 12,
     save_path = paste0('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/munged/', gwas_names[[i]], '_munged_build37.txt' ),
     write_vcf = FALSE,
     tabix_index = FALSE,
@@ -77,7 +81,7 @@ for(i in c(1:12)){
     return_format = "data.table",
     ldsc_format = FALSE,
     log_folder_ind = FALSE,
-    log_folder = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/munged/',
+    log_folder = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/munged/log/',
     log_mungesumstats_msgs = TRUE,
     imputation_ind = FALSE,
     force_new = FALSE,
@@ -85,3 +89,6 @@ for(i in c(1:12)){
   )
   
 }
+
+
+saveRDS(output, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/munged/output_removed_SNPs/removed_SNP.RDS')
