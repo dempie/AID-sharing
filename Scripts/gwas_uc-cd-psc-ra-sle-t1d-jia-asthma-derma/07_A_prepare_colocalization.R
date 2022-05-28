@@ -234,20 +234,16 @@ t1d_37$BP <-  t1d_37_granges@ranges@start
 SNP_ref <- fread('SNP/reference.1000G.maf.0.005.txt.gz', data.table = F)
 
  
- ref <- SNP_ref[base::match(t1d_37$SNP, SNP_ref$SNP),]
+ref <- SNP_ref[base::match(t1d_37$SNP, SNP_ref$SNP),]
  
- table(t1d_37$CHR==ref$CHR)
+table(t1d_37$CHR==ref$CHR) #26 different, probably different or multiple rsID names, take it out
  
- t1d_37[! t1d_37$CHR==ref$CHR,]
- ref[! ref$CHR==t1d_37$CHR,]
- 
- ref[132978,]
- t1d_37[132978,]
+t1d_37[! t1d_37$CHR==ref$CHR,] #26 different, probably different or multiple rsID names, take it out
+dim(t1d_37) #9259094
+t1d_37 <-  t1d_37[t1d_37$CHR==ref$CHR,]
+dim(t1d_37) # 9259068
+head(t1d_37)
 
-
-
-    mean(t1d_38$BP==ref$BP)
- 
 #-----asthma prepare GWAS-------------------------------------------------------
 asthma <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/asthma_ban-2020.txt', data.table = F)
 asthma$beta <- log(asthma$OR)
