@@ -3,11 +3,8 @@ library(data.table)
 library(dplyr)
 library(MungeSumstats)
 library(GenomicRanges)
-library(liftOver)
-library('BSgenome.Hsapiens.NCBI.GRCh38')
-library('SNPlocs.Hsapiens.dbSNP144.GRCh38')
-library("SNPlocs.Hsapiens.dbSNP144.GRCh37")
-library("BSgenome.Hsapiens.1000genomes.hs37d5")
+library(tidyr)
+
 
 
 
@@ -128,35 +125,41 @@ f3 <- prepare_munge(f3,
 )
 
 #----------uc prepare GWAS -----------------------------------------------------
-uc <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/uc_delange-2017.txt', data.table = F)
-head(uc)
+uc <- fread('Summary_Stats/delange-2017_uc_build37_45975_20161107.txt', data.table = F)
+uc <- uc %>% separate(col = 'MarkerName', sep = '_|_', remove = F, convert = T, extra = 'warn', into = c('SNP', 'Extra1', 'Extra2') ) %>% select(-c(Extra1, Extra2))  %>% separate(col='SNP', sep= ':', convert=F,  into = c('CHR', 'BP'), remove = F)
+head(uc)    
+uc <- select(uc,-c('SNP'))
 
     prepare_munge(uc,
-                    rsID = 'SNP',
-                    the_effect_allele = 'A1',
-                    the_non_effect_allele = 'A2',
-                    pvalue = 'p',
-                    the_Beta = 'Beta',
-                    the_SE = 'SE',
+                    rsID = 'MarkerName',
+                    the_effect_allele = 'Allele2',
+                    the_non_effect_allele = 'Allele1',
+                    pvalue = 'P.value',
+                    the_Beta = 'Effect',
+                    the_SE = 'StdErr',
+                    to_remove = c( 'Min_single_cohort_pval', 'Pval_GWAS3', 'Pval_IIBDGC', 'Pval_IBDseq', 'HetPVal', 'HetDf', 'HetChiSq', 'HetISq'  ),
                     path = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/prepare_for_munge/uc_ready_for_munge_build37.txt'
                     )
 head(uc)
 
 #-----crohn prepare GWAS -------------------------------------------------------
-cd <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/crohn_delange-2017.txt', data.table = F)
+cd <- fread('Summary_Stats/delange-2017_cd_build37_40266_20161107.txt', data.table = F)
+cd <- cd %>% separate(col = 'MarkerName', sep = '_|_', remove = F, convert = T, extra = 'warn', into = c('SNP', 'Extra1', 'Extra2') ) %>% select(-c(Extra1, Extra2))  %>% separate(col='SNP', sep= ':', convert=F,  into = c('CHR', 'BP'), remove = F)
+head(cd)    
+cd <- select(cd,-c('SNP'))
 
 
 prepare_munge(cd,
-              rsID = 'SNP',
-              the_effect_allele = 'A1',
-              the_non_effect_allele = 'A2',
-              pvalue = 'p',
-              the_Beta = 'Beta',
-              the_SE = 'SE',
+              rsID = 'MarkerName',
+              the_effect_allele = 'Allele2',
+              the_non_effect_allele = 'Allele1',
+              pvalue = 'P.value',
+              the_Beta = 'Effect',
+              the_SE = 'StdErr',
+              to_remove = c( 'Min_single_cohort_pval', 'Pval_GWAS3', 'Pval_IIBDGC', 'Pval_IBDseq', 'HetPVal', 'HetDf', 'HetChiSq', 'HetISq'  ),
               path = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/prepare_for_munge/cd_ready_for_munge_build37.txt'
 )
 
-head(cd)
 
 #-----psc prepare GWAS----------------------------------------------------------
 psc <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/psc_ji-2016.txt', data.table = F)
@@ -206,43 +209,19 @@ prepare_munge(sle,
 )
 
 #-----t1d prepare gwas ---------------------------------------------------------
-t1d <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/t1d_chiou-2021_build37.txt', data.table=F)
-
+t1d <- fread('Summary_Stats/chiou-2021_t1d_build38_GCST90014023_buildGRCh38.tsv', data.table=F)
+head(t1d)
 prepare_munge(t1d,
-              rsID = 'rsID',
-              the_effect_allele = 'A1',
-              the_non_effect_allele = 'A2',
-              pvalue = 'p',
-              the_Beta = 'effect',
-              the_SE = 'SE',
-              to_remove = c('CHR_37','BP_37'),
+              rsID = 'variant_id',
+              the_effect_allele = 'effect_allele',
+              the_non_effect_allele = 'other_allele',
+              pvalue = 'p_value',
+              the_Beta = 'beta',
+              the_SE = 'standard_error',
+              the_chr = 'chromosome',
+              the_bp = 'base_pair_location',
               path = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/prepare_for_munge/t1d_ready_for_mung_build38.txt'
 )
-
-#liftover to GhR37
-t1d_38 <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/prepare_for_munge/t1d_ready_for_mung_build38.txt', data.table=F)
-t1d_37 <- t1d_38 
-t1d_38_granges <- GRanges(seqnames = paste0('chr',t1d_38$CHR), IRanges(start = t1d_38$BP , end = t1d_38$BP)) 
-path = system.file(package="liftOver", "extdata", "hg38ToHg19.over.chain") #the file that will be used to perform the liftover of the annotation 
-ch = import.chain(path) 
-
-seqlevelsStyle(t1d_38_granges) = "UCSC"  # necessar
-t1d_37_granges <- liftOver(t1d_38_granges, ch)
-t1d_37_granges<- unlist(t1d_37_granges)
-
-t1d_37$BP <-  t1d_37_granges@ranges@start
-SNP_ref <- fread('SNP/reference.1000G.maf.0.005.txt.gz', data.table = F)
-
- 
-ref <- SNP_ref[base::match(t1d_37$SNP, SNP_ref$SNP),]
- 
-table(t1d_37$CHR==ref$CHR) #26 different, probably different or multiple rsID names, take it out
- 
-t1d_37[! t1d_37$CHR==ref$CHR,] #26 different, probably different or multiple rsID names, take it out
-dim(t1d_37) #9259094
-t1d_37 <-  t1d_37[t1d_37$CHR==ref$CHR,]
-dim(t1d_37) # 9259068
-head(t1d_37)
 
 #-----asthma prepare GWAS-------------------------------------------------------
 asthma <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/asthma_ban-2020.txt', data.table = F)
@@ -275,8 +254,8 @@ prepare_munge(ra,
 
 
 #-------------derma prepare GWAS
-derma <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/derma_sliz-2021_build37.txt', data.table = F)
-
+derma <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_sumstats/ready_for_munge/derma_sliz-2021.txt', data.table = F)
+head(derma)
 prepare_munge(derma,
               rsID = 'SNP',
               the_effect_allele = 'A1',
@@ -284,10 +263,8 @@ prepare_munge(derma,
               pvalue = 'p',
               the_Beta = 'Beta',
               the_SE = 'SE',
-              to_remove = c('CHR_37',  'BP_37'),
               path = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/prepare_for_munge/derma_ready_for_munge_build38.txt'
 )
-
 
 #---------- MungeSumstats ------------------------------------------------------
 #check the build
@@ -312,9 +289,9 @@ create_range <- function(res, chr='CHR', start='start', end='end', w=T, tag=NA )
 #-------------------------------------------------------------------------------
 
 
-sstats_names <- list.files('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/prepare_for_munge/')
-sstats_names  <- sstats_names [-10]
-mypaths <- as.list(paste0('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/prepare_for_munge/', sstats_names))
+sstats_names <- list.files('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/munged/')
+sstats_names  <- sstats_names [c(-8, -9)]
+mypaths <- as.list(paste0('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/munged/', sstats_names))
 
 trait_names <- list()
 for( i in c(1:length(sstats_names ))){
@@ -338,7 +315,7 @@ locus_lister <- function(my_paths, gwas_names) {
                 sstats <- fread(my_paths[[i]], data.table = F)
                 colnames(sstats) <- toupper(colnames(sstats))
                 
-                sstats <- select(sstats, c(SNP, CHR,BP,EFFECT_ALLELE, NON_EFFECT_ALLELE, BETA,SE, P))
+                sstats <- select(sstats, c(SNP, CHR,BP, A2, A1, BETA,SE, P))
                 loci[[i]] <-  locus.breaker(sstats)  #locus breaker function is in my R profile
                 names(loci[i]) <- gwas_names[[i]]
                 loci[[i]]$trait <- rep(gwas_names[i], nrow(loci[[i]]))
@@ -364,7 +341,24 @@ locus_lister <- function(my_paths, gwas_names) {
 loci <- locus_lister(mypaths, trait_names)
 dim(loci)
 
+loci_all <- readRDS('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/06_gwas_analysis/loci_all_gwas.RDS')
+
+loci_all$psc$start==loci[loci$trait=='psc','start']
+
+head(loci_all$t1d, 20)
+head(loci[loci$trait=='t1d',], 20)
 
 
+
+
+
+
+
+
+
+
+lengt locus.breaker(t1d, p.label ='p', chr.label = 'CHR', pos.label = 'BP')
+
+head(t1d)
 
 
