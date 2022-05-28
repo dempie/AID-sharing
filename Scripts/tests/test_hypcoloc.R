@@ -180,9 +180,8 @@ manhattan(subset(psc_plot, CHR==1), chr="CHR", bp="BP", snp="SNP", p="P" ,ylim=c
 dev.off()
 
 
-uc[c(uc$chr==1 & uc$),]
 
-uc$chr
+
 
 
 
