@@ -5,6 +5,8 @@ library(GenomicRanges)
 library(tidyr)
 library(hyprcoloc) #https://github.com/jrs95/hyprcoloc
 
+vignette('hyprcoloc')
+
 #function to create a genomic ranges object useful to find overlapps between loci 
 
 create_range <- function(res, chr='CHR', start='start', end='end', w=T, tag=NA ) {
@@ -33,7 +35,7 @@ for( i in c(1:length(sstats_names ))){
 #this function identifies significant loci with the locus.breaker fuction
 #then creates a table of all the loci for all traits and puts them togehter.
 #then looks at the overlapps between the loci and creates a macro loci that do not overlapp among them and assigns them a unique number (column pan_loci)
-#the function requires the sumstatsto have the columns: SNP, CHR,BP,EFFECT_ALLELE, NON_EFFECT_ALLELE, BETA,SE, P
+#the function requires the sumstatsto have the columns: SNP, CHR,BP, A2 (EFFECT_ALLELE), A1 (NON_EFFECT_ALLELE), BETA,SE, P
 
 locus_lister <- function(my_paths, gwas_names) {
   require(data.table)
@@ -58,7 +60,7 @@ locus_lister <- function(my_paths, gwas_names) {
   overlapping <- findOverlaps(pan_loci_non_reduced, pan_loci) #find overlaps between all the loci and use it as an index of the unique non overlapping loci
   overlapping
   all_loci$pan_locus <- rep(0, nrow(all_loci)) #allocate the column 
-  all_loci[overlapping@from,]$pan_locus <- overlapping@to  #assing the number as index of which macro loci is overlapping 
+  all_loci[overlapping@from,]$pan_locus <- overlapping@to  #assinging the number as index of which macro loci is overlapping 
   
   return(all_loci)
   
@@ -68,40 +70,37 @@ locus_lister <- function(my_paths, gwas_names) {
 #---------generate the list of all loci------------------------------------------
 
 sstats_names <- list.files('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/munged/')
-sstats_names  <- sstats_names[1:5]
+sstats_names  <- sstats_names[-8:-9]
 mypaths <- as.list(paste0('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/munged/', sstats_names))
 
+#loop for loading all the files, create a vector of names and find the SNPs that are present in all the GWAS
 trait_names <- list()
+SNPs <- list()
+list_of_files <- list()
+
 for( i in c(1:length(sstats_names ))){
-  trait_names[i] <- strsplit(sstats_names , '_')[[i]][[1]]
-  
+        #createa lit of trait names
+        trait_names[i] <- strsplit(sstats_names , '_')[[i]][[1]]
+        
+        #load the sumstats and put them into a list
+        list_of_files[[i]] <- fread(mypaths[[i]], data.table = F)
+        SNPs[[i]]<- list_of_files[[i]]$SNP
 }
-
-
 
 loci <- locus_lister(mypaths, trait_names)
 
+head(loci)
+fwrite(loci, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/all_loci_all_traits.txt', sep = '\t', col.names = T, row.names = F, quote = F)
+saveRDS(shared_SNPs, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/shared_SNPs_all_traits.RDS')
 
-trait_1 <- fread(mypaths[[1]], data.table = F)
-trait_2 <- fread(mypaths[[2]], data.table = F)
-trait_3 <- fread(mypaths[[3]], data.table = F)
-traits <- list(trait_1, trait_2, trait_3)  
-
-  SNPs <- list()
-  ss <- vector()
-for(i in c(1:3)){
-  ss <- traits[[i]]
-  SNPs[[i]]<- ss$SNP
-}
-
-
+  
 i=16
 k=1
 
 #start by searching the commong SNPs between all the gwas and generate a referenc set 
 shared_SNPs <- Reduce(intersect, SNPs)  #shared SNPs among all the GWAS
 reference_file <- fread('SNP/reference.1000G.maf.0.005.txt.gz', data.table = F) #load the reference file
-ref_set <- reference_file[ref_set$SNP   %in%  shared_SNPs, ] #create a reference set of the positions of the shared SNPs
+ref_set <- reference_file[reference_file$SNP   %in%  shared_SNPs, ] #create a reference set of the positions of the shared SNPs
 loc_index <- sort(unique(loci$pan_locus))
 
 
@@ -113,26 +112,36 @@ loc_index <- sort(unique(loci$pan_locus))
         #the active SNP for locus i
         SNP_active <- ref_set[c( between(ref_set$BP,  start_loc ,  end_loc)  & ref_set$CHR== chr_loc ), ]$SNP
         
+        #add and if statetment for gacing at least 50 SNPs per locus 
+        
         betas <- list()
         se <- list()
-                #for each GWAS take out the BETAs and the SE
+        beta_locus <- data.frame(row.names =SNP_active )
+        se_locus <- data.frame( row.names = SNP_active )
+                    
+                    #for each GWAS take out the BETAs and the SE
+                    for(k in c(1:length(list_of_files))){
+                      
+                    tr_SNP_active <- list_of_files[[k]][list_of_files[[k]]$SNP %in% SNP_active ,]
+                    beta_locus[, paste0(trait_names[k],'-',k,'_locus', i)] <- select(tr_SNP_active, 'BETA')
+                    se_locus[, paste0(trait_names[k],'-',k,'_locus', i)] <- select(tr_SNP_active, 'SE')
+                    
+                    }
+                
+        betas[[locus]] <- beta_locus
+        SE[[locus]] <- se_locus
                 
         
-                tr_SNP_active <- traits[[k]][traits[[k]]$SNP %in% SNP_active ,]
-                betas[[k]]  <- select(tr_SNP_active, 'BETA')
-                se[[k]] <- select(tr_SNP_active, 'SE')
-                
-                betas[[locus]]
-                SE[[locus]]
-                app
+        
+        traits <- unlist(trait_names)
+        rsid <- rownames(beta_locus)
+        res <- hyprcoloc( effect.est = as.matrix(beta_locus), effect.se = as.matrix(se_locus), trait.names=traits, snp.id=rsid, binary.outcomes = rep(1, 12))
+        res
         
         
+    
         
-        
-        
-        
-        
-        
+        as.matrix(beta_locus)
         
         
         
