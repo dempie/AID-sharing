@@ -56,8 +56,8 @@ output[[i]] <-  format_sumstats(
     analysis_trait = NULL,
     INFO_filter = 0,
     FRQ_filter = 0,
-    pos_se = F,
-    effect_columns_nonzero = FALSE,
+    pos_se = T,   #importan for coloc
+    effect_columns_nonzero = T, #important for coloc 
     N_std = 5,
     N_dropNA = F,
     rmv_chr = c("X", "Y", "MT"),
@@ -70,7 +70,7 @@ output[[i]] <-  format_sumstats(
     allele_flip_frq = TRUE,
     bi_allelic_filter = TRUE,
     snp_ids_are_rs_ids = TRUE,
-    remove_multi_rs_snp = FALSE,
+    remove_multi_rs_snp = T,    #important for my script 
     frq_is_maf = TRUE,
     sort_coordinates = TRUE,
     nThread = 12,
