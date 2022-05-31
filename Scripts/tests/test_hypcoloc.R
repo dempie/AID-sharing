@@ -13,7 +13,7 @@ colnames(f3_23) <- c('rsid', 'pval')
 a <- 'f1_23.csv'
 b <- 'f3_23.csv'
 
-a <- locuscompare(in_fn1 = 'f1_233.tsv', in_fn2 = 'f3_233.tsv' , marker_col1 =  'rsID', pval_col1 = 'pval',combine = F,title1 = 'F1', title2 = 'F3' )
+a <- locuscompare(in_fn1 = 'f1_233.tsv', in_fn2 = 'f3_233.tsv' , marker_col1 =  'rsID', pval_col1 = 'pval',combine = F,title1 = 'F1', title2 = 'F3',  )
 b <- locuscompare(in_fn1 = 'f3_233.tsv', in_fn2 = 'f3_233.tsv' , marker_col1 =  'rsID', pval_col1 = 'pval',combine = F,title1 = 'F3', title2 = 'F3' )
 k <- locuscompare(in_fn1 = 'f2_233.tsv', in_fn2 = 'f2_233.tsv' , marker_col1 =  'rsID', pval_col1 = 'pval',combine = F,title1 = 'F2', title2 = 'F2' )
 
@@ -60,3 +60,27 @@ figure <- ggarrange(a, k, b,
 
 
 install_github("whweve/IntAssoPlot")
+
+
+
+
+
+
+
+
+
+
+
+
+pi <- locuscompare(in_fn1 = 'f1_233.tsv', in_fn2 = 'f3_233.tsv' , marker_col1 =  'rsID', pval_col1 = 'pval',title1 = 'F1', title2 = 'F3', combine = T, snp =  )
+po <- locuscompare(in_fn1 = 'f1_233.tsv', in_fn2 = 'f2_233.tsv' , marker_col1 =  'rsID', pval_col1 = 'pval',title1 = 'F3', title2 = 'F3' , combine = F)
+pu <- locuscompare(in_fn1 = 'f2_233.tsv', in_fn2 = 'f3_233.tsv' , marker_col1 =  'rsID', pval_col1 = 'pval',title1 = 'F2', title2 = 'F2' , combine = F)
+
+pi$locuscompare
+po$locuscompare
+pu$locuscompare
+
+
+
+
+
