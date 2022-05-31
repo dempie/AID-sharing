@@ -749,6 +749,8 @@ locus_lister <- function(my_paths, gwas_names) {
 
 ## colocalize
 
+This function takes as input a list of paths to munged summary statistics, thir repsectivr trait names(in list format). An output from locu_lister. 
+
 ```{r colocalize}
 colocalize <- function(list_of_paths, trait_names, loci){
     #packages 
