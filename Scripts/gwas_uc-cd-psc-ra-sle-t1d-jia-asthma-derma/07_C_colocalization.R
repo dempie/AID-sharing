@@ -61,7 +61,6 @@ locus_lister <- function(my_paths, gwas_names) {
   pan_loci_non_reduced <- create_range(all_loci)
   
   overlapping <- findOverlaps(pan_loci_non_reduced, pan_loci) #find overlaps between all the loci and use it as an index of the unique non overlapping loci
-  overlapping
   all_loci$pan_locus <- rep(0, nrow(all_loci)) #allocate the column 
   all_loci[overlapping@from,]$pan_locus <- overlapping@to  #assinging the number as index of which macro loci is overlapping 
   
@@ -145,7 +144,7 @@ colocalize <- function(list_of_paths, trait_names, loci){
             if(ncol(beta_locus)>1 & nrow(beta_locus)>10){
                         traits <- colnames(beta_locus)
                         rsid <- rownames(beta_locus)
-                        res_coloc[[paste0('locus_', i)]] <- hyprcoloc( effect.est = as.matrix(beta_locus), effect.se = as.matrix(se_locus), trait.names=traits, snp.id=rsid)
+                        res_coloc[[paste0('locus_', i)]] <- hyprcoloc( effect.est = as.matrix(beta_locus), effect.se = as.matrix(se_locus), trait.names=traits, snp.id=rsid, binary.outcomes = rep(1, length(traits)))
             
             } 
             
