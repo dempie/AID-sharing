@@ -50,6 +50,7 @@ b <- b$locuszoom2
 
 library(ggplot2)
 library(ggpubr)
+library(eQTpLot_)
 
 figure <- ggarrange(a, k, b,
                     labels = c("F1", "F2", "F3"),
