@@ -338,7 +338,4 @@ saveRDS(factor_coloc, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_col
 
 
 
-
-
-
   

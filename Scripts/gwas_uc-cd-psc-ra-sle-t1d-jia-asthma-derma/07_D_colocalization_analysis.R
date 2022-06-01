@@ -6,6 +6,7 @@ library(ComplexHeatmap)
 library(tidyr)
 library(ChIPpeakAnno)
 library(hyprcoloc)
+library(stringr)
 
 
 #function to create a genomic ranges object useful to find overlapps between loci 
@@ -30,7 +31,7 @@ f3_range <- reduce(create_range(loci_factors[loci_factors$trait=='f3',]))
 
 
 #find the loci that are physically overlapping among all the three factors 
-ovl_f <- findOverlapsOfPeaks(f1_range, f2_range, f3_range )
+ovl_f <- findOverlapsOfPeaks(f1_range, f2_range, f3_range , connectedPeaks = 'keepAll')
 
 st <- ovl_f$peaklist$`f1_range///f2_range///f3_range`@ranges@start
 en <- ovl_f$peaklist$`f1_range///f2_range///f3_range`@ranges@start + ovl_f$peaklist$`f1_range///f2_range///f3_range`@ranges@width -1
@@ -77,97 +78,71 @@ apply(coloc_factors$report, MARGIN = 1, FUN = function(x)strsplit(x[2],split = '
 length(coloc_factors$res_coloc)
 
 
+coloc_factors$report
+ 
+up <- list(f1=f1_range@ranges, f2=f2_range@ranges, f3=f3_range@ranges)
+cm <- make_comb_mat(ovl_f$venn_cnt, mode = 'distinct')
+
+extract_comb(cm, comb_name = '110')
+
+UpSet(cm  )
+list_to_matrix( )
+
+
+
+for_up <- data.frame(row.names = paste0('loc',c(1:nrow(loci_factors))), f1=rep(NA,nrow(loci_factors) ), f2=rep(NA, nrow(loci_factors)), f3= rep(NA, nrow(loci_factors)))
+
+all <- create_range(loci_factors)
+
+
+
+loci_factors
 
 
 
 
 
-colocalize_2 <- function(list_of_paths, trait_names, loci){
-  #packages 
-  # require(data.table)
-  # require(dplyr)
-  # require(GenomicRanges)
-  # require(hyprcoloc)
-  
-    SNPs <- list()
-    list_of_files <- list()
-    
-    for( i in c(1:length(trait_names))){
-      #load the sumstats and put them into a list
-      list_of_files[[i]] <- fread(list_of_paths[[i]], data.table = F)
-      SNPs[[i]]<- list_of_files[[i]]$SNP
-    }
-    
-    names(list_of_files) <- unlist(trait_names)
-    #start by searching the commong SNPs between all the gwas and generate a referenc set 
-    shared_SNPs <- Reduce(intersect, SNPs) 
-    cat(paste0('The number of shared SNPs is ', length(shared_SNPs )))
-    
-    reference_file <- fread('SNP/reference.1000G.maf.0.005.txt.gz', data.table = F) #load the reference file
-    ref_set <- reference_file[reference_file$SNP   %in%  shared_SNPs, ] #create a reference set of the positions of the shared SNPs
-    loc_index <- sort(unique(loci$pan_locus))
-    
-    betas <- list()
-    SE <- list()
-    res_coloc <- list()
-    report <- data.frame(row.names = paste0('locus_', loc_index )  ) #allocate space to produce a report of the number of SNPs per locus
-    
-    for(i in c(1:length(unique(loci$pan_locus)))){
-      
-      #select the active locus, the beginning and the end of the locus
-      start_loc <- min(loci[loci$pan_locus==loc_index[i], 'start'] )
-      end_loc <- max(loci[loci$pan_locus==loc_index[i], 'end'] )
-      chr_loc <- unique(loci[loci$pan_locus==loc_index[i], 'chr'])
-      
-      #the active SNP for locus i
-      SNP_active <- ref_set[c( between(ref_set$BP,  start_loc ,  end_loc)  & ref_set$CHR== chr_loc ), ]$SNP
-      
-      #if there are less than 10 SNPs raise the window of SNPs to take of +-100 kb 
-      if(length(SNP_active)<10) {
-        start_loc_2 <-  as.numeric(ifelse((as.numeric(start_loc) - 100000)<0, 0, as.numeric(start_loc) - 100000 )) #not below zero 
-        end_loc_2 <- as.numeric(as.numeric(end_loc) + 100000 )
-        #select the active SNPs
-        SNP_active <- ref_set[c( between(ref_set$BP,  start_loc_2 ,  end_loc_2)  & ref_set$CHR== chr_loc ), ]$SNP
-      } else {
-        #select the active SNPs
-        SNP_active <- ref_set[c( between(ref_set$BP,  start_loc ,  end_loc)  & ref_set$CHR== chr_loc ), ]$SNP
-      }
-      
-      #allocate the space
-      beta_locus <- data.frame(row.names =SNP_active )
-      se_locus <- data.frame(row.names =SNP_active )
-      
-      #for each GWAS take out the BETAs and the SE
-      for(k in c(1:length(list_of_files))){
-        #take all of them
-        tt<- unlist(trait_names)[k] 
-        tr_SNP_active <- list_of_files[[tt]][ list_of_files[[tt]]$SNP %in% SNP_active ,]
-        tr_SNP_active <- tr_SNP_active[!duplicated(tr_SNP_active ), ] #remove duplicated SNPs 
-        #exctract the betas and se
-        beta_locus[, paste0(tt,'-',k,'_locus', i)] <- select(tr_SNP_active, 'BETA')
-        se_locus[, paste0(tt,'-',k,'_locus', i)] <- select(tr_SNP_active, 'SE')
-        
-      }
-      
-      #run coloc only  if there are at least 10 SNPs
-      if( nrow(beta_locus)>10){
-        traits <- colnames(beta_locus)
-        rsid <- rownames(beta_locus)
-        res_coloc[[paste0('locus_', i)]] <- hyprcoloc( effect.est = as.matrix(beta_locus), effect.se = as.matrix(se_locus), trait.names=traits, snp.id=rsid, binary.outcomes = rep(1, length(traits)))
-  
-    } 
-      
-      betas[[paste0('locus_', i)]] <- beta_locus
-      SE[[paste0('locus_', i)]] <- se_locus
-      report[i,'SNP_active'] <-  length(SNP_active) 
-      report[i,'traits'] <- paste0(loci[loci$pan_locus==i,]$trait, collapse = ',')
-      print(i)
-  }  
-    
-  
-  output <- list(betas=betas, SE=SE, res_coloc=res_coloc, report=report) 
-  return(output)
+
+names(ovl_f$uniquePeaks@ranges)
+
+
+#unique
+un <- list()
+final <- list(list())
+sh <- list()
+for( i in 1:length(c('f1', 'f2', 'f3'))){
+  tt<-c('f1', 'f2', 'f3') [i]
+filt<- str_starts(names(ovl_f$uniquePeaks@ranges),tt, negate = FALSE)
+un[[tt]] <- names(ovl_f$uniquePeaks@ranges)[filt]
+}
+
+#two_two
+
+for(k in 1:length(ovl_f$mergedPeaks$peakNames)){
+
+chek_in <- c('f1', 'f2', 'f3') %in% substring(ovl_f$mergedPeaks$peakNames[[k]], first = 1, last = 2) #check if there is f1, f2 or f3
+
+for(u in 1:length(chek_in)){
+  tt<-c('f1', 'f2', 'f3')[u]
+  if(chek_in[u]==T){
+    un[[tt]][[length(un[[tt]])+1]]<- paste0(ovl_f$mergedPeaks$peakNames[[k]], collapse = '-')
   }
+  
+}
+}
+
+un
+lapply(ovl_f$mergedPeaks$peakNames[[k]],function(x)str_starts(x, c('f1', 'f2', 'f3')) )
+
+
+
+
+
+
+
+
+
+
 
 
 
