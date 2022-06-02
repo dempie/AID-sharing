@@ -7,144 +7,100 @@ library(tidyr)
 library(ChIPpeakAnno)
 library(hyprcoloc)
 library(stringr)
+library(RColorBrewer)
+
 
 
 #function to create a genomic ranges object useful to find overlapps between loci 
 
-create_range <- function(res, chr='CHR', start='start', end='end', w=T, tag=NA ) {
-  obj <-GRanges( seqnames =  res$chr ,IRanges(names = res$chr ,start = as.numeric(res$start), end = as.numeric(res$end))) 
-  if( sum(obj@ranges@width> 2000000) >0 ) { warning(paste0( sum(obj@ranges@width> 2000000)) ,' ranges are wider than 2 MB') 
-    print(obj[which(obj@ranges@width> 2000000),])
-  }
-  ifelse(w, return(obj), return(data.frame(names= obj@ranges@NAMES ,start=obj@ranges@start, width=obj@ranges@width))) 
-  
+create_range <- function(res, chr='CHR', start='start', end='end' ) {
+  cnd<- length(GRanges( seqnames =  res$chr ,IRanges(names = rownames(res) ,start = as.numeric(res$start), end = as.numeric(res$end)))@ranges) != (length(reduce(GRanges( seqnames =  res$chr ,IRanges(names = rownames(res) ,start = as.numeric(res$start), end = as.numeric(res$end))))))
+  if(cnd==T) {warning('There are overlaps inside this thing') }
+
+  return(GRanges( seqnames =  res$chr ,IRanges(names = rownames(res) ,start = as.numeric(res$start), end = as.numeric(res$end))) )
+  #check if there are overlapping ranges
 }
 
-
-
 #----------analysis of the factor gwas------------------------------------------
+
 coloc_factors <- readRDS('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/hyprcoloc_only_factors/colocalize_factors.RDS')
 loci_factors <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/hyprcoloc_only_factors/factor_loci.txt', data.table=F)
-f1_range <- reduce(create_range(loci_factors[loci_factors$trait=='f1',])) 
-f2_range <- reduce(create_range(loci_factors[loci_factors$trait=='f2',]))
-f3_range <- reduce(create_range(loci_factors[loci_factors$trait=='f3',]))
+f1_range <- create_range(loci_factors[loci_factors$trait=='f1',])
+f2_range <- create_range(loci_factors[loci_factors$trait=='f2',])
+f3_range <- create_range(loci_factors[loci_factors$trait=='f3',])
 
-
+dim(loci_factors[loci_factors$trait=='f3',])
 #find the loci that are physically overlapping among all the three factors 
 ovl_f <- findOverlapsOfPeaks(f1_range, f2_range, f3_range , connectedPeaks = 'keepAll')
 
-st <- ovl_f$peaklist$`f1_range///f2_range///f3_range`@ranges@start
-en <- ovl_f$peaklist$`f1_range///f2_range///f3_range`@ranges@start + ovl_f$peaklist$`f1_range///f2_range///f3_range`@ranges@width -1
-chr <-  ovl_f$peaklist$`f1_range///f2_range///f3_range`@seqnames@values
-loc_index <- sort(unique(loci_factors$pan_locus))
-
-
-
-
-report <- coloc_factors$report
-dim(report[ report$unique==F,])== length(coloc_factors$res_coloc) #TRUE, we were able to run colocalization on all of the loci that showed overlapp 
-report$unique <- rep(NA, nrow(report))
-
-#a loop for identifying which are the loci that do not overlap and therefore do not colocalize for sure. 
-a <- strsplit(coloc_factors$report$traits, split = ',') # trait elements
-strsplit(rownames(coloc_factors$report), split = '_') #row names
-
-for(i in 1: length(a)){
-  if(length(a[[i]])==1) {
-    report[i,'unique'] <- T  
-  } else {
-    report[i,'unique'] <- F
-  }
-  
-}
-
 #a loop to create as many list as the number of traits that have at least one unique locus
-unique_locus <- rownames(report[ report$unique==T,])
-unq <- report[ report$unique==T,]
-f <- list(list())
-
-for(i in 1:length(unique(unq$traits))){
-  tt <- unique(unq$traits)[i]
-  f[tt] <- list(rownames(unq[unq$traits==tt,])). 
+#it takes the output from findoverlapps function and the names of the traits as in findoverlapps!!
+lists_forupset <- function(ovl_f, traits){ 
+    #allocate lists
+    require(ComplexHeatmap)
+    un <- list()
+    final <- list(list())
+    sh <- list()
+    #create the lists and put it the eleemtnts that are unique
+    for( i in 1:length(traits)){
+      tt<-traits[i]
+    filt <- str_starts(names(ovl_f$uniquePeaks@ranges),tt, negate = FALSE)
+    un[[tt]] <- names(ovl_f$uniquePeaks@ranges)[filt]
+    }
+    
+    
+    #put into the lists the element that are shared among the lists
+    for(k in 1:length(ovl_f$mergedPeaks$peakNames)){
+    
+    chek_in <- traits %in% substring(ovl_f$mergedPeaks$peakNames[[k]], first = 1, last = 2) #check if there is f1, f2 or f3
+    
+            for(u in 1:length(chek_in)){
+              tt<-traits[u]
+              if(chek_in[u]==T){
+                un[[tt]][[length(un[[tt]])+1]]<- paste0(ovl_f$mergedPeaks$peakNames[[k]], collapse = '-')
+              }
+              
+            }
+    }
+    
+    
+    #-generate a matrix showing which locus is present in each disease
+    output <- list()
+    for(k in 1:length(un)){
+      tt <- c(names(un))[k]
+      to_get <- strsplit(unlist(strsplit(un[[tt]], split = '-')), split='__')
+      
+      for(i in c(1:length(to_get))){
+        output[[tt]][[i]]<-to_get[[i]][2]
+        
+      }
+      output[[tt]]<- unlist(output[[tt]])
+      
+      
+    }
+    output <- list_to_matrix(output)
+    output <- output[order(as.numeric(rownames(output))),]
+    
+    #generate the output
+    return(list(loci=output, traits_overlap=un))
 }
 
 
 
-apply(coloc_factors$report, MARGIN = 1, FUN = function(x)strsplit(x[2],split = ','))
+up_n <- lists_forupset(ovl_f = ovl_f, traits = c('f1', 'f2', 'f3')) 
 
 
+cm <- make_comb_mat(up_n, mode = 'distinct')
+pdf(width = 10, height = 5, file = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/upset_plot_factors.pdf')
+UpSet(cm, set_order = c("f1", "f2", "f3"), comb_order = order(comb_size(cm), decreasing = T),
+      comb_col = c((brewer.pal(6, 'Set3'))[4:6][comb_degree(cm)]),
+       top_annotation = upset_top_annotation(cm, add_numbers = TRUE, height = unit(6, "cm")),
+      right_annotation = upset_right_annotation(cm, add_numbers = TRUE, width = unit(5,'cm') )
+       )
+dev.off()
 
 
-length(coloc_factors$res_coloc)
-
-
-coloc_factors$report
- 
-up <- list(f1=f1_range@ranges, f2=f2_range@ranges, f3=f3_range@ranges)
-cm <- make_comb_mat(ovl_f$venn_cnt, mode = 'distinct')
-
-extract_comb(cm, comb_name = '110')
-
-UpSet(cm  )
-list_to_matrix( )
-
-
-
-for_up <- data.frame(row.names = paste0('loc',c(1:nrow(loci_factors))), f1=rep(NA,nrow(loci_factors) ), f2=rep(NA, nrow(loci_factors)), f3= rep(NA, nrow(loci_factors)))
-
-all <- create_range(loci_factors)
-
-
-
-loci_factors
-
-
-
-
-
-
-names(ovl_f$uniquePeaks@ranges)
-
-
-#unique
-un <- list()
-final <- list(list())
-sh <- list()
-for( i in 1:length(c('f1', 'f2', 'f3'))){
-  tt<-c('f1', 'f2', 'f3') [i]
-filt<- str_starts(names(ovl_f$uniquePeaks@ranges),tt, negate = FALSE)
-un[[tt]] <- names(ovl_f$uniquePeaks@ranges)[filt]
-}
-
-#two_two
-
-for(k in 1:length(ovl_f$mergedPeaks$peakNames)){
-
-chek_in <- c('f1', 'f2', 'f3') %in% substring(ovl_f$mergedPeaks$peakNames[[k]], first = 1, last = 2) #check if there is f1, f2 or f3
-
-for(u in 1:length(chek_in)){
-  tt<-c('f1', 'f2', 'f3')[u]
-  if(chek_in[u]==T){
-    un[[tt]][[length(un[[tt]])+1]]<- paste0(ovl_f$mergedPeaks$peakNames[[k]], collapse = '-')
-  }
-  
-}
-}
-
-un
-lapply(ovl_f$mergedPeaks$peakNames[[k]],function(x)str_starts(x, c('f1', 'f2', 'f3')) )
-
-
-
-
-
-
-
-
-
-
-
-
+#----- function locus namer-----------------------------------------------------
 
 
 
