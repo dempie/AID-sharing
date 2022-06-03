@@ -8,6 +8,7 @@ library(ChIPpeakAnno)
 library(hyprcoloc)
 library(stringr)
 library(RColorBrewer)
+library(moloc)
 
 
 
@@ -29,7 +30,7 @@ f1_range <- create_range(loci_factors[loci_factors$trait=='f1',])
 f2_range <- create_range(loci_factors[loci_factors$trait=='f2',])
 f3_range <- create_range(loci_factors[loci_factors$trait=='f3',])
 
-dim(loci_factors[loci_factors$trait=='f3',])
+
 #find the loci that are physically overlapping among all the three factors 
 ovl_f <- findOverlapsOfPeaks(f1_range, f2_range, f3_range , connectedPeaks = 'keepAll')
 
@@ -108,7 +109,7 @@ molocalize <- function(list_of_paths, trait_names, loci, N_hat){
       # require(data.table)
       # require(dplyr)
       # require(GenomicRanges)
-      # require(hyprcoloc)
+      # require(moloc)
       
       SNPs <- list()
       list_of_files <- list()
@@ -159,9 +160,9 @@ molocalize <- function(list_of_paths, trait_names, loci, N_hat){
                     the_locus <- data.frame(row.names = c(1:length(SNP_active)))
                     to_moloc <- list()
                     #for each GWAS take out the BETAs and the SE
-                    for(k in c(1:length(unlist( loci[loci$pan_locus==i,]$trait)))){
+                    for(k in c(1:length(unique(unlist( loci[loci$pan_locus==i,]$trait))))){
                               #take only the ones that are significant fot that loci
-                              tt<- unlist( loci[loci$pan_locus==i,]$trait)[k] 
+                              tt<- unique(unlist((loci[loci$pan_locus==i,]$trait)))[k] 
                               tr_SNP_active <- list_of_files[[tt]][ list_of_files[[tt]]$SNP %in% SNP_active ,]
                               tr_SNP_active <- tr_SNP_active[!duplicated(tr_SNP_active ), ] #remove duplicated SNPs 
                               #exctract the betas and se
@@ -170,7 +171,7 @@ molocalize <- function(list_of_paths, trait_names, loci, N_hat){
                               the_locus[, 'SE'] <- select(tr_SNP_active, 'SE')
                               the_locus[, 'MAF'] <- ref_set[ref_set$SNP %in% tr_SNP_active$SNP, ]$MAF
                               the_locus[, 'N'] <- rep(N_hat[[tt]], length(SNP_active))
-                              to_moloc[[tt]] <- the_locus
+                              to_moloc[[tt]] <- the_locus #important in case of multiple locus from the same trait, the last iteration will overwright the previous, no importance as it will be identical 
                             
                             }
                     
@@ -180,7 +181,7 @@ molocalize <- function(list_of_paths, trait_names, loci, N_hat){
                       
                     } 
                     
-                    lo[[paste0('locus_', i)]] <- the_locus
+                    lo[[paste0('locus_', i)]] <- to_moloc
                     report[i,'SNP_active'] <-  length(SNP_active)
                     report[i,'traits'] <- paste0(loci[loci$pan_locus==i,]$trait, collapse = ',')
                     print(i)
@@ -192,7 +193,7 @@ molocalize <- function(list_of_paths, trait_names, loci, N_hat){
 }
 
 #--------------- run moloc on the factors --------------------------------------
-##Calculate Effective Sample Size for Factor 1
+##Calculate Effective Sample Size for Factors
 #restrict to MAF of 40% and 10%
 N_hat_F <- list()
 for(k in 1:3){
@@ -203,13 +204,66 @@ subsetf <- subsetf[!is.na(subsetf$SE),]
 N_hat_F[[paste0('f', k)]]<-mean(1/((2*subsetf$MAF*(1-subsetf$MAF))*subsetf$SE^2))
 }
 
+
+
+#gather te info about the paths and the gwas names
+sstats_names <- list.files('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/munged/')
+sstats_names  <- sstats_names[c(-8, -9, -12)]
+the_paths<- as.list(paste0('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/munged/', sstats_names))
+
+#loop for loading all the files, create a vector of names and find the SNPs that are present in all the GWAS
+gwas_names <- list()
+
+
+for( i in c(1:length(sstats_names ))){
+  #createa lit of trait names
+  gwas_names[i] <- strsplit(sstats_names , '_')[[i]][[1]]
+}
 #-------------------------------------------------------------
 
-
 factor_loci <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/hyprcoloc_only_factors/factor_loci.txt', data.table = F)
-
 factor_coloc <- molocalize(list_of_paths = the_paths[c(4,5,6)], trait_names = gwas_names[c(4,5,6)],loci = factor_loci, N_hat = N_hat_F)
+saveRDS(factor_coloc, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/moloc_factors/factor_moloc_output.RDS')
+factor_coloc <- readRDS('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/moloc_factors/factor_moloc_output.RDS')
 
 
-factor_coloc$res_coloc$locus_125
+
+factor_coloc$report #look into locus 119 and 95 as one single locus from one factor is overlapping with two from the other factor 
+
+locus_119_a <- loci_factors[loci_factors$pan_locus==119, ][c(1,3),]
+locus_119_a$pan_locus <- 1
+moloc_119 <-  molocalize(list_of_paths = the_paths[c(4,5,6)], trait_names = gwas_names[c(4,5,6)],loci = locus_119_a , N_hat = N_hat_F) #posterior 9.973760e-01
+
+
+locus_119_b <- loci_factors[loci_factors$pan_locus==119, ][c(2,3),]
+locus_119_b$pan_locus <- 1
+moloc_119_b <-  molocalize(list_of_paths = the_paths[c(4,5,6)], trait_names = gwas_names[c(4,5,6)],loci = locus_119_b , N_hat = N_hat_F) # 9.973760e-01
+#the problem is that f2 range contains both f1 and f2, so no way of distinguishing it 
+#-------------------------------------------------------------------------------
+
+#script for adding the results of coloc to the loci table 
+
+factor_loci$configuration <- rep('-', nrow(factor_loci))
+factor_loci$posterior_moloc <- rep('-', nrow(factor_loci))
+
+
+for(k in 1:length(unique(factor_loci$pan_locus))){
+  if(nrow(factor_loci[factor_loci$pan_locus==k, ])==1){
+    
+    factor_loci[factor_loci$pan_locus==k, ]$configuration <- 'no_over'
+    
+    } else{
+      act <- factor_coloc$res_coloc[[paste0("locus_", k)]]$priors_lkl_ppa
+      m<- which.max(c(act$PPA))
+      factor_loci[factor_loci$pan_locus==k, ]$configuration <- paste0(rownames(act)[m])
+      factor_loci[factor_loci$pan_locus==k, ]$posterior_moloc <- act$PPA[m]
+  }
+  
+}
+
+
+
+
+
+
 

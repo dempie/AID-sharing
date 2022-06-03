@@ -1062,7 +1062,7 @@ molocalize <- function(list_of_paths, trait_names, loci, N_hat){
                       
                     } 
                     
-                    lo[[paste0('locus_', i)]] <- the_locus
+                    lo[[paste0('locus_', i)]] <- to_moloc
                     report[i,'SNP_active'] <-  length(SNP_active)
                     report[i,'traits'] <- paste0(loci[loci$pan_locus==i,]$trait, collapse = ',')
                     print(i)
@@ -1073,4 +1073,3 @@ molocalize <- function(list_of_paths, trait_names, loci, N_hat){
       return(output)
 }
 ```
-

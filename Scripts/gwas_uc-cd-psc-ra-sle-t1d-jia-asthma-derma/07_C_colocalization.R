@@ -182,7 +182,7 @@ colocalize_2 <- function(list_of_paths, trait_names, loci){
   names(list_of_files) <- unlist(trait_names)
   #start by searching the commong SNPs between all the gwas and generate a referenc set 
   shared_SNPs <- Reduce(intersect, SNPs) 
-  cat(paste0('The number of shared SNPs is ', length(shared_SNPs, '\n' )))
+  cat(paste0('The number of shared SNPs is ', length(shared_SNPs )))
   
   reference_file <- fread('SNP/reference.1000G.maf.0.005.txt.gz', data.table = F) #load the reference file
   ref_set <- reference_file[reference_file$SNP   %in%  shared_SNPs, ] #create a reference set of the positions of the shared SNPs
@@ -287,16 +287,8 @@ factor_loci <- locus_lister(the_paths[c(4,5,6)], gwas_names[c(4,5,6)])
 fwrite(factor_loci , 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/hyprcoloc_only_factors/factor_loci.txt', sep = '\t', col.names = T, row.names = F, quote = F)
 #factor_loci <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/hyprcoloc_only_factors/factor_loci.txt', data.table = F)
 
-factor_coloc <- colocalize_2(list_of_paths = the_paths[c(4,5,6)], trait_names = gwas_names[c(4,5,6)],loci = factor_loci)
+factor_coloc <- colocalize(list_of_paths = the_paths[c(4,5,6)], trait_names = gwas_names[c(4,5,6)],loci = factor_loci)
 saveRDS(factor_coloc, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/hyprcoloc_only_factors/colocalize_factors.RDS')
-
-
-
-
-
-
-
-
 
 
 
