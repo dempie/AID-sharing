@@ -90,7 +90,7 @@ lists_forupset <- function(ovl_f, traits){
 up_n <- lists_forupset(ovl_f = ovl_f, traits = c('f1', 'f2', 'f3')) 
 
 
-cm <- make_comb_mat(up_n, mode = 'distinct')
+cm <- make_comb_mat(up_n$traits_overlap, mode = 'distinct')
 pdf(width = 10, height = 5, file = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/upset_plot_factors.pdf')
 UpSet(cm, set_order = c("f1", "f2", "f3"), comb_order = order(comb_size(cm), decreasing = T),
       comb_col = c((brewer.pal(6, 'Set3'))[4:6][comb_degree(cm)]),
@@ -100,10 +100,116 @@ UpSet(cm, set_order = c("f1", "f2", "f3"), comb_order = order(comb_size(cm), dec
 dev.off()
 
 
-#----- function locus namer-----------------------------------------------------
+#----- function to run moloc-----------------------------------------------------
+#https://github.com/clagiamba/moloc
+
+molocalize <- function(list_of_paths, trait_names, loci, N_hat){
+      #packages 
+      # require(data.table)
+      # require(dplyr)
+      # require(GenomicRanges)
+      # require(hyprcoloc)
+      
+      SNPs <- list()
+      list_of_files <- list()
+      
+      for( i in c(1:length(trait_names))){
+                #load the sumstats and put them into a list
+                list_of_files[[i]] <- fread(list_of_paths[[i]], data.table = F)
+                SNPs[[i]]<- list_of_files[[i]]$SNP
+              }
+              
+      names(list_of_files) <- unlist(trait_names)
+              #start by searching the commong SNPs between all the gwas and generate a referenc set 
+      shared_SNPs <- Reduce(intersect, SNPs) 
+      cat(paste0('The number of shared SNPs is ', length(shared_SNPs )))
+              
+      reference_file <- fread('SNP/reference.1000G.maf.0.005.txt.gz', data.table = F) #load the reference file
+      ref_set <- reference_file[reference_file$SNP   %in%  shared_SNPs, ] #create a reference set of the positions of the shared SNPs
+      loc_index <- sort(unique(loci$pan_locus))
+              
+      betas <- list()
+      SE <- list()
+      res_coloc <- list()
+      report <- data.frame(row.names = paste0('locus_', loc_index )  ) #allocate space to produce a report of the number of SNPs per locus
+      lo <- list() 
+      
+      for(i in c(1:length(unique(loci$pan_locus)))){
+                
+                    #select the active locus, the beginning and the end of the locus
+                    start_loc <- min(loci[loci$pan_locus==loc_index[i], 'start'] )
+                    end_loc <- max(loci[loci$pan_locus==loc_index[i], 'end'] )
+                    chr_loc <- unique(loci[loci$pan_locus==loc_index[i], 'chr'])
+                    
+                    #the active SNP for locus i
+                    SNP_active <- ref_set[c( between(ref_set$BP,  start_loc ,  end_loc)  & ref_set$CHR== chr_loc ), ]$SNP
+                    
+                    #if there are less than 10 SNPs raise the window of SNPs to take of +-100 kb 
+                    if(length(SNP_active)<10) {
+                      start_loc_2 <-  as.numeric(ifelse((as.numeric(start_loc) - 100000)<0, 0, as.numeric(start_loc) - 100000 )) #not below zero 
+                      end_loc_2 <- as.numeric(as.numeric(end_loc) + 100000 )
+                      #select the active SNPs
+                      SNP_active <- ref_set[c( between(ref_set$BP,  start_loc_2 ,  end_loc_2)  & ref_set$CHR== chr_loc ), ]$SNP
+                    } else {
+                      #select the active SNPs
+                      SNP_active <- ref_set[c( between(ref_set$BP,  start_loc ,  end_loc)  & ref_set$CHR== chr_loc ), ]$SNP
+                    }
+                    
+                    #allocate the space
+                    the_locus <- data.frame(row.names = c(1:length(SNP_active)))
+                    to_moloc <- list()
+                    #for each GWAS take out the BETAs and the SE
+                    for(k in c(1:length(unlist( loci[loci$pan_locus==i,]$trait)))){
+                              #take only the ones that are significant fot that loci
+                              tt<- unlist( loci[loci$pan_locus==i,]$trait)[k] 
+                              tr_SNP_active <- list_of_files[[tt]][ list_of_files[[tt]]$SNP %in% SNP_active ,]
+                              tr_SNP_active <- tr_SNP_active[!duplicated(tr_SNP_active ), ] #remove duplicated SNPs 
+                              #exctract the betas and se
+                              the_locus[, 'SNP'] <- SNP_active
+                              the_locus[, 'BETA'] <- select(tr_SNP_active, 'BETA')
+                              the_locus[, 'SE'] <- select(tr_SNP_active, 'SE')
+                              the_locus[, 'MAF'] <- ref_set[ref_set$SNP %in% tr_SNP_active$SNP, ]$MAF
+                              the_locus[, 'N'] <- rep(N_hat[[tt]], length(SNP_active))
+                              to_moloc[[tt]] <- the_locus
+                            
+                            }
+                    
+                    #run coloc only if the number of traits for that locus is more than one (otherwise you will have an error) and if there are at least 10 SNPs
+                    if(length(to_moloc)>1 & length(SNP_active)>10){
+                      res_coloc[[paste0('locus_', i)]] <- moloc_test(to_moloc)
+                      
+                    } 
+                    
+                    lo[[paste0('locus_', i)]] <- the_locus
+                    report[i,'SNP_active'] <-  length(SNP_active)
+                    report[i,'traits'] <- paste0(loci[loci$pan_locus==i,]$trait, collapse = ',')
+                    print(i)
+                  }
+      
+      
+      output <- list(lo=lo, res_coloc=res_coloc, report=report) 
+      return(output)
+}
+
+#--------------- run moloc on the factors --------------------------------------
+##Calculate Effective Sample Size for Factor 1
+#restrict to MAF of 40% and 10%
+N_hat_F <- list()
+for(k in 1:3){
+f <- fread(paste0('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_gwas_ouput/factor', k ,'_gwas_final_withQindex.txt'), data.table = F)
+subsetf<-subset(f, f$MAF <= .4 & f$MAF >= .1)
+subsetf <- subsetf[!is.na(subsetf$SE),]
+
+N_hat_F[[paste0('f', k)]]<-mean(1/((2*subsetf$MAF*(1-subsetf$MAF))*subsetf$SE^2))
+}
+
+#-------------------------------------------------------------
 
 
+factor_loci <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/hyprcoloc_only_factors/factor_loci.txt', data.table = F)
+
+factor_coloc <- molocalize(list_of_paths = the_paths[c(4,5,6)], trait_names = gwas_names[c(4,5,6)],loci = factor_loci, N_hat = N_hat_F)
 
 
-
+factor_coloc$res_coloc$locus_125
 
