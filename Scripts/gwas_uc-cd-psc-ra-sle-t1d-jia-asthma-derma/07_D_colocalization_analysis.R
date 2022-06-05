@@ -8,7 +8,7 @@ library(ChIPpeakAnno)
 library(stringr)
 library(RColorBrewer)
 library(moloc)
-
+library(gprofiler2)
 
 
 #function to create a genomic ranges object useful to find overlapps between loci 
@@ -305,6 +305,47 @@ UpSet(a, set_order = c("f1", "f2", "f3"), comb_order = order(comb_size(a), decre
       right_annotation = upset_right_annotation(a, add_numbers = TRUE, width = unit(5,'cm') )
 )
 dev.off()
+
+
+
+gost_test <- gost( organism = , query = list(f1=factor_loci[str_detect(factor_loci$locmoloc, 'f1') & factor_loci$trait=='f1' , ]$SNP,
+                               f2=factor_loci[str_detect(factor_loci$locmoloc, 'f2') & factor_loci$trait=='f2' , ]$SNP,
+                               f3=factor_loci[str_detect(factor_loci$locmoloc, 'f3') & factor_loci$trait=='f3' , ]$SNP),
+                              sources = c("GO:BP", "REAC", 'KEGG'), significant = T, 
+                              ordered_query = F
+                        
+                                 
+                               )
+
+
+
+
+gost_test$result
+
+gostplot(gost_test, capped = F)
+
+
+factor_loci[str_detect(factor_loci$locmoloc, 'f1') & factor_loci$trait=='f1' , ]$pan_locus_name
+
+gost_test_region <- gost( organism = , query = list(f1=gsub('_',':' ,factor_loci[str_detect(factor_loci$locmoloc, 'f1') & factor_loci$trait=='f1' , ]$pan_locus_name) ,
+                                             f2=gsub('_', ':',factor_loci[str_detect(factor_loci$locmoloc, 'f2') & factor_loci$trait=='f2' , ]$pan_locus_name),
+                                             f3=gsub('_',':',factor_loci[str_detect(factor_loci$locmoloc, 'f3') & factor_loci$trait=='f3' , ]$pan_locus_name)),
+                   sources = c("GO:BP", "REAC", 'KEGG'), significant = T
+                   
+                   
+)
+
+
+gostplot(gost_test_region, capped = F)
+
+
+
+
+
+
+
+
+
 
 
 
