@@ -63,6 +63,12 @@ locus_lister <- function(my_paths, gwas_names) {
   overlapping <- findOverlaps(pan_loci_non_reduced, pan_loci) #find overlaps between all the loci and use it as an index of the unique non overlapping loci
   all_loci$pan_locus <- rep(0, nrow(all_loci)) #allocate the column 
   all_loci[overlapping@from,]$pan_locus <- overlapping@to  #assinging the number as index of which macro loci is overlapping 
+  all_loci$pan_locus_name <- rep(0, nrow(all_loci))
+  
+  #assign a name refereed to the position of each pan_locus
+  for(k in 1:length(unique(all_loci$pan_locus))){
+    all_loci[all_loci$pan_locus==k, ]$pan_locus_name <- paste0(all_loci[all_loci$pan_locus==k, ]$chr,'_',  min(all_loci[all_loci$pan_locus==k, ]$start), '_',  max(all_loci[all_loci$pan_locus==k, ]$end))
+  }
   
   return(all_loci)
   
@@ -292,7 +298,7 @@ saveRDS(factor_coloc, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_col
 
 
 
-
+head(factor_loci)
 
 
 
