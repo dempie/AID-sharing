@@ -5,7 +5,6 @@ library(dplyr)
 library(ComplexHeatmap)
 library(tidyr)
 library(ChIPpeakAnno)
-library(hyprcoloc)
 library(stringr)
 library(RColorBrewer)
 library(moloc)
@@ -15,11 +14,12 @@ library(moloc)
 #function to create a genomic ranges object useful to find overlapps between loci 
 
 create_range <- function(res, chr='CHR', start='start', end='end' ) {
+  #check if there are overlapping ranges
   cnd<- length(GRanges( seqnames =  res$chr ,IRanges(names = rownames(res) ,start = as.numeric(res$start), end = as.numeric(res$end)))@ranges) != (length(reduce(GRanges( seqnames =  res$chr ,IRanges(names = rownames(res) ,start = as.numeric(res$start), end = as.numeric(res$end))))))
   if(cnd==T) {warning('There are overlaps inside this thing') }
 
   return(GRanges( seqnames =  res$chr ,IRanges(names = rownames(res) ,start = as.numeric(res$start), end = as.numeric(res$end))) )
-  #check if there are overlapping ranges
+ 
 }
 
 #----------analysis of the factor gwas------------------------------------------
@@ -44,11 +44,10 @@ lists_forupset <- function(ovl_f, traits){
     sh <- list()
     #create the lists and put it the eleemtnts that are unique
     for( i in 1:length(traits)){
-      tt<-traits[i]
-    filt <- str_starts(names(ovl_f$uniquePeaks@ranges),tt, negate = FALSE)
-    un[[tt]] <- names(ovl_f$uniquePeaks@ranges)[filt]
+          tt<-traits[i]
+          filt <- str_starts(names(ovl_f$uniquePeaks@ranges),tt, negate = FALSE)
+          un[[tt]] <- names(ovl_f$uniquePeaks@ranges)[filt]
     }
-    
     
     #put into the lists the element that are shared among the lists
     for(k in 1:length(ovl_f$mergedPeaks$peakNames)){
@@ -64,19 +63,17 @@ lists_forupset <- function(ovl_f, traits){
             }
     }
     
-    
     #-generate a matrix showing which locus is present in each disease
     output <- list()
     for(k in 1:length(un)){
-      tt <- c(names(un))[k]
-      to_get <- strsplit(unlist(strsplit(un[[tt]], split = '-')), split='__')
-      
-      for(i in c(1:length(to_get))){
-        output[[tt]][[i]]<-to_get[[i]][2]
-        
-      }
-      output[[tt]]<- unlist(output[[tt]])
-      
+          tt <- c(names(un))[k]
+          to_get <- strsplit(unlist(strsplit(un[[tt]], split = '-')), split='__')
+          
+          for(i in c(1:length(to_get))){
+            output[[tt]][[i]]<-to_get[[i]][2]
+            
+          }
+          output[[tt]]<- unlist(output[[tt]])
       
     }
     output <- list_to_matrix(output)
@@ -162,7 +159,7 @@ molocalize <- function(list_of_paths, trait_names, loci, N_hat){
                     #for each GWAS take out the BETAs and the SE
                     for(k in c(1:length(unique(unlist( loci[loci$pan_locus==i,]$trait))))){
                               #take only the ones that are significant fot that loci
-                              tt<- unique(unlist((loci[loci$pan_locus==i,]$trait)))[k] 
+                              tt<- unique(unlist((loci[loci$pan_locus==i,]$trait)))[k]   #important the unique(), as  in case of multiple locus from the same trait, the last iteration will overwright the previous, no importance as it will be identical 
                               tr_SNP_active <- list_of_files[[tt]][ list_of_files[[tt]]$SNP %in% SNP_active ,]
                               tr_SNP_active <- tr_SNP_active[!duplicated(tr_SNP_active ), ] #remove duplicated SNPs 
                               #exctract the betas and se
@@ -242,24 +239,74 @@ moloc_119_b <-  molocalize(list_of_paths = the_paths[c(4,5,6)], trait_names = gw
 #-------------------------------------------------------------------------------
 
 #script for adding the results of coloc to the loci table 
+#locmoloc column indicates if the locus is colocalizing or not, if it is indicates the traits involved in the colocalization
 
 factor_loci$configuration <- rep('-', nrow(factor_loci))
-factor_loci$posterior_moloc <- rep('-', nrow(factor_loci))
-
+factor_loci$posterior_configuration <- rep('-', nrow(factor_loci))
+factor_loci$locmoloc <- rep(0, nrow(factor_loci))
 
 for(k in 1:length(unique(factor_loci$pan_locus))){
   if(nrow(factor_loci[factor_loci$pan_locus==k, ])==1){
     
+    factor_loci[factor_loci$pan_locus==k, ]$locmoloc <- factor_loci[factor_loci$pan_locus==k, ]$trait
     factor_loci[factor_loci$pan_locus==k, ]$configuration <- 'no_over'
     
-    } else{
-      act <- factor_coloc$res_coloc[[paste0("locus_", k)]]$priors_lkl_ppa
-      m<- which.max(c(act$PPA))
-      factor_loci[factor_loci$pan_locus==k, ]$configuration <- paste0(rownames(act)[m])
-      factor_loci[factor_loci$pan_locus==k, ]$posterior_moloc <- act$PPA[m]
+  } else{
+    act <- factor_coloc$res_coloc[[paste0("locus_", k)]]$priors_lkl_ppa
+    m<- which.max(c(act$PPA))
+    factor_loci[factor_loci$pan_locus==k, ]$configuration <- paste0(rownames(act)[m])
+    factor_loci[factor_loci$pan_locus==k, ]$posterior_configuration <- act$PPA[m]
+    
+          if( paste0(rownames(act)[m]) %in% c( "abc"  ,  "ab" )){
+                  factor_loci[factor_loci$pan_locus==k, ]$locmoloc<- paste0(unique(factor_loci[factor_loci$pan_locus==k, ]$trait),collapse = '-' ) #if they colocalize
+                  
+          } else if (paste0(rownames(act)[m]) %in% c( "a,b"  ,  "a,b,c" ) ){
+                  for(r in 1:nrow(factor_loci[factor_loci$pan_locus==k, ])){
+                          factor_loci[factor_loci$pan_locus==k, ][r,]$locmoloc<- paste0(unique(factor_loci[factor_loci$pan_locus==k, ][r,]$trait),collapse = '-' )
+                  }
+            
+          } else if (paste0(rownames(act)[m]) ==  "ab,c" ) {
+                  factor_loci[factor_loci$pan_locus==k & factor_loci$trait %in% c('f1', 'f2'),  ]$locmoloc <-   paste0(unique(factor_loci[factor_loci$pan_locus==k & factor_loci$trait %in% c('f1', 'f2'),  ]$trait),collapse = '-' ) 
+                  factor_loci[factor_loci$pan_locus==k & factor_loci$trait %in% c('f3'),  ]$locmoloc <-   paste0(unique(factor_loci[factor_loci$pan_locus==k & factor_loci$trait %in% c('f3'),  ]$trait),collapse = '-' ) 
+                
+          } else if (paste0(rownames(act)[m]) ==  "a,bc" ) {
+                  factor_loci[factor_loci$pan_locus==k & factor_loci$trait %in% c('f2', 'f3'),  ]$locmoloc <-   paste0(unique(factor_loci[factor_loci$pan_locus==k & factor_loci$trait %in% c('f2', 'f3'),  ]$trait),collapse = '-' )
+                  factor_loci[factor_loci$pan_locus==k & factor_loci$trait %in% c('f1'),  ]$locmoloc <-   paste0(unique(factor_loci[factor_loci$pan_locus==k & factor_loci$trait %in% c('f1'),  ]$trait),collapse = '-' )
+          }
   }
   
 }
+
+
+
+
+
+unique(factor_loci$locmoloc)
+
+factor_loci$locmoloc
+traits <- c('f1', 'f2', 'f3')
+for(q in 1:length(traits)){
+  tt <- traits[q]
+  <- str_detect(factor_loci$locmoloc, tt)
+}
+
+
+factor_loci[str_detect(factor_loci$locmoloc, 'f1') & factor_loci$trait=='f1' , ]
+factor_loci[str_detect(factor_loci$locmoloc, 'f2') & factor_loci$trait=='f2' , ]
+factor_loci[str_detect(factor_loci$locmoloc, 'f3') & factor_loci$trait=='f3' , ]
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
