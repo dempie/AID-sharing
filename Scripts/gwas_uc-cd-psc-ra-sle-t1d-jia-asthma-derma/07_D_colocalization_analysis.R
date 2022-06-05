@@ -285,26 +285,26 @@ unique(factor_loci$locmoloc)
 
 factor_loci$locmoloc
 traits <- c('f1', 'f2', 'f3')
+ups <- list()
 for(q in 1:length(traits)){
   tt <- traits[q]
-  <- str_detect(factor_loci$locmoloc, tt)
+  ups[[tt]] <- paste0(factor_loci[str_detect(factor_loci$locmoloc, tt) & factor_loci$trait==tt , ]$pan_locus_name, '_', factor_loci[str_detect(factor_loci$locmoloc, tt) & factor_loci$trait==tt , ]$locmoloc)
+  
+  
 }
 
 
-factor_loci[str_detect(factor_loci$locmoloc, 'f1') & factor_loci$trait=='f1' , ]
-factor_loci[str_detect(factor_loci$locmoloc, 'f2') & factor_loci$trait=='f2' , ]
-factor_loci[str_detect(factor_loci$locmoloc, 'f3') & factor_loci$trait=='f3' , ]
 
 
+a <- make_comb_mat(ups, mode = 'distinct')
 
-
-
-
-
-
-
-
-
+pdf(width = 10, height = 5, file = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/colocalization_upset_plot_factors.pdf')
+UpSet(a, set_order = c("f1", "f2", "f3"), comb_order = order(comb_size(a), decreasing = T),
+      comb_col = c((brewer.pal(6, 'Set3'))[4:6][comb_degree(a)]),
+      top_annotation = upset_top_annotation(a, add_numbers = TRUE, height = unit(6, "cm")),
+      right_annotation = upset_right_annotation(a, add_numbers = TRUE, width = unit(5,'cm') )
+)
+dev.off()
 
 
 
