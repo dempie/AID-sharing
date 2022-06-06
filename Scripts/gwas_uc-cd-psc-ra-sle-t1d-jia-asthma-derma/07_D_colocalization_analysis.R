@@ -9,6 +9,8 @@ library(stringr)
 library(RColorBrewer)
 library(moloc)
 library(gprofiler2)
+library(GenomicRanges)
+library(TxDb.Hsapiens.UCSC.hg19.knownGene )
 
 
 #function to create a genomic ranges object useful to find overlapps between loci 
@@ -303,52 +305,71 @@ dev.off()
 
 #------------------ gprofiler --------------------------------------------------
 
-gost_test <- gost( organism = , query = list(f1=factor_loci[str_detect(factor_loci$locmoloc, 'f1') & factor_loci$trait=='f1' , ]$SNP,
-                               f2=factor_loci[str_detect(factor_loci$locmoloc, 'f2') & factor_loci$trait=='f2' , ]$SNP,
-                               f3=factor_loci[str_detect(factor_loci$locmoloc, 'f3') & factor_loci$trait=='f3' , ]$SNP),
-                              sources = c("GO:BP", "REAC", 'KEGG'), significant = T, 
-                              ordered_query = F
-                               )
+
+#--------- first give ensemble gene ids to the genes-----------------------------
+
+ref_genome <-TxDb.Hsapiens.UCSC.hg19.knownGene 
+ref_genes <- genes(ref_genome)
+
+f_lead <- list()
+G_list <- list()
+f_nearest_genes <- list()
+
+
+for(i in 1:3){
+        tt <- c('f1', 'f2', 'f3')[i]
+        f_lead[tt] <- GRanges(seqnames  =paste0('chr',factor_loci[factor_loci$locmoloc==tt, c('chr')]),   IRanges(names =factor_loci[factor_loci$locmoloc==tt, c('SNP')] , start = factor_loci[factor_loci$locmoloc==tt, 'BP']))
+        #look for the nearest gene
+        f_nearest_genes[[tt]] <- nearest(f_lead[[tt]], ref_genes, ignore.strand=T) 
+        gene_id <- ref_genes[f_nearest_genes[[tt]],]@elementMetadata@listData
+        mart <- useDataset("hsapiens_gene_ensembl", useMart("ensembl")) #select the database to convert 
+        G_list[[tt]] <- getBM(filters= "entrezgene_id", attributes= c("entrezgene_id","ensembl_gene_id",'ensembl_peptide_id' ),values=gene_id,mart= mart)
+        merge()
+}
+
+G_list
+
+
+merge(df,G_list,by.x="gene",by.y="ensembl_peptide_id")
+
+
+listAttributes(mart)
 
 
 
 
-gost_test$result
-
-gostplot(gost_test, capped = F)
 
 
-factor_loci[str_detect(factor_loci$locmoloc, 'f1') & factor_loci$trait=='f1' , ]$pan_locus_name
 
-gost_test_region <- gost( organism = , query = list(f1=gsub('_',':' ,factor_loci[str_detect(factor_loci$locmoloc, 'f1') & factor_loci$trait=='f1' , ]$pan_locus_name) ,
-                                             f2=gsub('_', ':',factor_loci[str_detect(factor_loci$locmoloc, 'f2') & factor_loci$trait=='f2' , ]$pan_locus_name),
-                                             f3=gsub('_',':',factor_loci[str_detect(factor_loci$locmoloc, 'f3') & factor_loci$trait=='f3' , ]$pan_locus_name)),
-                   sources = c("GO:BP", "REAC", 'KEGG'), significant = T
-                   
-                   
+
+
+
+
+
+
+
+gost_test_region <- gost( organism = , query = list(unique(G_list$f1$ensembl_gene_id), unique(G_list$f2$ensembl_gene_id), unique(G_list$f3$ensembl_gene_id)),
+                          sources = c("GO:BP", "REAC", 'KEGG'), significant = T
+                      
 )
 
 
 gostplot(gost_test_region, capped = F)
 
 
-#-------------------------------------------------------------------------------
-
-factor_loci
 
 
 
-library('TxDb.Hsapiens.UCSC.hg19.knownGene')
-ref_genome <-TxDb.Hsapiens.UCSC.hg19.knownGene 
-ref_genes <- genes(ref_genome)
-
-f1_lead <- GRanges(seqnames  =paste0('chr',factor_loci[factor_loci$locmoloc=='f1', c('chr')]),   IRanges(names =factor_loci[factor_loci$locmoloc=='f1', c('SNP')] , start = factor_loci[factor_loci$locmoloc=='f1', 'BP']))
-f2_lead <- GRanges(seqnames  =factor_loci[factor_loci$locmoloc=='f2', c('SNP')]  ,IRanges(names = factor_loci[factor_loci$locmoloc=='f2', c('chr')], start = factor_loci[factor_loci$locmoloc=='f2', 'BP']))
-f3_lead <- GRanges(seqnames  =factor_loci[factor_loci$locmoloc=='f3', c('SNP')]  ,IRanges(names = factor_loci[factor_loci$locmoloc=='f3', c('chr')], start = factor_loci[factor_loci$locmoloc=='f3', 'BP']))
 
 
-?nearest
-f1_nearest_genes <- nearest(f1_lead, ref_genes, ignore.strand=T) 
+
+
+
+
+
+
+
+
 
 
 
