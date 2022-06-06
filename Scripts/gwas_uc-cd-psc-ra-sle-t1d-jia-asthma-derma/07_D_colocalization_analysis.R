@@ -202,7 +202,6 @@ N_hat_F[[paste0('f', k)]]<-mean(1/((2*subsetf$MAF*(1-subsetf$MAF))*subsetf$SE^2)
 }
 
 
-
 #gather te info about the paths and the gwas names
 sstats_names <- list.files('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/munged/')
 sstats_names  <- sstats_names[c(-8, -9, -12)]
@@ -218,6 +217,7 @@ for( i in c(1:length(sstats_names ))){
 }
 #-------------------------------------------------------------
 
+#run molocalize
 factor_loci <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/hyprcoloc_only_factors/factor_loci.txt', data.table = F)
 factor_coloc <- molocalize(list_of_paths = the_paths[c(4,5,6)], trait_names = gwas_names[c(4,5,6)],loci = factor_loci, N_hat = N_hat_F)
 saveRDS(factor_coloc, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/moloc_factors/factor_moloc_output.RDS')
@@ -239,7 +239,7 @@ moloc_119_b <-  molocalize(list_of_paths = the_paths[c(4,5,6)], trait_names = gw
 #-------------------------------------------------------------------------------
 
 #script for adding the results of coloc to the loci table 
-#locmoloc column indicates if the locus is colocalizing or not, if it is indicates the traits involved in the colocalization
+#locmoloc column indicates if the locus is co localizing or not, if it is indicates the traits involved in the co localization
 
 factor_loci$configuration <- rep('-', nrow(factor_loci))
 factor_loci$posterior_configuration <- rep('-', nrow(factor_loci))
@@ -277,27 +277,21 @@ for(k in 1:length(unique(factor_loci$pan_locus))){
   
 }
 
-
-
-
-
-unique(factor_loci$locmoloc)
-
-factor_loci$locmoloc
 traits <- c('f1', 'f2', 'f3')
 ups <- list()
 for(q in 1:length(traits)){
   tt <- traits[q]
   ups[[tt]] <- paste0(factor_loci[str_detect(factor_loci$locmoloc, tt) & factor_loci$trait==tt , ]$pan_locus_name, '_', factor_loci[str_detect(factor_loci$locmoloc, tt) & factor_loci$trait==tt , ]$locmoloc)
   
-  
 }
 
 
-
+#save the output 
+fwrite(factor_loci[order(factor_loci$pan_locus),], 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/moloc_factors/factor_loci_moloc_info.txt')
+factor_loci <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/moloc_factors/factor_loci_moloc_info.txt', data.table = F) 
+#plot an upset plot of the loci after colocalization---------------------------- 
 
 a <- make_comb_mat(ups, mode = 'distinct')
-
 pdf(width = 10, height = 5, file = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/colocalization_upset_plot_factors.pdf')
 UpSet(a, set_order = c("f1", "f2", "f3"), comb_order = order(comb_size(a), decreasing = T),
       comb_col = c((brewer.pal(6, 'Set3'))[4:6][comb_degree(a)]),
@@ -307,14 +301,13 @@ UpSet(a, set_order = c("f1", "f2", "f3"), comb_order = order(comb_size(a), decre
 dev.off()
 
 
+#------------------ gprofiler --------------------------------------------------
 
 gost_test <- gost( organism = , query = list(f1=factor_loci[str_detect(factor_loci$locmoloc, 'f1') & factor_loci$trait=='f1' , ]$SNP,
                                f2=factor_loci[str_detect(factor_loci$locmoloc, 'f2') & factor_loci$trait=='f2' , ]$SNP,
                                f3=factor_loci[str_detect(factor_loci$locmoloc, 'f3') & factor_loci$trait=='f3' , ]$SNP),
                               sources = c("GO:BP", "REAC", 'KEGG'), significant = T, 
                               ordered_query = F
-                        
-                                 
                                )
 
 
@@ -339,7 +332,23 @@ gost_test_region <- gost( organism = , query = list(f1=gsub('_',':' ,factor_loci
 gostplot(gost_test_region, capped = F)
 
 
+#-------------------------------------------------------------------------------
 
+factor_loci
+
+
+
+library('TxDb.Hsapiens.UCSC.hg19.knownGene')
+ref_genome <-TxDb.Hsapiens.UCSC.hg19.knownGene 
+ref_genes <- genes(ref_genome)
+
+f1_lead <- GRanges(seqnames  =paste0('chr',factor_loci[factor_loci$locmoloc=='f1', c('chr')]),   IRanges(names =factor_loci[factor_loci$locmoloc=='f1', c('SNP')] , start = factor_loci[factor_loci$locmoloc=='f1', 'BP']))
+f2_lead <- GRanges(seqnames  =factor_loci[factor_loci$locmoloc=='f2', c('SNP')]  ,IRanges(names = factor_loci[factor_loci$locmoloc=='f2', c('chr')], start = factor_loci[factor_loci$locmoloc=='f2', 'BP']))
+f3_lead <- GRanges(seqnames  =factor_loci[factor_loci$locmoloc=='f3', c('SNP')]  ,IRanges(names = factor_loci[factor_loci$locmoloc=='f3', c('chr')], start = factor_loci[factor_loci$locmoloc=='f3', 'BP']))
+
+
+?nearest
+f1_nearest_genes <- nearest(f1_lead, ref_genes, ignore.strand=T) 
 
 
 
