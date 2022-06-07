@@ -11,6 +11,7 @@ library(moloc)
 library(gprofiler2)
 library(GenomicRanges)
 library(TxDb.Hsapiens.UCSC.hg19.knownGene )
+library(biomaRt)
 
 
 #function to create a genomic ranges object useful to find overlapps between loci 
@@ -279,6 +280,15 @@ for(k in 1:length(unique(factor_loci$pan_locus))){
   
 }
 
+
+#save the output 
+fwrite(factor_loci[order(factor_loci$pan_locus),], 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/moloc_factors/factor_loci_moloc_info.txt')
+factor_loci <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/moloc_factors/factor_loci_moloc_info.txt', data.table = F) 
+
+
+
+
+#plot an upset plot of the loci after colocalization---------------------------- 
 traits <- c('f1', 'f2', 'f3')
 ups <- list()
 for(q in 1:length(traits)){
@@ -286,12 +296,6 @@ for(q in 1:length(traits)){
   ups[[tt]] <- paste0(factor_loci[str_detect(factor_loci$locmoloc, tt) & factor_loci$trait==tt , ]$pan_locus_name, '_', factor_loci[str_detect(factor_loci$locmoloc, tt) & factor_loci$trait==tt , ]$locmoloc)
   
 }
-
-
-#save the output 
-fwrite(factor_loci[order(factor_loci$pan_locus),], 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/moloc_factors/factor_loci_moloc_info.txt')
-factor_loci <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/moloc_factors/factor_loci_moloc_info.txt', data.table = F) 
-#plot an upset plot of the loci after colocalization---------------------------- 
 
 a <- make_comb_mat(ups, mode = 'distinct')
 pdf(width = 10, height = 5, file = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/colocalization_upset_plot_factors.pdf')
@@ -306,57 +310,70 @@ dev.off()
 #------------------ gprofiler --------------------------------------------------
 
 
-#--------- first give ensemble gene ids to the genes-----------------------------
+#--------- first find the nearest genes to each lead SNP------------------------
+#I used ensmble names, on build 37
+factor_loci <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/moloc_factors/factor_loci_moloc_info.txt', data.table = F) 
 
 ref_genome <-TxDb.Hsapiens.UCSC.hg19.knownGene 
 ref_genes <- genes(ref_genome)
 
 f_lead <- list()
 G_list <- list()
-f_nearest_genes <- list()
 
+mart <- useDataset("hsapiens_gene_ensembl", useMart(biomart="ENSEMBL_MART_ENSEMBL", host="https://grch37.ensembl.org", path="/biomart/martservice" ,dataset="hsapiens_gene_ensembl")) #select the database to convert and maake sure it is build 37 
+factor_loci$closest_gene <- rep('-', nrow(factor_loci))
 
 for(i in 1:3){
         tt <- c('f1', 'f2', 'f3')[i]
-        f_lead[tt] <- GRanges(seqnames  =paste0('chr',factor_loci[factor_loci$locmoloc==tt, c('chr')]),   IRanges(names =factor_loci[factor_loci$locmoloc==tt, c('SNP')] , start = factor_loci[factor_loci$locmoloc==tt, 'BP']))
-        #look for the nearest gene
-        f_nearest_genes[[tt]] <- nearest(f_lead[[tt]], ref_genes, ignore.strand=T) 
-        gene_id <- ref_genes[f_nearest_genes[[tt]],]@elementMetadata@listData
-        mart <- useDataset("hsapiens_gene_ensembl", useMart("ensembl")) #select the database to convert 
-        G_list[[tt]] <- getBM(filters= "entrezgene_id", attributes= c("entrezgene_id","ensembl_gene_id",'ensembl_peptide_id' ),values=gene_id,mart= mart)
-        merge()
+        f_lead[[tt]] <- GRanges(seqnames  =paste0('chr',factor_loci[factor_loci$trait==tt, c('chr')]),   IRanges(names =factor_loci[factor_loci$trait==tt, c('SNP')] , start = factor_loci[factor_loci$trait==tt, 'BP']))
+        elementMetadata(f_lead[[tt]])[['entrezgene_id']] <-  ref_genes[nearest(f_lead[[tt]], ref_genes, ignore.strand=T),]@elementMetadata@listData[[1]]
+        #check number of nearest genes equal to number of SNPs
+        ifelse(isTRUE(length(f_lead[[tt]]@seqnames) == length(elementMetadata(f_lead[[tt]])[['entrezgene_id']] )), print(paste0('All good with nearest genes numbers in ', tt)), warning('not equal number or ranges and nearest genes in ', tt) )
+      
+        G_list[[tt]] <- getBM(filters= "entrezgene_id", attributes= c("entrezgene_id","ensembl_gene_id" ),values=  elementMetadata(f_lead[[tt]])[['entrezgene_id']],mart= mart)
+        match(f_lead[[tt]]@elementMetadata, G_list[[tt]]$entrezgene_id)[[1]]
+        elementMetadata(f_lead[[tt]])[['ensembl_gene_id']] <- G_list[[tt]][match(f_lead[[tt]]@elementMetadata, G_list[[tt]]$entrezgene_id)[[1]],][,2]
+        
+        #add a column with the ensemble gene id into the factor loci table
+        factor_loci[factor_loci$trait==tt, ][match(factor_loci[factor_loci$trait==tt, ]$SNP, f_lead[[tt]]@ranges@NAMES),]$closest_gene  <- unlist(elementMetadata(f_lead[[tt]])[['ensembl_gene_id']])
 }
 
-G_list
 
-
-merge(df,G_list,by.x="gene",by.y="ensembl_peptide_id")
-
-
-listAttributes(mart)
+fwrite(factor_loci, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/moloc_factors/factor_loci_moloc_closest_gene_info.txt') 
 
 
 
 
 
-
-
-
-
-
-
-
-
-
-gost_test_region <- gost( organism = , query = list(unique(G_list$f1$ensembl_gene_id), unique(G_list$f2$ensembl_gene_id), unique(G_list$f3$ensembl_gene_id)),
-                          sources = c("GO:BP", "REAC", 'KEGG'), significant = T
-                      
-)
-
-
+gost_test_region <- gost( organism = , query = list(f1=unique(G_list$f1$ensembl_gene_id), f2=unique(G_list$f2$ensembl_gene_id), f3=unique(G_list$f3$ensembl_gene_id)),
+                          sources = c("GO:BP", "REAC", 'KEGG'), significant = T)
 gostplot(gost_test_region, capped = F)
 
 
+ensembl = useMart(biomart="ENSEMBL_MART_ENSEMBL", host="https://grch37.ensembl.org", path="/biomart/martservice" ,dataset="hsapiens_gene_ensembl")
+
+
+duplicated(G_list$f1$entrezgene_id)
+
+G_list$f1[!duplicated(G_list$f1$entrezgene_id),][,3]
+G_list$f2[!duplicated(G_list$f2$entrezgene_id),][,3]
+G_list$f3[!duplicated(G_list$f3$entrezgene_id),][,3]
+
+
+listDatasets(mart)
+
+
+listAttributes(ensemble_Homo_sapiens.GRCh37.70.processed)
+listAttributes(mart)
+
+q<- do.call(rbind, G_list)
+
+q[!duplicated(q$entrezgene_id),3]
+
+fwrite(matrix(q[!duplicated(q$entrezgene_id),3], ncol = 1, nrow = length(q[!duplicated(q$entrezgene_id),3])), 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/test.string.csv')
+
+
+listEnsemblGenomes()
 
 
 
@@ -366,20 +383,7 @@ gostplot(gost_test_region, capped = F)
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+q[order(q$pan_locus),]
 
 
 
