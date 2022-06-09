@@ -263,6 +263,53 @@ head(aid_sumstats)
 
 
 
+calculate_prevalence <- function(path_of_csv){
+  #read the file and remove the NA columns and rows
+  preva_csv <- read.csv(file = path_of_csv , header = T, sep = ';')
+  preva_csv <-  preva_csv[, c('cases', 'controls')]
+  preva_csv_noNA <- preva_csv[complete.cases(preva_csv), ]
+  
+  #calculated effective prevalence 
+  #calculate sample prevalence for each cohort
+  preva_csv_noNA$v <-preva_csv_noNA$cases/(preva_csv_noNA$cases+preva_csv_noNA$controls)
+  #calculate cohort specific effective sample size
+  preva_csv_noNA$EffN<-4*preva_csv_noNA$v*(1-preva_csv_noNA$v)*(preva_csv_noNA$cases+preva_csv_noNA$controls)
+  #calculate sum of effective sample size: 
+  eff_sample_size <- round(sum(preva_csv_noNA$EffN), 3)
+  
+  #print number of cases and controls, and effective sample size
+  cat(paste0( 'Number of cases  ' , sum(preva_csv_noNA$cases), '\n', 
+              'Number of contros  ', sum(preva_csv_noNA$controls), '\n', 
+              'Effective sample size  ', round(sum(preva_csv_noNA$EffN), 3)
+  ))
+  
+  #output the prevalenc when assigned to a variable 
+  
+  
+  
+  return(sum(preva_csv_noNA$cases)/sum(preva_csv_noNA$controls))
+}
+
+
+
+
+traits <- c('t1d','crohn', 'uc', 'psc', 'jia', 'sle', 'ra',  'asthma', 'derma')
+
+t1d_p <- calculate_prevalence('Prevalences/CSV_prevalences/t1d_chiou-2021.csv')
+crohn_p <- calculate_prevalence('Prevalences/CSV_prevalences/crohn_delange-2017.csv')
+uc_p <- calculate_prevalence('Prevalences/CSV_prevalences/uc_delange-2017.csv')
+psc_p <- 2871/12019
+jia_p <- 3305/9196
+sle_p <- calculate_prevalence('Prevalences/CSV_prevalences/sle_benthman-2015.csv')
+ra_p <- calculate_prevalence('Prevalences/CSV_prevalences/ra_okada-2014_only-eu.csv')
+asthma_p <- 64538/ 239321
+derma_p <- calculate_prevalence('Prevalences/CSV_prevalences/derma_sliz-2021.csv')
+
+
+
+
+list(t1d_p=t1d_p, crohn_p=crohn_p, uc_p=uc_p, psc_p=psc_p, jia_p=jia_p, sle_p=sle_p, ra_p=ra_p, asthma_p=asthma_p, derma_p=derma_p)
+
 
 
 
