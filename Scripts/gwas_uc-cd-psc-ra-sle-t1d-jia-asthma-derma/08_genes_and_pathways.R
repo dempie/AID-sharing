@@ -9,11 +9,13 @@ library(GenomicRanges)
 library(EnsDb.Hsapiens.v75)
 library(biomaRt)
 library(ComplexHeatmap)
-
-#------------------ gprofiler --------------------------------------------------
+library(clusterProfiler)
+library(enrichplot)
 
 
 #--------- first find the nearest genes to each lead SNP------------------------
+
+
 #I used ensmble names, on build 37
 factor_loci <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/moloc_factors/factor_loci_moloc_info.txt', data.table = F) 
 # 
@@ -56,7 +58,8 @@ UpSet(q, set_order = c("f1", "f2", "f3"), comb_order = order(comb_size(q), decre
 )
 dev.off()
 
-#-------------------------------------------------------------------------------
+
+#----string --------------------------------------------------------------------
 #write a matrix to be uploaded intro stringr to build the matrix
 fwrite(matrix(factor_loci$closest_gene, ncol = 1, nrow = length(factor_loci$closest_gene)), 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways/test.string.csv')
 
@@ -97,17 +100,48 @@ fwrite(string, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_
 
 #gprofiler----------------------------------------------------------------------
 
-gost_test_region <- gost( organism = , query = list(f1=unique(elementMetadata(f_lead$f1)[['ensembl_gene_id']]), f2=unique(elementMetadata(f_lead$f2)[['ensembl_gene_id']]), f3=unique(elementMetadata(f_lead$f3)[['ensembl_gene_id']])),
+gost_test_region <- gost(  query = list(f1=unique(elementMetadata(f_lead$f1)[['ensembl_gene_id']]), f2=unique(elementMetadata(f_lead$f2)[['ensembl_gene_id']]), f3=unique(elementMetadata(f_lead$f3)[['ensembl_gene_id']])),
                           sources = c("GO:BP", "REAC", 'KEGG'), significant = T, evcodes = T)
+
 gostplot(gost_test_region, capped = F)
 saveRDS(gost_test_region, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways/gprofiler_object.RDS')
 
 
 
+#--- gprofiler KEGG ------------------------------------------------------------
+ 
+gost_test_region <- gost(query = list(f1=unique(elementMetadata(f_lead$f1)[['ensembl_gene_id']]), f2=unique(elementMetadata(f_lead$f2)[['ensembl_gene_id']]), f3=unique(elementMetadata(f_lead$f3)[['ensembl_gene_id']])),
+                          sources = c('KEGG'), significant = T, evcodes = T)
 
 
 
 
 
+gost_test_region_2 <- gost(query = list(f1=c(factor_loci[factor_loci$trait=='f1',]$closest_gene), f2=c(factor_loci[factor_loci$trait=='f2',]$closest_gene), f3=c(factor_loci[factor_loci$trait=='f3',]$closest_gene)),
+                          sources = c('KEGG'), significant = T, evcodes = T)
+saveRDS(gost_test_region_2, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways/gprofiler_kegg_only.RDS')
+gost_test_region_2$result[, c('query', 'term_name', 'p_value', "intersection") ] 
+
+#------Th1 and Th2 cell differentiation ----------------------------------------
+th1_f2 <- gost_test_region$result[9:10,]$intersection[1]
+th1_f3 <- gost_test_region$result[9:10,]$intersection[2]
+mart <- useDataset("hsapiens_gene_ensembl", useMart(biomart="ENSEMBL_MART_ENSEMBL", host="https://grch37.ensembl.org", path="/biomart/martservice" ,dataset="hsapiens_gene_ensembl")) #select the database to convert and maake sure it is build 37 
+th1_f2_ent <- getBM(filters= "ensembl_gene_id", attributes= c("entrezgene_id","ensembl_gene_id"),values=  th1_f2 ,mart= mart)
+th1_f3_ent <- getBM(filters= "ensembl_gene_id", attributes= c("entrezgene_id","ensembl_gene_id"),values=  th1_f3 ,mart= mart)
+th1_f2_ent$entrezgene_id 
+th1_f3_ent$entrezgene_id
 
 
+#----- JAK-STAT signaling pathway----------------------------------------------
+jak_f1 <- gost_test_region$result[2,]$intersection
+jak_f3 <- gost_test_region$result[11,]$intersection
+
+jak_f1_ent <- getBM(filters= "ensembl_gene_id", attributes= c("entrezgene_id","ensembl_gene_id"),values=  jak_f1 ,mart= mart)
+jak_f3_ent <- getBM(filters= "ensembl_gene_id", attributes= c("entrezgene_id","ensembl_gene_id"),values=  jak_f3 ,mart= mart)
+
+jak_f1_ent$entrezgene_id
+jak_f3_ent$entrezgene_id
+
+
+
+jak_f1_ent$entrezgene_id %in% jak_f3_ent$entrezgene_id
