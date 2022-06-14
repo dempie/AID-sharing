@@ -123,6 +123,7 @@ saveRDS(gost_test_region_2, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/
 gost_test_region_2$result[, c('query', 'term_name', 'p_value', "intersection") ] 
 
 #------Th1 and Th2 cell differentiation ----------------------------------------
+
 th1_f2 <- gost_test_region$result[9:10,]$intersection[1]
 th1_f3 <- gost_test_region$result[9:10,]$intersection[2]
 mart <- useDataset("hsapiens_gene_ensembl", useMart(biomart="ENSEMBL_MART_ENSEMBL", host="https://grch37.ensembl.org", path="/biomart/martservice" ,dataset="hsapiens_gene_ensembl")) #select the database to convert and maake sure it is build 37 
@@ -145,3 +146,48 @@ jak_f3_ent$entrezgene_id
 
 
 jak_f1_ent$entrezgene_id %in% jak_f3_ent$entrezgene_id
+
+
+
+#---- heatmap ------------------------------------------------------------------
+
+he <- gost_test_region_2$result[, c('query', 'term_name', 'p_value', "intersection") ] 
+genes <- unique(strsplit(paste0(he$intersection, collapse = ','), split = ',')[[1]])
+
+
+genes
+t_t <- data.frame(genes) 
+for(i in 1:length(he$term_name)){
+  t_t[, paste0(paste(strsplit(he$term_name[i], split=' ')[[1]], collapse = '_'),'_' , he$query[i])] <- as.numeric(genes %in% strsplit(he[he$term_name==he$term_name[i] & he$query==he$query[i], 'intersection'], split=',' )[[1]])
+  
+}
+
+t_t[33,] <- c('trait',he$query) 
+t_t[34,] <- c('p_value',he$p_value)
+tt <- t(t_t)
+tt[,33]
+
+tt <- as.data.frame(tt)
+colnames(tt) <- tt[1,]
+tt <- tt[-1,]
+
+pdf('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways/heatmap_gene_and_pathways.pdf', height = 8, width = 16)
+Heatmap(tt, column_title = "Genes and pathways",
+        rect_gp = gpar(col = "white", lwd = 0.25), 
+        column_title_gp = gpar(fontsize = 20, fontface = "bold"),
+        left_annotation = rowAnnotation( '-log10(p)' = anno_barplot(   axis_param = list(direction = "reverse"),-log10(as.numeric(tt[,34])), width = unit(2, "cm"))),
+        row_split = tt[,33],
+        row_gap = unit(5, "mm"), 
+        column_labels = c(colnames(tt)[1:32], 'factor', '') ,
+        column_names_side = 'bottom',
+        show_heatmap_legend = F,
+        row_title = "Pathways" )
+
+dev.off()
+
+
+
+
+
+
+
