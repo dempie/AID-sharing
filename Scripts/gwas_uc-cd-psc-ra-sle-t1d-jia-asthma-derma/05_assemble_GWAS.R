@@ -330,26 +330,101 @@ for(i in c(1:3)){
          sep = '\t', col.names = T, row.names = F, quote = F)
 }
 
-#all_chunks<- readRDS('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_gwas_ouput/gwas_final_withQindex.RDS')
+
 
 
 #QSNP is a χ2-distributed test statistic, with larger values indexing a violation of the null hypothesis that the SNP acts entirely through the common factor(s)
 
 
-#plot the Q value
+#---------- plotting -----------------------------------------------------------
+gw <- list()
+g <- list()
+q <- list()
+for(i in c(1:3)){
+  tt <- c('f1', 'f2', 'f3')[i]
+  gw[[tt]] <- fread(paste0('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_gwas_ouput/factor',c('1', '2', '3')[i],'_gwas_final_withQindex.txt' ),
+         data.table = F)
+  g[[tt]] <-  gw[[tt]][gw[[tt]]$Pval_Estimate < 0.05 & (!is.na(gw[[tt]]$Pval_Estimate)),   ]
+  g[[tt]] <-  gw[[tt]][gw[[tt]]$Pval_Estimate < 0.05 & (!is.na(gw[[tt]]$Pval_Estimate)),   ]
+  q[[tt]] <- g[[tt]][g[[tt]]$Q_chisq_pval < 0.05 & (!is.na(g[[tt]]$Q_chisq_pval)),   ]
+  
+}
 
-jpeg(file='outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_gwas_ouput/miami_Qindex.jpeg', width = 800, height = 400, units='mm', res = 600)
+
+
+
+#pvalue of the SNP
+jpeg(file='outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_gwas_ouput/manhattan_pvalue.jpeg', width = 800, height = 400, units='mm', res = 600)
 par(mfrow=c(3,1))
-par(mar=c(5,5,3,3))
-manhattan(F1_plot, chr="CHR", bp="BP", snp="SNP", p="Pval_Estimate" ,ylim=c(0,30), main='F1 =~ crohn + uc  + psc', 
-          col = c("cornflowerblue", "coral2"), highlight = c(F1_plot[F1_plot$Q_chisq_pval<0.005,]$SNP) )  
-par(mar=c(5,5,3,3))
-manhattan(F2_plot, chr="CHR", bp="BP", snp="SNP", p="Pval_Estimate" ,ylim=c(0,30), main='F2 =~ jia + sle + ra + t1d', 
-          col = c("cornflowerblue", "coral2"), highlight = c(F2_plot[F2_plot$Q_chisq_pval<0.005,]$SNP))
-par(mar=c(5,5,3,3))
-manhattan(F3_plot, chr="CHR", bp="BP", snp="SNP", p="Pval_Estimate" ,ylim=c(0,30), main='F3 =~ asthma + derma', 
-          col =  c("cornflowerblue", "coral2"), highlight = c(F3_plot[F3_plot$Q_chisq_pval<0.005,]$SNP) )
+for(i in 1:length(g)){
+  tt <- c('f1', 'f2', 'f3')[i]
+          par(mar=c(5,5,3,3))
+          manhattan(g[[tt]], chr="CHR", bp="BP", snp="SNP", p="Pval_Estimate" ,ylim=c(0,30), main=paste0(tt,'=~ crohn + uc  + psc'), 
+                    col = c("cornflowerblue", "coral2"))  
+}
 dev.off()
+
+
+#Q value of the SNP
+jpeg(file='outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_gwas_ouput/manhattan_qpvaule.jpeg', width = 800, height = 400, units='mm', res = 600)
+par(mfrow=c(3,1))
+for(i in 1:length(g)){
+  tt <- c('f1', 'f2', 'f3')[i]
+  par(mar=c(5,5,3,3))
+  manhattan(q[[tt]], chr="CHR", bp="BP", snp="SNP", p="Q_chisq_pval" ,ylim=c(0,30), main=paste0(tt,'=~ crohn + uc  + psc'), 
+            col = c("cornflowerblue", "coral2"))  
+}
+dev.off()
+
+
+
+
+which(is.na(q[[tt]]$Pval_Estimate))
+par(mfrow=c(2,1))
+par(mar=c(0,5,3,3))
+manhattan(gwasResults,ylim=c(0,10),cex=2.2,cex.lab=2.5,font.lab=2,font.axis=2,cex.axis=1.6,las=2,font=4)
+par(mar=c(5,5,3,3))
+manhattan(gwasResults,ylim=c(10,0),cex=2.2,cex.lab=2.5,font.lab=2,font.axis=2,cex.axis=1.6,las=2,font=4,xlab="",xaxt="n")
+dev.off()
+
+
+
+#--------circular plot---------------------------------------------------------
+library("CMplot")
+
+
+gw <- list()
+g <- list()
+q <- list()
+for(i in c(1:3)){
+  tt <- c('f1', 'f2', 'f3')[i]
+  gw[[tt]] <- fread(paste0('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_gwas_ouput/factor',c('1', '2', '3')[i],'_gwas_final_withQindex.txt' ),
+                    data.table = F)
+  g[[tt]] <-  gw[[tt]][gw[[tt]]$Pval_Estimate < 0.5 & (!is.na(gw[[tt]]$Pval_Estimate)),   ]
+  g[[tt]] <-  gw[[tt]][gw[[tt]]$Pval_Estimate < 0.05 & (!is.na(gw[[tt]]$Pval_Estimate)),   ]
+}
+
+
+SNPs <- unique(c(gw[['f1']]$SNP, gw[['f2']]$SNP, gw[['f3']]$SNP ))
+circular <- data.frame('SNP'=SNPs)
+
+circular[,c('CHR')] <- gw[['f1']][match(circular$SNP,gw[['f1']]$SNP ),]$CHR
+circular[,c('BP')] <- gw[['f1']][match(circular$SNP,gw[['f1']]$SNP ),]$BP
+
+circular[, 'P_f1'] <- gw[['f1']][match(circular$SNP,gw[['f1']]$SNP ),]$Pval_Estimate
+circular[, 'P_f2'] <- gw[['f2']][match(circular$SNP,gw[['f2']]$SNP ),]$Pval_Estimate
+circular[, 'P_f3'] <- gw[['f3']][match(circular$SNP,gw[['f3']]$SNP ),]$Pval_Estimate
+
+CMplot(circular,type="p",plot.type="c",chr.labels=paste("Chr",c(1:22),sep=""),r=4,cir.legend=TRUE,
+       outward=T,cir.legend.col="black",cir.chr.h=1.3,chr.den.col="black",file="jpg",
+       memo="",dpi=300,file.output=TRUE,verbose=TRUE,width=20,height=20, amplify = T, cir.band = 1, threshold=5e-10, band=0.2)
+
+
+
+
+
+
+
 
 
 
