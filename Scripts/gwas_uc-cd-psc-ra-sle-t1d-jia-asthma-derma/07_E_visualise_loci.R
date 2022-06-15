@@ -88,87 +88,6 @@ for( i in c(1:3)){
 plot_locus(list_of_files = list_of_files, trait_names =gwas_names[c(4,5,6)], start =11020255, end = 11400000, chr = 16, y_b= 25, locus_name = 205)
 
 
-library(Gviz)
-library(biomaRt)
-
-ref_genes <- genes(EnsDb.Hsapiens.v75)
-ref_genes <- ref_genes[ref_genes@elementMetadata$gene_biotype=='protein_coding',]
-
-
-a <- GRanges(seqnames = 16 ,IRanges( start =11020255, end = 11400000))
-
-
-#function for plotting
-granges2df <- function(x) {
-  df <- as(x, "data.frame")
-  df <- df[,c("seqnames","start","end","strand","group_name", 'exon_id')]
-  colnames(df)[1] <- "chromosome"
-  colnames(df)[5] <- "transcript"
-  df
-}
-
-txdf <- select(EnsDb.Hsapiens.v75,
-               keys=keys(EnsDb.Hsapiens.v75, "GENEID"),
-               columns=c("GENEID","TXID", 'SYMBOL'),
-               keytype="GENEID")
-
-ebt <- exonsBy(EnsDb.Hsapiens.v75, by="tx")
-
-d <- list()
-for(i in 1:length(a@elementMetadata$gene_id)){
-
-idx <- txdf$GENEID ==  a@elementMetadata$gene_id[i]
-txs <- txdf$TXID[idx]
-#all the xons for these transcripts
-ebt2 <- ebt[txs]
-df <- granges2df(ebt2)
-df$gene <- a@elementMetadata$gene_id[i]
-df$symbol <-  txdf[match(df$gene, txdf$GENEID), ]$SYMBOL 
-d[[i]] <- df
-}
-
-
-d <- do.call(rbind, d) 
-grt <- GeneRegionTrack(d)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-d <- list()
-for(i in 1:length(a@elementMetadata$gene_id)){
-idx <- txdf$GENEID == a@elementMetadata$gene_id[i]
-exons <- txdf$TXID[idx]
-exons <- ebt[exons]
-
-df <- granges2df(exons)
-df$gene <- a@elementMetadata$gene_id[i]
-d[[i]] <- df
-}
-d <- do.call(rbind, d) 
-grt <- GeneRegionTrack(df)
-gax <- GenomeAxisTrack()
-plotTracks(list(gax,grt))
-
-df
-
-
-
-
-
 
 
 #a function to plot specific loci, provide the files and the position of the locus
@@ -225,8 +144,8 @@ plot_locus <- function(list_of_files, trait_names, start, end, chr, y_a=0, y_b=2
   #retrieve the info on the genes
   ref_genes <- genes(EnsDb.Hsapiens.v75)
   ref_genes <- ref_genes[ref_genes@elementMetadata$gene_biotype=='protein_coding',]
-  
-  
+  ind <- findOverlaps(GRanges(seqnames = chr ,IRanges(start = start, end = end)), ref_genes, type = 'any' )
+  a <- ref_genes[ind@to,]
   #function for plotting
   granges2df <- function(x) {
     df <- as(x, "data.frame")
@@ -269,8 +188,7 @@ plot_locus <- function(list_of_files, trait_names, start, end, chr, y_a=0, y_b=2
 }
 
 
-plot_locus(list_of_files = list_of_files, trait_names =gwas_names[c(4,5,6)], start =10850255, end = 11800000, chr = 16, y_b= 35, locus_name = 205)
-
+plot_locus(list_of_files = list_of_files, trait_names =gwas_names[c(4,5,6)], start =40000000, end = 41000000, chr = 17, y_b= NULL, y_a = NULL, locus_name = 205)
 
 
 
