@@ -421,10 +421,22 @@ CMplot(circular,type="p",plot.type="c",chr.labels=paste("Chr",c(1:22),sep=""),r=
 
 
 
+CMplot(circular[1:200000,] ,type="m",chr.labels=paste("Chr",c(1:22),sep=""),file="jpg",
+       memo="",dpi=300,file.output=TRUE,verbose=TRUE, width=20,height=20, amplify = T,  threshold=5e-10, band=0.2, multracks=TRUE)
 
 
 
 
 
+CMplot(circular[1:200000,], plot.type="m", band=0.5, LOG10=T, ylab="-log10(pvalue)",threshold=5e-10,
+       threshold.lty=2, threshold.lwd=1, threshold.col="red", amplify=TRUE, width=14,height=6,
+       signal.col=NULL, chr.den.col=NULL, file="jpg",memo="",dpi=300,file.output=TRUE,
+       verbose=TRUE,cex=0.8, multracks=TRUE, signal.line = 1)
+
+
+CMplot(circular[1:20000], plot.type="m",multracks=TRUE,threshold=c(5e-10),threshold.lty=c(1,2), 
+       threshold.lwd=c(1,1), threshold.col=c("black","grey"), amplify=TRUE,
+       chr.den.col=c("darkgreen", "yellow", "red"), signal.col=c("red","green","blue"),
+       signal.cex=1, file="jpg",memo="",dpi=300,file.output=TRUE,verbose=TRUE, LOG10=T,  width=40, height=5)
 
 
