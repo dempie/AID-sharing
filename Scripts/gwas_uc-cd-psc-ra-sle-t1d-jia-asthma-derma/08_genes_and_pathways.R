@@ -55,14 +55,16 @@ for(i in 1:3){
 
 
 #plot the upset plot of the genes
-q <- make_comb_mat(list(f1=elementMetadata(f_lead$f1)[['ensembl_gene_id']], f2=elementMetadata(f_lead$f2)[['ensembl_gene_id']], f3=elementMetadata(f_lead$f3)[['ensembl_gene_id']]))
+q <- make_comb_mat(list(f1=f_list_genes$f1$ensembl_gene_id, f2=f_list_genes$f2$ensembl_gene_id, f3=f_list_genes$f3$ensembl_gene_id))
 UpSet(q)
 pdf(width = 10, height = 5, file = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways/nearest_genes_upset_plot_factors.pdf')
-UpSet(q, set_order = c("f1", "f2", "f3"), comb_order = order(comb_size(q), decreasing = T),
-      comb_col = c((brewer.pal(6, 'Set3'))[4:6][comb_degree(q)]),
+UpSet(q, set_order = c("f1", "f2", "f3"), 
+      comb_order = order(comb_size(q), decreasing = T),
+      comb_col = c(rcartocolor::carto_pal(12, 'Safe')[c(1,2,3)][comb_degree(q)]),
       top_annotation = upset_top_annotation(q, add_numbers = TRUE, height = unit(6, "cm")),
-      right_annotation = upset_right_annotation(q, add_numbers = TRUE, width = unit(5,'cm') )
-)
+      right_annotation = upset_right_annotation(q, add_numbers = TRUE, width = unit(5,'cm') ),
+      row_title = "Factor", 
+      column_title = "Intersection of all genes ")
 dev.off()
 
 
@@ -120,45 +122,6 @@ gost_test_region_2 <- gost(query = list(f1=f_list_genes$f1$entrezgene_id, f2=f_l
 
 saveRDS(gost_test_region_2, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways/gprofiler_kegg_only.RDS')
 gost_test_region_2$result[, c('query', 'term_name', 'p_value', "intersection") ] 
-
-
-#------Th1 and Th2 cell differentiation ----------------------------------------
-gost_test_region_2 <- readRDS('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways/gprofiler_kegg_only.RDS')
-
-th1_f2 <- gost_test_region_2$result[9:10,]$intersection[1]
-th1_f3 <- gost_test_region_2$result[9:10,]$intersection[2]
-mart <- useDataset("hsapiens_gene_ensembl", useMart(biomart="ENSEMBL_MART_ENSEMBL", host="https://grch37.ensembl.org", path="/biomart/martservice" ,dataset="hsapiens_gene_ensembl")) #select the database to convert and maake sure it is build 37 
-th1_f2_ent <- getBM(filters= "ensembl_gene_id", attributes= c("entrezgene_id","ensembl_gene_id", 'hgnc_symbol'),values=  th1_f2 ,mart= mart)
-th1_f3_ent <- getBM(filters= "ensembl_gene_id", attributes= c("entrezgene_id","ensembl_gene_id", 'hgnc_symbol'),values=  th1_f3 ,mart= mart)
-th1_f2_ent$entrezgene_id 
-th1_f3_ent$entrezgene_id
-
-
-#----- JAK-STAT signaling pathway----------------------------------------------
-jak_f1 <- gost_test_region_2$result[2,]$intersection
-jak_f3 <- gost_test_region_2$result[11,]$intersection
-
-jak_f1_ent <- getBM(filters= "ensembl_gene_id", attributes= c("entrezgene_id","ensembl_gene_id", 'hgnc_symbol'),values=  jak_f1 ,mart= mart)
-jak_f3_ent <- getBM(filters= "ensembl_gene_id", attributes= c("entrezgene_id","ensembl_gene_id", 'hgnc_symbol'),values=  jak_f3 ,mart= mart)
-
-jak_f1_ent$entrezgene_id
-jak_f3_ent$entrezgene_id
-
-
-
-jak_f1_ent$entrezgene_id %in% jak_f3_ent$entrezgene_id
-
-
-#---- Th17 ---------------------------------------------------------------------
-th17_f1 <- gost_test_region_2$result[6,]$intersection
-th17_f3 <-  gost_test_region_2$result[12,]$intersection
-
-th17_f1_ent <- getBM(filters= "ensembl_gene_id", attributes= c("entrezgene_id","ensembl_gene_id", 'hgnc_symbol'),values=  th17_f1 ,mart= mart)
-th17_f3_ent <- getBM(filters= "ensembl_gene_id", attributes= c("entrezgene_id","ensembl_gene_id", 'hgnc_symbol'),values=  th17_f3 ,mart= mart)
-
-
-th17_f1_ent$entrezgene_id %in% th17_f3_ent$entrezgene_id
-
 
 
 #---- heatmap -----------------------------------------------------------------
@@ -469,26 +432,6 @@ Heatmap(tt, column_title = "Genes and pathways Factor Unique Genes",
         heatmap_width = unit(28, 'cm'), heatmap_height = unit(15, 'cm')
 )
 dev.off()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
