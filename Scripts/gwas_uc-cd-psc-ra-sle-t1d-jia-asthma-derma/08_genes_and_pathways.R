@@ -117,7 +117,7 @@ gost_test_region <- gost(query = list(f1=unique(elementMetadata(f_lead$f1)[['ens
 
 
 
-gost_test_region_2 <- gost(query = list(f1=f_list_genes$f1$entrezgene_id, f2=f_list_genes$f2$entrezgene_id, f3=f_list_genes$f3$entrezgene_id),
+gost_test_region_2 <- gost(query = list(f1=f_list_genes$f1$ensembl_gene_id, f2=f_list_genes$f2$ensembl_gene_id, f3=f_list_genes$f3$ensembl_gene_id),
                           sources = c('KEGG'), significant = T, evcodes = T)
 
 saveRDS(gost_test_region_2, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways/gprofiler_kegg_only.RDS')
