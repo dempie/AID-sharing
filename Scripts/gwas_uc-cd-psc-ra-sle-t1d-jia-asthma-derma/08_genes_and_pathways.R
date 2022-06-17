@@ -66,6 +66,8 @@ UpSet(q, set_order = c("f1", "f2", "f3"), comb_order = order(comb_size(q), decre
 dev.off()
 
 
+
+
 #----string --------------------------------------------------------------------
 #write a matrix to be uploaded intro stringr to build the matrix
 fwrite(matrix(factor_loci$closest_gene, ncol = 1, nrow = length(factor_loci$closest_gene)), 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways/test.string.csv')
@@ -101,17 +103,6 @@ for(i in 1:length(string_no_NA$ensembl_gene_id)) {
 string$trait <- string_no_NA[match(string$ensembl_gene_id, string_no_NA$ensembl_gene_id),]$trait
 string$map <- str_sub(string$`@id`, start = 10) 
 fwrite(string, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways/string_mapping_columns.csv')
-
-
-
-
-#gprofiler----------------------------------------------------------------------
-
-gost_test_region <- gost(  query = list(f1=unique(elementMetadata(f_lead$f1)[['ensembl_gene_id']]), f2=unique(elementMetadata(f_lead$f2)[['ensembl_gene_id']]), f3=unique(elementMetadata(f_lead$f3)[['ensembl_gene_id']])),
-                          sources = c("GO:BP", "REAC", 'KEGG'), significant = T, evcodes = T)
-
-gostplot(gost_test_region, capped = F)
-saveRDS(gost_test_region, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways/gprofiler_object.RDS')
 
 
 
@@ -168,11 +159,16 @@ th17_f3_ent <- getBM(filters= "ensembl_gene_id", attributes= c("entrezgene_id","
 
 th17_f1_ent$entrezgene_id %in% th17_f3_ent$entrezgene_id
 
-#---- heatmap ------------------------------------------------------------------
 
-he <- gost_test_region_2$result[, c('query', 'term_name', 'p_value', "intersection") ] 
+
+#---- heatmap -----------------------------------------------------------------
+gost_all <- gost(  query = list(f1=f_list_genes$f1$ensembl_gene_id, f2=f_list_genes$f2$ensembl_gene_id, f3=f_list_genes$f3$ensembl_gene_id),
+                   sources = c( 'KEGG'), significant = T, evcodes = T) 
+saveRDS(gost_all, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways/keeg_pathways.RDS')
+
+he <- gost_all$result
 genes <- unique(strsplit(paste0(he$intersection, collapse = ','), split = ',')[[1]])
-genes_symbol <- getBM(filters= "ensembl_gene_id", attributes= c("entrezgene_id","ensembl_gene_id", 'hgnc_symbol'),values=  genes,mart= mart)
+genes_symbol <- getBM(filters= "ensembl_gene_id", attributes= c("entrezgene_id","ensembl_gene_id", 'hgnc_symbol'),values=  genes,mart=mart )
 
 genes
 t_t <- data.frame(genes) 
@@ -206,11 +202,11 @@ names(sep)<- colnames(tt)
                      
 
 #plot heatmap_gene_and_pathways.pdf             
-pdf('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways/heatmap_gene_and_pathways.pdf', height = 8, width = 16)
-Heatmap(tt, column_title = "Genes and pathways",
+pdf('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways/heatmap_gene_and_pathways_all_genes.pdf', height = 8, width = 16)
+Heatmap(tt, column_title = "Genes and pathways all genes",
         rect_gp = gpar(col = "white", lwd = 0.25), 
         column_title_gp = gpar(fontsize = 20, fontface = "bold"),
-        left_annotation = rowAnnotation( '-log10(p)' = anno_barplot(   axis_param = list(direction = "reverse"),-log10(as.numeric(tt[,34])), width = unit(2, "cm"))),
+        left_annotation = rowAnnotation( '-log10(Padj)' = anno_barplot(   axis_param = list(direction = "reverse"),-log10(as.numeric(tt[,34])), width = unit(2, "cm"))),
         row_split = tt[,33],
         column_split = sep,
         column_gap = unit(3, "mm"),
@@ -226,8 +222,72 @@ Heatmap(tt, column_title = "Genes and pathways",
         )
 dev.off()
 
+saveRDS(tt, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways/heatmap_gene_and_pathways_all_genes_table.RDS')
 
-#---------- try something with clusterprofiler ---------------------------------
+
+
+#---------- heatmap to show all genes -----------------------------------------
+
+
+he_all_genes <- gost_all$result
+genes <- unique(do.call(rbind, f_list_genes)$ensembl_gene_id)
+genes_symbol <- getBM(filters= "ensembl_gene_id", attributes= c("entrezgene_id","ensembl_gene_id", 'hgnc_symbol'),values=  genes,mart=mart )
+#add ENSID to the ones that do not have gene id
+genes_symbol[which(genes_symbol$hgnc_symbol==''),]$hgnc_symbol <- genes_symbol[which(genes_symbol$hgnc_symbol==''),]$ensembl_gene_id 
+
+genes
+t_t <- data.frame(genes) 
+for(i in 1:length(he$term_name)){
+  t_t[, paste0(paste(strsplit(he_all_genes$term_name[i], split=' ')[[1]], collapse = '_'),'_' , he$query[i])] <- as.numeric(genes %in% strsplit(he_all_genes[he_all_genes$term_name==he_all_genes$term_name[i] & he_all_genes$query==he_all_genes$query[i], 'intersection'], split=',' )[[1]])
+  
+}
+
+t_t
+#add gene symbol and remove ENSEMBLE
+rownames(t_t) <- genes_symbol$hgnc_symbol[match(t_t$genes, genes_symbol$ensembl_gene_id)]   
+t_t$genes <- NULL
+t_t
+
+t_t['trait',] <- c(he_all_genes$query) 
+t_t['p_value',] <- c(he_all_genes$p_value)
+tt <- t(t_t)
+
+
+#color selection
+library(rcartocolor)
+display_carto_all(colorblind_friendly = TRUE)
+
+colori<- ComplexHeatmap:::default_col(x = tt)
+colori[c('f1', 'f2', 'f3')] <-  rcartocolor::carto_pal(12, 'Safe')[c(4,5,10)]#colorblind safe
+colori[c('0','1')] <- c('#a6cee3','#1f78b4')
+c('#a6cee3','#1f78b4','#b2df8a')
+#column split
+sep <- c(rep('a', 179), rep('b', 2))
+names(sep)<- colnames(tt)
+
+
+#plot heatmap_gene_and_pathways_with_all_genes.pdf             
+pdf('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways/heatmap_gene_and_pathways_all_genes_full_matrix.pdf', height = 8, width = 16)
+Heatmap(tt, column_title = "Genes and pathways all genes",
+        rect_gp = gpar(col = "white", lwd = 0.25), 
+        column_title_gp = gpar(fontsize = 20, fontface = "bold"),
+        left_annotation = rowAnnotation( '-log10(Padj)' = anno_barplot(   axis_param = list(direction = "reverse"),-log10(as.numeric(tt[,'p_value'])), width = unit(2, "cm"))),
+        row_split = tt[,'trait'],
+        column_split = sep,
+        column_gap = unit(3, "mm"),
+        row_gap = unit(5, "mm"), 
+        row_names_gp = gpar(col =  rcartocolor::carto_pal(12, 'Safe')[c(4,5,10)], fontsize=10),
+        column_labels = c(colnames(tt)[1:179], 'Factor', '') ,
+       column_names_gp = gpar(fontsize=3),
+        column_names_side = 'bottom',
+        show_heatmap_legend = F,
+        row_title = "Pathways",
+        na_col = 'black', 
+        col = colori, 
+        heatmap_width = unit(30, 'cm'), heatmap_height = unit(15, 'cm')
+)
+dev.off()
+
 
 
 #----clusterprofiler go terms -------------------------------------------------
@@ -321,6 +381,7 @@ corrplot(semsim, is.corr = T, addCoef.col = 'black', type = 'upper') #the inform
 
 
 #-----unique genes replication -------------------------------------------------
+
 #replicate the same analysis by taking out the shared genes among all the factors
 a <- combinations(n=3, r=2, c('f1', 'f2', 'f3'), repeats.allowed = F) #find the possible combinations
 shared_genes <- list()
@@ -333,13 +394,96 @@ for(i in 1:3){
 sh_genes <- unique(do.call(c, shared_genes))
 
 f_unique_genes <- list()
+
 for(i in 1:3){
-#create a list of genes that are unique and not shared
-tt <- c('f1', 'f2', 'f3')[i]
-f_unique_genes[[tt]] <- f_list_genes[[tt]][which(!f_list_genes[[tt]]$ensembl_gene_id %in% sh_genes),]
+    #create a list of genes that are unique and not shared
+    tt <- c('f1', 'f2', 'f3')[i]
+    f_unique_genes[[tt]] <- f_list_genes[[tt]][which(!f_list_genes[[tt]]$ensembl_gene_id %in% sh_genes),]
 }
 
 f_unique_genes
+gost_unique <- gost(  query = list(f1=f_unique_genes$f1$ensembl_gene_id, f2=f_unique_genes$f2$ensembl_gene_id, f3=f_unique_genes$f3$ensembl_gene_id),
+                           sources = c( 'KEGG'), significant = T, evcodes = T)
+gost_all <- gost(  query = list(f1=f_list_genes$f1$ensembl_gene_id, f2=f_list_genes$f2$ensembl_gene_id, f3=f_list_genes$f3$ensembl_gene_id),
+                   sources = c( 'KEGG'), significant = T, evcodes = T) 
+  
+  
+gost_all$result
+gost_unique$result
+
+
+
+#the heatmap 
+he_u <- gost_unique$result[, c('query', 'term_name', 'p_value', "intersection") ] 
+genes <- unique(strsplit(paste0(he_u_u$intersection, collapse = ','), split = ',')[[1]])
+genes_symbol <- getBM(filters= "ensembl_gene_id", attributes= c("entrezgene_id","ensembl_gene_id", 'hgnc_symbol'),values=  genes,mart= mart)
+
+genes
+t_t <- data.frame(genes) 
+for(i in 1:length(he_u$term_name)){
+  t_t[, paste0(paste(strsplit(he_u$term_name[i], split=' ')[[1]], collapse = '_'),'_' , he_u$query[i])] <- as.numeric(genes %in% strsplit(he_u[he_u$term_name==he_u$term_name[i] & he_u$query==he_u$query[i], 'intersection'], split=',' )[[1]])
+  
+}
+
+t_t
+#add gene symbol and remove ENSEMBLE
+rownames(t_t) <- genes_symbol$hgnc_symbol[match(t_t$genes, genes_symbol$ensembl_gene_id)]   
+t_t$genes <- NULL
+t_t
+
+t_t['trait',] <- c(he_u$query) 
+t_t['p_value',] <- c(he_u$p_value)
+tt <- t(t_t)
+
+
+#color selection
+library(rcartocolor)
+display_carto_all(colorblind_friendly = TRUE)
+
+colori<- Com
+colori[c('f1', 'f2', 'f3')] <-  rcartocolor::carto_pal(12, 'Safe')[c(4,5,10)]#colorblind safe
+colori[c('0','1')] <- c('#a6cee3','#1f78b4')
+c('#a6cee3','#1f78b4','#b2df8a')
+#column split
+sep <- c(rep('a', 30), rep('b', 2))
+names(sep)<- colnames(tt)
+dim(tt)
+
+#plot heatmap_gene_and_pathways.pdf             
+pdf('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways/heatmap_gene_and_pathways_factor_unique_genes.pdf', height = 8, width = 16)
+Heatmap(tt, column_title = "Genes and pathways Factor Unique Genes",
+        rect_gp = gpar(col = "white", lwd = 0.25), 
+        column_title_gp = gpar(fontsize = 20, fontface = "bold"),
+        left_annotation = rowAnnotation( '-log10(p_adjusted)' = anno_barplot(   axis_param = list(direction = "reverse"),-log10(as.numeric(tt[,32])), width = unit(2, "cm"))),
+        row_split = tt[,'trait'],
+        column_split = sep,
+        column_gap = unit(3, "mm"),
+        row_gap = unit(5, "mm"), 
+        row_names_gp = gpar(col =  rcartocolor::carto_pal(12, 'Safe')[c(4,5,10)], fontsize=10),
+        column_labels = c(colnames(tt)[1:30], 'Factor', '') ,
+        column_names_side = 'bottom',
+        show_heatmap_legend = F,
+        row_title = "Pathways",
+        na_col = 'black', 
+        col = colori, 
+        heatmap_width = unit(28, 'cm'), heatmap_height = unit(15, 'cm')
+)
+dev.off()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
