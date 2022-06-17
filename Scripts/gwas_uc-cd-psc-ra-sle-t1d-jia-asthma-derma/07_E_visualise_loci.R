@@ -188,10 +188,13 @@ plot_locus <- function(list_of_files, trait_names, start, end, chr, y_a=0, y_b=2
 }
 
 
-plot_locus(list_of_files = list_of_files, trait_names =gwas_names[c(4,5,6)], start =40000000, end = 41000000, chr = 17, y_b= NULL, y_a = NULL, locus_name = 205)
-
-
-
-
-
+# plot_locus(list_of_files = list_of_files, trait_names =gwas_names[c(4,5,6)], start =40000000, end = 41000000, chr = 17, y_b= NULL, y_a = NULL, locus_name = 205)
+# 
+# 
+# derma <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/munged/derma_munged_build37.txt', data.table = F)
+# f3 <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/munged/f3_munged_build37.txt', data.table = F)
+# asthma <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/munged/asthma_munged_build37.txt', data.table = F)
+# 
+# plot_locus(list_of_files=list(derma, f3, asthma), trait_names = c('derma', 'f3', 'asthma')  ,start =40000000, end = 41000000, chr = 17, y_b= NULL, y_a = NULL, locus_name = 205)
+# 
 
