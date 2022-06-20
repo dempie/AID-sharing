@@ -17,6 +17,10 @@ library(corrplot)
 library(qgraph)
 library(semPlot)
 library(lavaan)
+library(rcartocolor)
+library(extrafont)
+loadfonts()
+
 
 
 output2 <- readRDS('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/02_ldsc_alltraits/ldsc_output_all-traits.RDS')
@@ -65,7 +69,7 @@ aid_factor <-usermodel(output2, estimation = "DWLS", model = aid_model, CFIcalc 
 aid_factor
 
 saveRDS(aid_factor, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/03_factor-model/model_uc-cd-psc-ra-sle-t1d-jia-asthma-derma.RDS')
-
+aid_factor <- readRDS('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/03_factor-model/model_uc-cd-psc-ra-sle-t1d-jia-asthma-derma.RDS') 
 
 #----Nicola's function for plotting SEM-----------------------------------------
 
@@ -112,11 +116,35 @@ semPlotModel_GSEM=function(gsem.object=GWISoutput , est.label="STD_All"){
   
 }
 
-pdf('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/03_factor-model/path_uc-cd-psc-ra-sle-t1d-jia-asthma-derm_factor.pdf', height = 7, width = 14)
-semPaths(semPlotModel_GSEM(aid_factor) , what = 'est' , residuals = T, edge.color = 'black',
-         sizeMan = 7, sizeLat = 7, label.cex=1, edge.label.cex = 0.8)
+pdf('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/03_factor-model/path_uc-cd-psc-ra-sle-t1d-jia-asthma-derm_factor.pdf', height = 16, width = 16)
+semPaths(semPlotModel_GSEM(aid_factor) , 
+         what = 'est' , 
+         residuals = T, 
+         sizeMan = 7, 
+         label.cex=1, 
+         theme="colorblind", 
+         rotation = 2, 
+         layout = "tree2", 
+         sizeLat = 7,
+         edge.color = "black",
+         edge.label.cex = 1,
+         curve = 2,
+       nodeLabels = c('CD', 'UC', 'PSC', 'JIA', 
+                      'SLE', 'RA','T1D' ,'AS', 'DE' , 'F1', 'F2', 'F3' ), 
+       label.cex = 1.5, 
+       color = list( lat=rcartocolor::carto_pal(12, 'Safe')[c(1,2,3)]),
+       groups=list(c("crohn","uc","psc"),c("jia","sle","ra_eu","t1d"), c( "asthma" ,"derma")),
+       height = 10, width = 16
+       
+         )
 dev.off()
 
 
+names_plot = c('Type 1 Diabetes','Crohn\'s disease', 'Ulcerative colitis', 
+               'Primary sclerosing cholangitis ', 'Juvenile idiopathic arthritis', 'Systemic lupus erythematosus', 
+               'Rheumatoid arthritis',  'Asthma', 'Atopic dermatitis')
+
+
+?semPaths
 
 
