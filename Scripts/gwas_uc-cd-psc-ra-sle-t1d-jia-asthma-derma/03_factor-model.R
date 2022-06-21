@@ -20,7 +20,7 @@ library(lavaan)
 library(rcartocolor)
 library(extrafont)
 loadfonts()
-
+library(RColorBrewer)
 
 
 output2 <- readRDS('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/02_ldsc_alltraits/ldsc_output_all-traits.RDS')
@@ -116,11 +116,17 @@ semPlotModel_GSEM=function(gsem.object=GWISoutput , est.label="STD_All"){
   
 }
 
+names_plot = c('Type 1 Diabetes','Crohn\'s disease', 'Ulcerative colitis', 
+               'Primary sclerosing cholangitis ', 'Juvenile idiopathic arthritis', 'Systemic lupus erythematosus', 
+               'Rheumatoid arthritis',  'Asthma', 'Atopic dermatitis')
+
 pdf('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/03_factor-model/path_uc-cd-psc-ra-sle-t1d-jia-asthma-derm_factor.pdf', height = 16, width = 16)
 semPaths(semPlotModel_GSEM(aid_factor) , 
-         what = 'est' , 
+         what = 'path' , 
+         whatLabels= 'est',
          residuals = T, 
          sizeMan = 7, 
+         sizeInt = 2,
          label.cex=1, 
          theme="colorblind", 
          rotation = 2, 
@@ -132,19 +138,19 @@ semPaths(semPlotModel_GSEM(aid_factor) ,
        nodeLabels = c('CD', 'UC', 'PSC', 'JIA', 
                       'SLE', 'RA','T1D' ,'AS', 'DE' , 'F1', 'F2', 'F3' ), 
        label.cex = 1.5, 
-       color = list( lat=rcartocolor::carto_pal(12, 'Safe')[c(1,2,3)]),
+       color = list( lat=brewer.pal(12, 'Paired')[c(1,3,5)]),
        groups=list(c("crohn","uc","psc"),c("jia","sle","ra_eu","t1d"), c( "asthma" ,"derma")),
-       height = 10, width = 16
-       
+       height = 10, width = 16, 
+       edge.label.position=0.5,
+       asize=3,
+       esize=1,
+  
          )
 dev.off()
 
 
-names_plot = c('Type 1 Diabetes','Crohn\'s disease', 'Ulcerative colitis', 
-               'Primary sclerosing cholangitis ', 'Juvenile idiopathic arthritis', 'Systemic lupus erythematosus', 
-               'Rheumatoid arthritis',  'Asthma', 'Atopic dermatitis')
 
 
-?semPaths
+
 
 
