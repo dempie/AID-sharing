@@ -224,4 +224,67 @@ nuovo[!nuovo$closest_gene==vecchio$closest_gene,]
 
 genes[genes$ensembl_gene_id %in% c('ENSG00000215041', 'ENSG00000261915'),]
 
+#---------------------liftover--------------------------------------------------
+library(liftOver)
+
+liftOver()
+
+library(rtracklayer)
+
+ch = import.chain('hg19ToHg38.over.chain')
+
+x<- GRanges(seqnames  =paste0('chr', factor_loci[, c('chr')]),   IRanges(names =factor_loci[, c('SNP')] , start = factor_loci[, 'BP']))
+results <- as.data.frame(liftOver(x,ch))
+
+factor_loci[match(results$group_name ,factor_loci$SNP),]$BP <- results$start
+
+
+
+listEnsemblArchives()
+listEnsembl()
+
+ensembl <- useEnsembl(biomart = 'genes',
+                      dataset = 'hsapiens_gene_ensembl')
+
+mart <- useDataset("hsapiens_gene_ensembl", useMart(biomart="ENSEMBL_MART_ENSEMBL", host="https://apr2022.archive.ensembl.org", path="/biomart/martservice" ,dataset="hsapiens_gene_ensembl"))
+genes <- biomaRt::getBM(attributes = c('ensembl_gene_id', "external_gene_name", "chromosome_name","transcript_biotype", 'start_position', 'end_position', 'strand', 'transcription_start_site'),
+                        filters = c("transcript_biotype","chromosome_name"),values = list("protein_coding",c(1:22)), mart = mart)
+
+genes <- genes[!duplicated(genes$ensembl_gene_id),]
+
+
+
+#reg_genes_tss <-GRanges( seqnames =genes$chromosome_name ,IRanges(start = as.numeric(genes$transcription_start_site), end = as.numeric(genes$transcription_start_site), names = genes$ensembl_gene_id))
+reg_genes_tss <-GRanges( seqnames =c$chromosome_name ,IRanges(start = as.numeric(c$tss), end=as.numeric(c$tss) , names = c$ensembl_gene_id))
+
+
+factor_loci$closest_gene <- rep('-', nrow(factor_loci))
+f_lead <- list()
+for(i in 1:3){
+  tt <- c('f1', 'f2', 'f3')[i]
+  f_lead[[tt]] <- GRanges(seqnames  =factor_loci[factor_loci$trait==tt, c('chr')],   IRanges(names =factor_loci[factor_loci$trait==tt, c('SNP')] , start = factor_loci[factor_loci$trait==tt, 'BP']))
+  elementMetadata(f_lead[[tt]])[['ensembl_gene_id']] <-  reg_genes_tss[nearest(f_lead[[tt]], reg_genes_tss, ignore.strand=F),]@ranges@NAMES
+  
+  #add a column with the ensemble gene id into the factor loci table
+  factor_loci[factor_loci$trait==tt, ][match(factor_loci[factor_loci$trait==tt, ]$SNP, f_lead[[tt]]@ranges@NAMES),]$closest_gene  <- unlist(elementMetadata(f_lead[[tt]])[['ensembl_gene_id']])
+}
+
+nuovissimo <- factor_loci
+
+
+sum(!vecchio$closest_gene ==nuovissimo$closest_gene)
+
+nuovissimo[!vecchio$closest_gene ==nuovissimo$closest_gene,]
+
+
+
+
+
+
+
+
+
+
+
+
 
