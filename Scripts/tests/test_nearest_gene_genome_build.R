@@ -30,8 +30,6 @@ start(ref_genes)
 reg_genes_tss <- resize(ref_genes,width = 1 ,fix = 'start')
 
 
-# ref_genes <- genes(ref_genome, single.strand.genes.only=FALSE )
-# ref_genes<- c(unlist(ref_genes))
 f_lead <- list()
 G_list <- list()
 
@@ -41,7 +39,7 @@ factor_loci$closest_gene <- rep('-', nrow(factor_loci))
 for(i in 1:3){
   tt <- c('f1', 'f2', 'f3')[i]
   f_lead[[tt]] <- GRanges(seqnames  =factor_loci[factor_loci$trait==tt, c('chr')],   IRanges(names =factor_loci[factor_loci$trait==tt, c('SNP')] , start = factor_loci[factor_loci$trait==tt, 'BP']))
-  elementMetadata(f_lead[[tt]])[['ensembl_gene_id']] <-  reg_genes_tss[nearest(f_lead[[tt]], reg_genes_tss, select=c('arbitrary')),]@ranges@NAMES
+  elementMetadata(f_lead[[tt]])[['ensembl_gene_id']] <-  reg_genes_tss[nearest(f_lead[[tt]], reg_genes_tss),]@ranges@NAMES
   
   #add a column with the ensemble gene id into the factor loci table
   factor_loci[factor_loci$trait==tt, ][match(factor_loci[factor_loci$trait==tt, ]$SNP, f_lead[[tt]]@ranges@NAMES),]$closest_gene  <- unlist(elementMetadata(f_lead[[tt]])[['ensembl_gene_id']])
@@ -145,8 +143,85 @@ factor_loci[69,]
 
 
 
+#------------------------------------------------alternative database for nearest genes
+
+factor_loci <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/moloc_factors/factor_loci_moloc_info.txt', data.table = F) 
+listEnsemblArchives()
+listEnsembl(version = 'GRCh37')
+
+# ensembl <- useEnsembl(biomart = 'genes', 
+#                       dataset = 'hsapiens_gene_ensembl',
+#                       version = 'GRCh37' )
+
+ensembl <- useDataset("hsapiens_gene_ensembl", useMart(biomart="ENSEMBL_MART_ENSEMBL", host="https://grch37.ensembl.org", path="/biomart/martservice" ,dataset="hsapiens_gene_ensembl")) #select the database to convert and maake sure it is build 37 
+listAttributes(ensembl)
 
 
 
+genes <- biomaRt::getBM(attributes = c('ensembl_gene_id', "external_gene_name", "chromosome_name","transcript_biotype", 'start_position', 'end_position', 'strand', 'transcription_start_site'),
+                        filters = c("transcript_biotype","chromosome_name"),values = list("protein_coding",c(1:22)), mart = ensembl )
+
+#genes <- genes[!duplicated(genes$ensembl_gene_id),]
+
+
+  
+reg_genes_tss <-GRanges( seqnames =genes$chromosome_name ,IRanges(start = as.numeric(genes$transcription_start_site), end = as.numeric(genes$transcription_start_site), names = genes$ensembl_gene_id))
+#reg_genes_tss <-GRanges( seqnames =c$chromosome_name ,IRanges(start = as.numeric(c$tss), end=as.numeric(c$tss) , names = c$ensembl_gene_id))
+
+
+factor_loci$closest_gene <- rep('-', nrow(factor_loci))
+f_lead <- list()
+for(i in 1:3){
+  tt <- c('f1', 'f2', 'f3')[i]
+  f_lead[[tt]] <- GRanges(seqnames  =factor_loci[factor_loci$trait==tt, c('chr')],   IRanges(names =factor_loci[factor_loci$trait==tt, c('SNP')] , start = factor_loci[factor_loci$trait==tt, 'BP']))
+  elementMetadata(f_lead[[tt]])[['ensembl_gene_id']] <-  reg_genes_tss[nearest(f_lead[[tt]], reg_genes_tss, ignore.strand=F),]@ranges@NAMES
+  
+  #add a column with the ensemble gene id into the factor loci table
+  factor_loci[factor_loci$trait==tt, ][match(factor_loci[factor_loci$trait==tt, ]$SNP, f_lead[[tt]]@ranges@NAMES),]$closest_gene  <- unlist(elementMetadata(f_lead[[tt]])[['ensembl_gene_id']])
+}
+
+nuovo <- factor_loci
+
+
+#-----------------------the ok version------------------------------------------
+
+
+#I used ensmble names, on build 37
+factor_loci <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/moloc_factors/factor_loci_moloc_info.txt', data.table = F) 
+# 
+
+ref_genome <- EnsDb.Hsapiens.v75
+ref_genes <- genes(ref_genome)
+ref_genes <- ref_genes[ref_genes@elementMetadata$gene_biotype=='protein_coding',]
+reg_genes_tss <- resize(ref_genes,width = 1 ,fix = 'start')
+
+f_lead <- list()
+G_list <- list()
+
+mart <- useDataset("hsapiens_gene_ensembl", useMart(biomart="ENSEMBL_MART_ENSEMBL", host="https://grch37.ensembl.org", path="/biomart/martservice" ,dataset="hsapiens_gene_ensembl")) #select the database to convert and maake sure it is build 37 
+factor_loci$closest_gene <- rep('-', nrow(factor_loci))
+
+for(i in 1:3){
+  tt <- c('f1', 'f2', 'f3')[i]
+  f_lead[[tt]] <- GRanges(seqnames  =factor_loci[factor_loci$trait==tt, c('chr')],   IRanges(names =factor_loci[factor_loci$trait==tt, c('SNP')] , start = factor_loci[factor_loci$trait==tt, 'BP']))
+  elementMetadata(f_lead[[tt]])[['ensembl_gene_id']] <-  reg_genes_tss[nearest(f_lead[[tt]], reg_genes_tss),]@ranges@NAMES
+  
+  #add a column with the ensemble gene id into the factor loci table
+  factor_loci[factor_loci$trait==tt, ][match(factor_loci[factor_loci$trait==tt, ]$SNP, f_lead[[tt]]@ranges@NAMES),]$closest_gene  <- unlist(elementMetadata(f_lead[[tt]])[['ensembl_gene_id']])
+}
+
+
+vecchio <- factor_loci
+
+
+sum(!vecchio$closest_gene==nuovo$closest_gene)
+
+factor_loci[!a==b,]
+
+vecchio[sample(1:nrow(vecchio), 10),]
+nuovo[!nuovo$closest_gene==vecchio$closest_gene,]
+
+
+genes[genes$ensembl_gene_id %in% c('ENSG00000215041', 'ENSG00000261915'),]
 
 
