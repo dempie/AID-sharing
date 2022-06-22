@@ -192,6 +192,14 @@
         "crayon"
       ]
     },
+    "CMplot": {
+      "Package": "CMplot",
+      "Version": "4.1.0",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "2a022f183be8d04d65a554af8d1c9b58",
+      "Requirements": []
+    },
     "ChIPpeakAnno": {
       "Package": "ChIPpeakAnno",
       "Version": "3.28.1",
@@ -230,6 +238,33 @@
         "rtracklayer"
       ]
     },
+    "ComplexHeatmap": {
+      "Package": "ComplexHeatmap",
+      "Version": "2.13.1",
+      "Source": "GitHub",
+      "RemoteType": "github",
+      "RemoteHost": "api.github.com",
+      "RemoteRepo": "ComplexHeatmap",
+      "RemoteUsername": "jokergoo",
+      "RemoteRef": "HEAD",
+      "RemoteSha": "2bb14c911d31c8c39514e0a6d33a01017d8b3721",
+      "Hash": "a056246bd194514b6413bc18882bee0d",
+      "Requirements": [
+        "GetoptLong",
+        "GlobalOptions",
+        "IRanges",
+        "RColorBrewer",
+        "circlize",
+        "clue",
+        "codetools",
+        "colorspace",
+        "digest",
+        "doParallel",
+        "foreach",
+        "matrixStats",
+        "png"
+      ]
+    },
     "DBI": {
       "Package": "DBI",
       "Version": "1.1.2",
@@ -237,6 +272,37 @@
       "Repository": "RSPM",
       "Hash": "dcd1743af4336156873e3ce3c950b8b9",
       "Requirements": []
+    },
+    "DO.db": {
+      "Package": "DO.db",
+      "Version": "2.9",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "7d05e00472158bda5f124df351af0a49",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "DOSE": {
+      "Package": "DOSE",
+      "Version": "3.20.1",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "git_url": "https://git.bioconductor.org/packages/DOSE",
+      "git_branch": "RELEASE_3_14",
+      "git_last_commit": "bf434f2",
+      "git_last_commit_date": "2021-11-17",
+      "Hash": "a774b8bba3755015ff83e724fe3a1f58",
+      "Requirements": [
+        "AnnotationDbi",
+        "BiocParallel",
+        "DO.db",
+        "GOSemSim",
+        "fgsea",
+        "ggplot2",
+        "qvalue",
+        "reshape2"
+      ]
     },
     "DelayedArray": {
       "Package": "DelayedArray",
@@ -256,6 +322,16 @@
         "S4Vectors"
       ]
     },
+    "EnsDb.Hsapiens.v75": {
+      "Package": "EnsDb.Hsapiens.v75",
+      "Version": "2.99.0",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "8e2fb5762dd0a581b69b4d6a7ed945c4",
+      "Requirements": [
+        "ensembldb"
+      ]
+    },
     "Formula": {
       "Package": "Formula",
       "Version": "1.2-4",
@@ -263,6 +339,32 @@
       "Repository": "RSPM",
       "Hash": "cc8c8c4d61346cde1ca60030ff9c241f",
       "Requirements": []
+    },
+    "GO.db": {
+      "Package": "GO.db",
+      "Version": "3.14.0",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "ed4177b5fca84cd5833e33615b115382",
+      "Requirements": [
+        "AnnotationDbi"
+      ]
+    },
+    "GOSemSim": {
+      "Package": "GOSemSim",
+      "Version": "2.20.0",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "git_url": "https://git.bioconductor.org/packages/GOSemSim",
+      "git_branch": "RELEASE_3_14",
+      "git_last_commit": "fa82442",
+      "git_last_commit_date": "2021-10-26",
+      "Hash": "a90b1805395d561aa48d49c98e53056a",
+      "Requirements": [
+        "AnnotationDbi",
+        "GO.db",
+        "Rcpp"
+      ]
     },
     "GenomeInfoDb": {
       "Package": "GenomeInfoDb",
@@ -388,6 +490,61 @@
         "stringr"
       ]
     },
+    "GetoptLong": {
+      "Package": "GetoptLong",
+      "Version": "1.0.5",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "61fac01c73abf03ac72e88dc3952c1e3",
+      "Requirements": [
+        "GlobalOptions",
+        "crayon",
+        "rjson"
+      ]
+    },
+    "GlobalOptions": {
+      "Package": "GlobalOptions",
+      "Version": "0.1.2",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "c3f7b221e60c28f5f3533d74c6fef024",
+      "Requirements": []
+    },
+    "Gviz": {
+      "Package": "Gviz",
+      "Version": "1.38.4",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "git_url": "https://git.bioconductor.org/packages/Gviz",
+      "git_branch": "RELEASE_3_14",
+      "git_last_commit": "6cde2b9",
+      "git_last_commit_date": "2022-04-07",
+      "Hash": "a74923a4418ac30e76a69212a44d945f",
+      "Requirements": [
+        "AnnotationDbi",
+        "BSgenome",
+        "Biobase",
+        "BiocGenerics",
+        "Biostrings",
+        "GenomeInfoDb",
+        "GenomicAlignments",
+        "GenomicFeatures",
+        "GenomicRanges",
+        "IRanges",
+        "RColorBrewer",
+        "Rsamtools",
+        "S4Vectors",
+        "XVector",
+        "biomaRt",
+        "biovizBase",
+        "digest",
+        "ensembldb",
+        "lattice",
+        "latticeExtra",
+        "matrixStats",
+        "rtracklayer"
+      ]
+    },
     "Hmisc": {
       "Package": "Hmisc",
       "Version": "4.6-0",
@@ -495,6 +652,16 @@
       "Hash": "506b92cb263d9e014a391b41939badcf",
       "Requirements": [
         "matrixStats"
+      ]
+    },
+    "MatrixModels": {
+      "Package": "MatrixModels",
+      "Version": "0.5-0",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "366a8838782928e398b8762c932a42a3",
+      "Requirements": [
+        "Matrix"
       ]
     },
     "MungeSumstats": {
@@ -658,6 +825,16 @@
       "Hash": "32e79b908fda56ee57fe518a8d37b864",
       "Requirements": []
     },
+    "RcppArmadillo": {
+      "Package": "RcppArmadillo",
+      "Version": "0.11.1.1.0",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "631929e53829901562986c504f86104b",
+      "Requirements": [
+        "Rcpp"
+      ]
+    },
     "RcppEigen": {
       "Package": "RcppEigen",
       "Version": "0.3.3.9.2",
@@ -691,6 +868,16 @@
         "zlibbioc"
       ]
     },
+    "Rmpfr": {
+      "Package": "Rmpfr",
+      "Version": "0.8-7",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "3e4b9d1192e79022615f25b98a3a6663",
+      "Requirements": [
+        "gmp"
+      ]
+    },
     "Rsamtools": {
       "Package": "Rsamtools",
       "Version": "2.10.0",
@@ -714,6 +901,14 @@
         "bitops",
         "zlibbioc"
       ]
+    },
+    "Rttf2pt1": {
+      "Package": "Rttf2pt1",
+      "Version": "1.3.10",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "8952819f94cd9fce521f9b1cb558f8a4",
+      "Requirements": []
     },
     "S4Vectors": {
       "Package": "S4Vectors",
@@ -758,6 +953,14 @@
         "IRanges",
         "S4Vectors"
       ]
+    },
+    "SparseM": {
+      "Package": "SparseM",
+      "Version": "1.81",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "2042cd9759cc89a453c4aefef0ce9aae",
+      "Requirements": []
     },
     "StanHeaders": {
       "Package": "StanHeaders",
@@ -866,6 +1069,32 @@
       "Hash": "4f57884290cc75ab22f4af9e9d4ca862",
       "Requirements": []
     },
+    "ape": {
+      "Package": "ape",
+      "Version": "5.6-2",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "894108412a7ec23d5de85cdcce871c8b",
+      "Requirements": [
+        "Rcpp",
+        "lattice",
+        "nlme"
+      ]
+    },
+    "aplot": {
+      "Package": "aplot",
+      "Version": "0.1.6",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "f33f09b723d25086d5373d996be34cc3",
+      "Requirements": [
+        "ggfun",
+        "ggplot2",
+        "ggplotify",
+        "magrittr",
+        "patchwork"
+      ]
+    },
     "arm": {
       "Package": "arm",
       "Version": "1.12-2",
@@ -879,6 +1108,17 @@
         "coda",
         "lme4",
         "nlme"
+      ]
+    },
+    "arrangements": {
+      "Package": "arrangements",
+      "Version": "1.1.9",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "ebca94b9b3cff3fff7975e26216156c6",
+      "Requirements": [
+        "R6",
+        "gmp"
       ]
     },
     "askpass": {
@@ -907,12 +1147,39 @@
       "Hash": "c39fbec8a30d23e721980b8afb31984c",
       "Requirements": []
     },
+    "bamsignals": {
+      "Package": "bamsignals",
+      "Version": "1.26.0",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "git_url": "https://git.bioconductor.org/packages/bamsignals",
+      "git_branch": "RELEASE_3_14",
+      "git_last_commit": "d576434",
+      "git_last_commit_date": "2021-10-26",
+      "Hash": "0485a62a642b95ecacad1f91cd36d3ed",
+      "Requirements": [
+        "BiocGenerics",
+        "GenomicRanges",
+        "IRanges",
+        "Rcpp",
+        "Rhtslib",
+        "zlibbioc"
+      ]
+    },
     "base64enc": {
       "Package": "base64enc",
       "Version": "0.1-3",
       "Source": "Repository",
       "Repository": "RSPM",
       "Hash": "543776ae6848fde2f48ff3816d0628bc",
+      "Requirements": []
+    },
+    "bezier": {
+      "Package": "bezier",
+      "Version": "1.1.2",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "a02b18c7fe82856f3e9a7e2f2a643435",
       "Requirements": []
     },
     "biomaRt": {
@@ -935,6 +1202,38 @@
         "rappdirs",
         "stringr",
         "xml2"
+      ]
+    },
+    "biovizBase": {
+      "Package": "biovizBase",
+      "Version": "1.42.0",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "git_url": "https://git.bioconductor.org/packages/biovizBase",
+      "git_branch": "RELEASE_3_14",
+      "git_last_commit": "f1627b2",
+      "git_last_commit_date": "2021-10-26",
+      "Hash": "553a22c9f8b3add1626b74e9f718e681",
+      "Requirements": [
+        "AnnotationDbi",
+        "AnnotationFilter",
+        "BiocGenerics",
+        "Biostrings",
+        "GenomeInfoDb",
+        "GenomicAlignments",
+        "GenomicFeatures",
+        "GenomicRanges",
+        "Hmisc",
+        "IRanges",
+        "RColorBrewer",
+        "Rsamtools",
+        "S4Vectors",
+        "SummarizedExperiment",
+        "VariantAnnotation",
+        "dichromat",
+        "ensembldb",
+        "rlang",
+        "scales"
       ]
     },
     "bit": {
@@ -990,6 +1289,26 @@
       "Hash": "976cf154dfb043c012d87cddd8bca363",
       "Requirements": []
     },
+    "broom": {
+      "Package": "broom",
+      "Version": "0.8.0",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "fe13cb670e14da57fd7a466578db8ce5",
+      "Requirements": [
+        "backports",
+        "dplyr",
+        "ellipsis",
+        "generics",
+        "ggplot2",
+        "glue",
+        "purrr",
+        "rlang",
+        "stringr",
+        "tibble",
+        "tidyr"
+      ]
+    },
     "bslib": {
       "Package": "bslib",
       "Version": "0.3.1",
@@ -1036,6 +1355,25 @@
         "processx"
       ]
     },
+    "car": {
+      "Package": "car",
+      "Version": "3.0-13",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "69e00596e08b7f64e5a7d16447bec44d",
+      "Requirements": [
+        "MASS",
+        "abind",
+        "carData",
+        "lme4",
+        "maptools",
+        "mgcv",
+        "nlme",
+        "nnet",
+        "pbkrtest",
+        "quantreg"
+      ]
+    },
     "carData": {
       "Package": "carData",
       "Version": "3.0-5",
@@ -1052,6 +1390,18 @@
       "Hash": "a667800d5f0350371bedeb8b8b950289",
       "Requirements": [
         "backports"
+      ]
+    },
+    "circlize": {
+      "Package": "circlize",
+      "Version": "0.4.15",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "2bb47a2fe6ab009b1dcc5566d8c3a988",
+      "Requirements": [
+        "GlobalOptions",
+        "colorspace",
+        "shape"
       ]
     },
     "class": {
@@ -1082,6 +1432,16 @@
       "Hash": "3f038e5ac7f41d4ac41ce658c85e3042",
       "Requirements": []
     },
+    "clue": {
+      "Package": "clue",
+      "Version": "0.3-60",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "402594b0365210ad6df53e8fcda69d8a",
+      "Requirements": [
+        "cluster"
+      ]
+    },
     "cluster": {
       "Package": "cluster",
       "Version": "2.1.2",
@@ -1089,6 +1449,32 @@
       "Repository": "CRAN",
       "Hash": "ce49bfe5bc0b3ecd43a01fe1b01c2243",
       "Requirements": []
+    },
+    "clusterProfiler": {
+      "Package": "clusterProfiler",
+      "Version": "4.2.2",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "git_url": "https://git.bioconductor.org/packages/clusterProfiler",
+      "git_branch": "RELEASE_3_14",
+      "git_last_commit": "4ebb9de",
+      "git_last_commit_date": "2022-01-12",
+      "Hash": "d1b442b2bf2c082d3851fa63f7748b8e",
+      "Requirements": [
+        "AnnotationDbi",
+        "DOSE",
+        "GO.db",
+        "GOSemSim",
+        "downloader",
+        "dplyr",
+        "enrichplot",
+        "magrittr",
+        "plyr",
+        "qvalue",
+        "rlang",
+        "tidyr",
+        "yulab.utils"
+      ]
     },
     "coda": {
       "Package": "coda",
@@ -1132,6 +1518,19 @@
       "Hash": "fcf11a91936fd5047b2ee9bc00595e36",
       "Requirements": []
     },
+    "cowplot": {
+      "Package": "cowplot",
+      "Version": "1.1.1",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "b418e8423699d11c7f2087c2bfd07da2",
+      "Requirements": [
+        "ggplot2",
+        "gtable",
+        "rlang",
+        "scales"
+      ]
+    },
     "cpp11": {
       "Package": "cpp11",
       "Version": "0.4.2",
@@ -1147,6 +1546,19 @@
       "Repository": "RSPM",
       "Hash": "8dc45fd8a1ee067a92b85ef274e66d6a",
       "Requirements": []
+    },
+    "crosstalk": {
+      "Package": "crosstalk",
+      "Version": "1.2.0",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "6aa54f69598c32177e920eb3402e8293",
+      "Requirements": [
+        "R6",
+        "htmltools",
+        "jsonlite",
+        "lazyeval"
+      ]
     },
     "curl": {
       "Package": "curl",
@@ -1200,6 +1612,14 @@
         "rprojroot"
       ]
     },
+    "dichromat": {
+      "Package": "dichromat",
+      "Version": "2.0-0.1",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "16e66f2a483e124af5fc6582d26005f7",
+      "Requirements": []
+    },
     "diffobj": {
       "Package": "diffobj",
       "Version": "0.3.5",
@@ -1227,6 +1647,16 @@
       "Requirements": [
         "foreach",
         "iterators"
+      ]
+    },
+    "downloader": {
+      "Package": "downloader",
+      "Version": "0.4",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "f4f2a915e0dedbdf016a83b63477349f",
+      "Requirements": [
+        "digest"
       ]
     },
     "dplyr": {
@@ -1269,6 +1699,34 @@
         "rlang"
       ]
     },
+    "enrichplot": {
+      "Package": "enrichplot",
+      "Version": "1.14.2",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "git_url": "https://git.bioconductor.org/packages/enrichplot",
+      "git_branch": "RELEASE_3_14",
+      "git_last_commit": "7ffc704",
+      "git_last_commit_date": "2022-02-23",
+      "Hash": "9ee4955b1c8355cc8b7bdb51c36492c7",
+      "Requirements": [
+        "DOSE",
+        "GOSemSim",
+        "RColorBrewer",
+        "aplot",
+        "ggplot2",
+        "ggraph",
+        "ggtree",
+        "igraph",
+        "magrittr",
+        "plyr",
+        "purrr",
+        "reshape2",
+        "scatterpie",
+        "shadowtext",
+        "yulab.utils"
+      ]
+    },
     "ensembldb": {
       "Package": "ensembldb",
       "Version": "2.18.4",
@@ -1306,6 +1764,25 @@
       "Hash": "699a7a93d08c962d9f8950b2d7a227f1",
       "Requirements": []
     },
+    "extrafont": {
+      "Package": "extrafont",
+      "Version": "0.18",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "07a8a50195fc77e8690fd8bc4e87e6a0",
+      "Requirements": [
+        "Rttf2pt1",
+        "extrafontdb"
+      ]
+    },
+    "extrafontdb": {
+      "Package": "extrafontdb",
+      "Version": "1.0",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "a861555ddec7451c653b40e713166c6f",
+      "Requirements": []
+    },
     "fansi": {
       "Package": "fansi",
       "Version": "1.0.3",
@@ -1330,6 +1807,14 @@
       "Hash": "77bd60a6157420d4ffa93b27cf6a58b8",
       "Requirements": []
     },
+    "fastmatch": {
+      "Package": "fastmatch",
+      "Version": "1.1-3",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "dabc225759a2c2b241e60e42bf0e8e54",
+      "Requirements": []
+    },
     "fdrtool": {
       "Package": "fdrtool",
       "Version": "1.2.17",
@@ -1337,6 +1822,27 @@
       "Repository": "RSPM",
       "Hash": "9feeb4e7a484e663a52d7de89135591a",
       "Requirements": []
+    },
+    "fgsea": {
+      "Package": "fgsea",
+      "Version": "1.20.0",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "git_url": "https://git.bioconductor.org/packages/fgsea",
+      "git_branch": "RELEASE_3_14",
+      "git_last_commit": "b704f81",
+      "git_last_commit_date": "2021-10-26",
+      "Hash": "a4913104166e73957fa32d2e595cceef",
+      "Requirements": [
+        "BH",
+        "BiocParallel",
+        "Matrix",
+        "Rcpp",
+        "data.table",
+        "fastmatch",
+        "ggplot2",
+        "gridExtra"
+      ]
     },
     "filelock": {
       "Package": "filelock",
@@ -1436,6 +1942,37 @@
       "Hash": "177475892cf4a55865868527654a7741",
       "Requirements": []
     },
+    "ggforce": {
+      "Package": "ggforce",
+      "Version": "0.3.3",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "4c64a588b497f8c088e1d308ddd40bc6",
+      "Requirements": [
+        "MASS",
+        "Rcpp",
+        "RcppEigen",
+        "ggplot2",
+        "gtable",
+        "polyclip",
+        "rlang",
+        "scales",
+        "tidyselect",
+        "tweenr",
+        "withr"
+      ]
+    },
+    "ggfun": {
+      "Package": "ggfun",
+      "Version": "0.0.6",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "ec2bf075e5bd353fa502992a0f5f5f03",
+      "Requirements": [
+        "ggplot2",
+        "rlang"
+      ]
+    },
     "ggplot2": {
       "Package": "ggplot2",
       "Version": "3.3.5",
@@ -1455,6 +1992,128 @@
         "withr"
       ]
     },
+    "ggplotify": {
+      "Package": "ggplotify",
+      "Version": "0.1.0",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "acbcedf783cdb8710168aa0edba42ac0",
+      "Requirements": [
+        "ggplot2",
+        "gridGraphics",
+        "yulab.utils"
+      ]
+    },
+    "ggpubr": {
+      "Package": "ggpubr",
+      "Version": "0.4.0",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "77089557d374c69db7cb77e65f0d6ab0",
+      "Requirements": [
+        "cowplot",
+        "dplyr",
+        "ggplot2",
+        "ggrepel",
+        "ggsci",
+        "ggsignif",
+        "glue",
+        "gridExtra",
+        "magrittr",
+        "polynom",
+        "purrr",
+        "rlang",
+        "rstatix",
+        "scales",
+        "tibble",
+        "tidyr"
+      ]
+    },
+    "ggraph": {
+      "Package": "ggraph",
+      "Version": "2.0.5",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "bb52a023e912142b8970ba883dd3b706",
+      "Requirements": [
+        "MASS",
+        "Rcpp",
+        "digest",
+        "dplyr",
+        "ggforce",
+        "ggplot2",
+        "ggrepel",
+        "graphlayouts",
+        "gtable",
+        "igraph",
+        "rlang",
+        "scales",
+        "tidygraph",
+        "viridis",
+        "withr"
+      ]
+    },
+    "ggrepel": {
+      "Package": "ggrepel",
+      "Version": "0.9.1",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "08ab869f37e6a7741a64ab9069bcb67d",
+      "Requirements": [
+        "Rcpp",
+        "ggplot2",
+        "rlang",
+        "scales"
+      ]
+    },
+    "ggsci": {
+      "Package": "ggsci",
+      "Version": "2.9",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "81ccb8213ed592598210afd10c3a5936",
+      "Requirements": [
+        "ggplot2",
+        "scales"
+      ]
+    },
+    "ggsignif": {
+      "Package": "ggsignif",
+      "Version": "0.6.3",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "2e82e829a1c4a6c5d41921c177051e85",
+      "Requirements": [
+        "ggplot2"
+      ]
+    },
+    "ggtree": {
+      "Package": "ggtree",
+      "Version": "3.2.1",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Remotes": "GuangchuangYu/treeio",
+      "git_url": "https://git.bioconductor.org/packages/ggtree",
+      "git_branch": "RELEASE_3_14",
+      "git_last_commit": "d3747e6",
+      "git_last_commit_date": "2021-11-14",
+      "Hash": "f156c85173024c88e2fdfd63ccca3fd7",
+      "Requirements": [
+        "ape",
+        "aplot",
+        "dplyr",
+        "ggfun",
+        "ggplot2",
+        "magrittr",
+        "purrr",
+        "rlang",
+        "scales",
+        "tidyr",
+        "tidytree",
+        "treeio",
+        "yulab.utils"
+      ]
+    },
     "glasso": {
       "Package": "glasso",
       "Version": "1.11",
@@ -1469,6 +2128,14 @@
       "Source": "Repository",
       "Repository": "RSPM",
       "Hash": "4f2596dfb05dac67b9dc558e5c6fba2e",
+      "Requirements": []
+    },
+    "gmp": {
+      "Package": "gmp",
+      "Version": "0.6-5",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "b007d2e515a743a1dd6c34cd88b968f8",
       "Requirements": []
     },
     "googleAuthR": {
@@ -1488,6 +2155,24 @@
         "rlang"
       ]
     },
+    "gprofiler2": {
+      "Package": "gprofiler2",
+      "Version": "0.2.1",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "3b0e14c3c1f736b08d5adf9763a074a4",
+      "Requirements": [
+        "RCurl",
+        "crosstalk",
+        "dplyr",
+        "ggplot2",
+        "gridExtra",
+        "jsonlite",
+        "plotly",
+        "tidyr",
+        "viridisLite"
+      ]
+    },
     "graph": {
       "Package": "graph",
       "Version": "1.72.0",
@@ -1502,6 +2187,18 @@
         "BiocGenerics"
       ]
     },
+    "graphlayouts": {
+      "Package": "graphlayouts",
+      "Version": "0.8.0",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "83ebd459dbc288ee4f7ef5f7d52594a9",
+      "Requirements": [
+        "Rcpp",
+        "RcppArmadillo",
+        "igraph"
+      ]
+    },
     "gridExtra": {
       "Package": "gridExtra",
       "Version": "2.3",
@@ -1511,6 +2208,14 @@
       "Requirements": [
         "gtable"
       ]
+    },
+    "gridGraphics": {
+      "Package": "gridGraphics",
+      "Version": "0.5-1",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "5b79228594f02385d4df4979284879ae",
+      "Requirements": []
     },
     "gtable": {
       "Package": "gtable",
@@ -1607,6 +2312,29 @@
         "openssl"
       ]
     },
+    "hyprcoloc": {
+      "Package": "hyprcoloc",
+      "Version": "1.0",
+      "Source": "GitHub",
+      "RemoteType": "github",
+      "RemoteHost": "api.github.com",
+      "RemoteRepo": "hyprcoloc",
+      "RemoteUsername": "jrs95",
+      "RemoteRef": "HEAD",
+      "RemoteSha": "0b945fd8c60aed00dd8efcbf8f93606aac89327b",
+      "Hash": "4c95ab0ffcb798ee85c3f14f90e6347d",
+      "Requirements": [
+        "Matrix",
+        "RColorBrewer",
+        "Rcpp",
+        "RcppEigen",
+        "Rmpfr",
+        "iterpc",
+        "knitr",
+        "pheatmap",
+        "rmarkdown"
+      ]
+    },
     "igraph": {
       "Package": "igraph",
       "Version": "1.3.0",
@@ -1635,6 +2363,18 @@
       "Hash": "8954069286b4b2b0d023d1b288dce978",
       "Requirements": []
     },
+    "iterpc": {
+      "Package": "iterpc",
+      "Version": "0.4.2",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "819fb9b445eec2fccdc312d4613763b6",
+      "Requirements": [
+        "arrangements",
+        "gmp",
+        "iterators"
+      ]
+    },
     "jpeg": {
       "Package": "jpeg",
       "Version": "0.1-9",
@@ -1660,6 +2400,34 @@
       "Repository": "RSPM",
       "Hash": "d07e729b27b372429d42d24d503613a0",
       "Requirements": []
+    },
+    "karyoploteR": {
+      "Package": "karyoploteR",
+      "Version": "1.20.3",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "git_url": "https://git.bioconductor.org/packages/karyoploteR",
+      "git_branch": "RELEASE_3_14",
+      "git_last_commit": "1a34c68",
+      "git_last_commit_date": "2022-01-19",
+      "Hash": "11266911d1d9e265bd61483b8f694236",
+      "Requirements": [
+        "AnnotationDbi",
+        "GenomeInfoDb",
+        "GenomicFeatures",
+        "GenomicRanges",
+        "IRanges",
+        "Rsamtools",
+        "S4Vectors",
+        "VariantAnnotation",
+        "bamsignals",
+        "bezier",
+        "biovizBase",
+        "digest",
+        "memoise",
+        "regioneR",
+        "rtracklayer"
+      ]
     },
     "knitr": {
       "Package": "knitr",
@@ -1705,6 +2473,17 @@
       "Hash": "b1e925c4b9ffeb901bacf812cbe9a6ad",
       "Requirements": [
         "formatR"
+      ]
+    },
+    "later": {
+      "Package": "later",
+      "Version": "1.3.0",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "7e7b457d7766bc47f2a5f21cc2984f8e",
+      "Requirements": [
+        "Rcpp",
+        "rlang"
       ]
     },
     "lattice": {
@@ -1794,6 +2573,18 @@
       "Hash": "7ce2733a9826b3aeb1775d56fd305472",
       "Requirements": []
     },
+    "maptools": {
+      "Package": "maptools",
+      "Version": "1.1-4",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "e60a1728ad29c48a3491777e0c55a07d",
+      "Requirements": [
+        "foreign",
+        "lattice",
+        "sp"
+      ]
+    },
     "matrixStats": {
       "Package": "matrixStats",
       "Version": "0.62.0",
@@ -1871,6 +2662,23 @@
         "tmvnsim"
       ]
     },
+    "moloc": {
+      "Package": "moloc",
+      "Version": "0.1.0",
+      "Source": "GitHub",
+      "RemoteType": "github",
+      "RemoteHost": "api.github.com",
+      "RemoteRepo": "moloc",
+      "RemoteUsername": "clagiamba",
+      "RemoteRef": "HEAD",
+      "RemoteSha": "f083d8e44577c9a0c3a562f0d99957851f50fa68",
+      "Hash": "07c0574b64034551f650b4581aee397b",
+      "Requirements": [
+        "GenomicRanges",
+        "data.table",
+        "mvtnorm"
+      ]
+    },
     "multtest": {
       "Package": "multtest",
       "Version": "2.50.0",
@@ -1918,10 +2726,10 @@
     },
     "nloptr": {
       "Package": "nloptr",
-      "Version": "2.0.0",
+      "Version": "2.0.3",
       "Source": "Repository",
       "Repository": "RSPM",
-      "Hash": "6e45c045fea34a9d0d1ceaa6fb7c4e91",
+      "Hash": "277c67a08f358f42b6a77826e4492f79",
       "Requirements": [
         "testthat"
       ]
@@ -1964,6 +2772,17 @@
         "zip"
       ]
     },
+    "patchwork": {
+      "Package": "patchwork",
+      "Version": "1.1.1",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "c446b30cb33ec125ff02588b60660ccb",
+      "Requirements": [
+        "ggplot2",
+        "gtable"
+      ]
+    },
     "pbapply": {
       "Package": "pbapply",
       "Version": "1.5-0",
@@ -1979,6 +2798,23 @@
       "Repository": "RSPM",
       "Hash": "643e16a7da6aac3e18cadc3e14abb94b",
       "Requirements": []
+    },
+    "pbkrtest": {
+      "Package": "pbkrtest",
+      "Version": "0.5.1",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "b304ff5955f37b48bd30518faf582929",
+      "Requirements": [
+        "MASS",
+        "Matrix",
+        "broom",
+        "dplyr",
+        "knitr",
+        "lme4",
+        "magrittr",
+        "numDeriv"
+      ]
     },
     "pheatmap": {
       "Package": "pheatmap",
@@ -2042,6 +2878,36 @@
       "Hash": "09eb987710984fc2905c7129c7d85e65",
       "Requirements": []
     },
+    "plotly": {
+      "Package": "plotly",
+      "Version": "4.10.0",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "fbb11e44d057996ca5fe40d959cacfb0",
+      "Requirements": [
+        "RColorBrewer",
+        "base64enc",
+        "crosstalk",
+        "data.table",
+        "digest",
+        "dplyr",
+        "ggplot2",
+        "htmltools",
+        "htmlwidgets",
+        "httr",
+        "jsonlite",
+        "lazyeval",
+        "magrittr",
+        "promises",
+        "purrr",
+        "rlang",
+        "scales",
+        "tibble",
+        "tidyr",
+        "vctrs",
+        "viridisLite"
+      ]
+    },
     "plyr": {
       "Package": "plyr",
       "Version": "1.8.7",
@@ -2058,6 +2924,22 @@
       "Source": "Repository",
       "Repository": "RSPM",
       "Hash": "03b7076c234cb3331288919983326c55",
+      "Requirements": []
+    },
+    "polyclip": {
+      "Package": "polyclip",
+      "Version": "1.10-0",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "cb167f328b3ada4ec5cf67a7df4c900a",
+      "Requirements": []
+    },
+    "polynom": {
+      "Package": "polynom",
+      "Version": "1.4-1",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "ceb5c2a59ba33d42d051285a3e8a5118",
       "Requirements": []
     },
     "praise": {
@@ -2098,6 +2980,20 @@
         "crayon",
         "hms",
         "prettyunits"
+      ]
+    },
+    "promises": {
+      "Package": "promises",
+      "Version": "1.2.0.1",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "4ab2c43adb4d4699cf3690acd378d75d",
+      "Requirements": [
+        "R6",
+        "Rcpp",
+        "later",
+        "magrittr",
+        "rlang"
       ]
     },
     "proxy": {
@@ -2176,6 +3072,35 @@
         "calibrate"
       ]
     },
+    "quantreg": {
+      "Package": "quantreg",
+      "Version": "5.93",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "48485e5cbfe385caf47ce1d9442f5147",
+      "Requirements": [
+        "MASS",
+        "Matrix",
+        "MatrixModels",
+        "SparseM",
+        "survival"
+      ]
+    },
+    "qvalue": {
+      "Package": "qvalue",
+      "Version": "2.26.0",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "git_url": "https://git.bioconductor.org/packages/qvalue",
+      "git_branch": "RELEASE_3_14",
+      "git_last_commit": "6d7410d",
+      "git_last_commit_date": "2021-10-26",
+      "Hash": "a701708b518dc3b7d68be91493275ef0",
+      "Requirements": [
+        "ggplot2",
+        "reshape2"
+      ]
+    },
     "rappdirs": {
       "Package": "rappdirs",
       "Version": "0.3.3",
@@ -2183,6 +3108,17 @@
       "Repository": "RSPM",
       "Hash": "5e3c5dc0b071b21fa128676560dbe94d",
       "Requirements": []
+    },
+    "rcartocolor": {
+      "Package": "rcartocolor",
+      "Version": "2.0.0",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "42b5652d8d7b5583710edca989450c2f",
+      "Requirements": [
+        "ggplot2",
+        "scales"
+      ]
     },
     "readr": {
       "Package": "readr",
@@ -2346,6 +3282,26 @@
       "Hash": "1de7ab598047a87bba48434ba35d497d",
       "Requirements": []
     },
+    "rstatix": {
+      "Package": "rstatix",
+      "Version": "0.7.0",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "aa020f8efde649badd0b2b5456e942fe",
+      "Requirements": [
+        "broom",
+        "car",
+        "corrplot",
+        "dplyr",
+        "generics",
+        "magrittr",
+        "purrr",
+        "rlang",
+        "tibble",
+        "tidyr",
+        "tidyselect"
+      ]
+    },
     "rstudioapi": {
       "Package": "rstudioapi",
       "Version": "0.13",
@@ -2411,6 +3367,20 @@
         "viridisLite"
       ]
     },
+    "scatterpie": {
+      "Package": "scatterpie",
+      "Version": "0.1.7",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "f4d12f5fdf169e10739fe554e7705159",
+      "Requirements": [
+        "ggforce",
+        "ggfun",
+        "ggplot2",
+        "rlang",
+        "tidyr"
+      ]
+    },
     "sem": {
       "Package": "sem",
       "Version": "3.1-15",
@@ -2443,6 +3413,25 @@
         "sem"
       ]
     },
+    "shadowtext": {
+      "Package": "shadowtext",
+      "Version": "0.1.2",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "e639c0fa75fc71085c37e21e05a06e41",
+      "Requirements": [
+        "ggplot2",
+        "scales"
+      ]
+    },
+    "shape": {
+      "Package": "shape",
+      "Version": "1.4.6",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "9067f962730f58b14d8ae54ca885509f",
+      "Requirements": []
+    },
     "snow": {
       "Package": "snow",
       "Version": "0.4-4",
@@ -2450,6 +3439,16 @@
       "Repository": "RSPM",
       "Hash": "40b74690debd20c57d93d8c246b305d4",
       "Requirements": []
+    },
+    "sp": {
+      "Package": "sp",
+      "Version": "1.4-7",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "c5dad1d43440f0c426a6d29b30b333fa",
+      "Requirements": [
+        "lattice"
+      ]
     },
     "splitstackshape": {
       "Package": "splitstackshape",
@@ -2544,6 +3543,25 @@
         "vctrs"
       ]
     },
+    "tidygraph": {
+      "Package": "tidygraph",
+      "Version": "1.2.1",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "19f5f240d255ff0bf91e76d062fdc176",
+      "Requirements": [
+        "R6",
+        "cli",
+        "cpp11",
+        "dplyr",
+        "igraph",
+        "magrittr",
+        "pillar",
+        "rlang",
+        "tibble",
+        "tidyr"
+      ]
+    },
     "tidyr": {
       "Package": "tidyr",
       "Version": "1.2.0",
@@ -2578,6 +3596,25 @@
         "vctrs"
       ]
     },
+    "tidytree": {
+      "Package": "tidytree",
+      "Version": "0.3.9",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "bf9d994b6c4a8e448618feac4bbff2d4",
+      "Requirements": [
+        "ape",
+        "dplyr",
+        "lazyeval",
+        "magrittr",
+        "pillar",
+        "rlang",
+        "tibble",
+        "tidyr",
+        "tidyselect",
+        "yulab.utils"
+      ]
+    },
     "tinytex": {
       "Package": "tinytex",
       "Version": "0.38",
@@ -2595,6 +3632,39 @@
       "Repository": "RSPM",
       "Hash": "50470c7ed0cc8099cbc17b38f0ef621f",
       "Requirements": []
+    },
+    "treeio": {
+      "Package": "treeio",
+      "Version": "1.18.1",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "git_url": "https://git.bioconductor.org/packages/treeio",
+      "git_branch": "RELEASE_3_14",
+      "git_last_commit": "a06b6b3",
+      "git_last_commit_date": "2021-11-12",
+      "Hash": "835f0ab27ea0cfcad448397568fdf4d1",
+      "Requirements": [
+        "ape",
+        "dplyr",
+        "jsonlite",
+        "magrittr",
+        "rlang",
+        "tibble",
+        "tidytree"
+      ]
+    },
+    "tweenr": {
+      "Package": "tweenr",
+      "Version": "1.0.2",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "6cc663f970a529dbf776f11d5bcd1a2e",
+      "Requirements": [
+        "Rcpp",
+        "farver",
+        "magrittr",
+        "rlang"
+      ]
     },
     "tzdb": {
       "Package": "tzdb",
@@ -2723,6 +3793,14 @@
       "Source": "Repository",
       "Repository": "RSPM",
       "Hash": "458bb38374d73bf83b1bb85e353da200",
+      "Requirements": []
+    },
+    "yulab.utils": {
+      "Package": "yulab.utils",
+      "Version": "0.0.4",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "922e11dcf40bb5dfcf3fe5e714d0dc35",
       "Requirements": []
     },
     "zip": {
