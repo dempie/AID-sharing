@@ -19,13 +19,12 @@ library(circlize)
 #I used ensmble names, on build 37
 factor_loci <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/moloc_factors/factor_loci_moloc_info.txt', data.table = F) 
 # 
-# ref_genome <-TxDb.Hsapiens.UCSC.hg19.knownGene
+
 ref_genome <- EnsDb.Hsapiens.v75
 ref_genes <- genes(ref_genome)
-ref_genes<- ref_genes[ref_genes@elementMetadata$gene_biotype=='protein_coding',]
-# 
-# ref_genes <- genes(ref_genome, single.strand.genes.only=FALSE )
-# ref_genes<- c(unlist(ref_genes))
+ref_genes <- ref_genes[ref_genes@elementMetadata$gene_biotype=='protein_coding',]
+reg_genes_tss <- resize(ref_genes,width = 1 ,fix = 'start')
+
 f_lead <- list()
 G_list <- list()
 
@@ -35,7 +34,7 @@ factor_loci$closest_gene <- rep('-', nrow(factor_loci))
 for(i in 1:3){
   tt <- c('f1', 'f2', 'f3')[i]
   f_lead[[tt]] <- GRanges(seqnames  =factor_loci[factor_loci$trait==tt, c('chr')],   IRanges(names =factor_loci[factor_loci$trait==tt, c('SNP')] , start = factor_loci[factor_loci$trait==tt, 'BP']))
-  elementMetadata(f_lead[[tt]])[['ensembl_gene_id']] <-  ref_genes[nearest(f_lead[[tt]], ref_genes, ignore.strand=TRUE, select=c('arbitrary')),]@ranges@NAMES
+  elementMetadata(f_lead[[tt]])[['ensembl_gene_id']] <-  reg_genes_tss[nearest(f_lead[[tt]], reg_genes_tss),]@ranges@NAMES
   
   #add a column with the ensemble gene id into the factor loci table
   factor_loci[factor_loci$trait==tt, ][match(factor_loci[factor_loci$trait==tt, ]$SNP, f_lead[[tt]]@ranges@NAMES),]$closest_gene  <- unlist(elementMetadata(f_lead[[tt]])[['ensembl_gene_id']])
@@ -43,7 +42,7 @@ for(i in 1:3){
 
 
 fwrite(factor_loci, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways/factor_loci_moloc_closest_gene_info.txt') 
-factor_loci <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/factor_loci_moloc_closest_gene_info.txt', data.table = F) 
+
 
 #make a list of genes for all the factors with ensemble_gened and gene symbol
 f_list_genes <- list()
@@ -110,13 +109,6 @@ fwrite(string, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_
 
 
 #--- gprofiler KEGG ------------------------------------------------------------
- 
-gost_test_region <- gost(query = list(f1=unique(elementMetadata(f_lead$f1)[['ensembl_gene_id']]), f2=unique(elementMetadata(f_lead$f2)[['ensembl_gene_id']]), f3=unique(elementMetadata(f_lead$f3)[['ensembl_gene_id']])),
-                          sources = c('KEGG'), significant = T, evcodes = T)
-
-
-
-
 
 gost_test_region_2 <- gost(query = list(f1=f_list_genes$f1$ensembl_gene_id, f2=f_list_genes$f2$ensembl_gene_id, f3=f_list_genes$f3$ensembl_gene_id),
                           sources = c('KEGG'), significant = T, evcodes = T)
@@ -161,8 +153,8 @@ colori[c('f1', 'f2', 'f3')] <-  rcartocolor::carto_pal(12, 'Safe')[c(4,5,10)]#co
 colori[c('0','1')] <- c('#a6cee3','#1f78b4')
 c('#a6cee3','#1f78b4','#b2df8a')
 #column split
-sep <- c(rep('a', 32), rep('b', 2))
-names(sep)<- colnames(tt)
+sep <- c(rep('a', 37), rep('b', 2))
+names(sep) <- colnames(tt)
                      
 
 #plot heatmap_gene_and_pathways.pdf             
@@ -170,13 +162,13 @@ pdf('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways/he
 Heatmap(tt, column_title = "Genes and pathways all genes",
         rect_gp = gpar(col = "white", lwd = 0.25), 
         column_title_gp = gpar(fontsize = 20, fontface = "bold"),
-        left_annotation = rowAnnotation( '-log10(Padj)' = anno_barplot(   axis_param = list(direction = "reverse"),-log10(as.numeric(tt[,34])), width = unit(2, "cm"))),
-        row_split = tt[,33],
+        left_annotation = rowAnnotation( '-log10(Padj)' = anno_barplot(   axis_param = list(direction = "reverse"),-log10(as.numeric(tt[,'p_value'])), width = unit(2, "cm"))),
+        row_split = tt[,'trait'],
         column_split = sep,
         column_gap = unit(3, "mm"),
         row_gap = unit(5, "mm"), 
         row_names_gp = gpar(col =  rcartocolor::carto_pal(12, 'Safe')[c(4,5,10)], fontsize=10),
-        column_labels = c(colnames(tt)[1:32], 'Factor', '') ,
+        column_labels = c(colnames(tt)[1:37], 'Factor', '') ,
         column_names_side = 'bottom',
         show_heatmap_legend = F,
         row_title = "Pathways",
@@ -256,90 +248,91 @@ dev.off()
 
 #----clusterprofiler go terms -------------------------------------------------
 
-ggo <- enrichGO(gene     = as.character(f3_genes$entrezgene_id),
-               OrgDb    = org.Hs.eg.db,
-               ont      = "BP")
-
-ggo <- pairwise_termsim(ggo)
-ggo@result
-ggo <- simplify(ggo, cutoff=0.7, by="p.adjust", select_fun=min)
-emapplot(ggo)
-
-
-kk <- list()
-plot_kk <- list()
-for(i in 1:3){
-  tt <- c('f1','f2', 'f3')[i]
-kk[[tt]]<- clusterProfiler::enrichKEGG(f_list_genes[[tt]]$entrezgene_id)
-plot_kk[[tt]]<- cnetplot(kk[[tt]], showCategory = 5, circular=T, categorySize="pvalue") + ggtitle(paste0(tt,' KEGG pathways and genes'))
-}
-
-dotplot(ggo, 
-        showCategory = 12000, 
-        title = "Enriched Pathways",
-        font.size = 8)
-
-?dotplot
-
-plot_kk
-gost_test_region_2$result
-
-#dotplot 
-dotplot(
-  ggo,
-  x = "Cluster",
-  color = "p.adjust",
-  showCategory = 5,
-  split = NULL,
-  font.size = 12,
-  title = "",
-  size = NULL,
-  label_format = 30,
-)
-
-#dotplot KEGG
-cc <- compareCluster(list(f1=f_list_genes$f1$entrezgene_id, f2=f_list_genes$f2$entrezgene_id , f3=f_list_genes$f3$entrezgene_id), fun = "enrichKEGG")
-pdf('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways/cluster_profiler/dotplot_kegg_cluster_profiler_all_factors.pdf', height = 14, width = 14)
-dotplot(
-  cc,
-  x = "Cluster",
-  color = "p.adjust",
-  showCategory = 50,
-  font.size = 5,
-  title = "",
-#  by = "geneRatio",
-  size = NULL,
-  includeAll = F,
-  label_format = 5
-)
-dev.off()
-
-#cnetplot KEGG
-pdf('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways/cluster_profiler/network_kegg_cluster_profiler_all_factors.pdf', height = 14, width = 14)
-cnetplot(cc, showCategory = 10, colorEdge=T, circular=F, node_label='all')
-dev.off()
+# ggo <- enrichGO(gene     = as.character(f3_genes$entrezgene_id),
+#                OrgDb    = org.Hs.eg.db,
+#                ont      = "BP")
+# 
+# ggo <- pairwise_termsim(ggo)
+# ggo@result
+# ggo <- simplify(ggo, cutoff=0.7, by="p.adjust", select_fun=min)
+# emapplot(ggo)
+# 
+# 
+# kk <- list()
+# plot_kk <- list()
+# for(i in 1:3){
+#   tt <- c('f1','f2', 'f3')[i]
+# kk[[tt]]<- clusterProfiler::enrichKEGG(f_list_genes[[tt]]$entrezgene_id)
+# plot_kk[[tt]]<- cnetplot(kk[[tt]], showCategory = 5, circular=T, categorySize="pvalue") + ggtitle(paste0(tt,' KEGG pathways and genes'))
+# }
+# 
+# dotplot(ggo, 
+#         showCategory = 12000, 
+#         title = "Enriched Pathways",
+#         font.size = 8)
+# 
+# ?dotplot
+# 
+# plot_kk
+# gost_test_region_2$result
+# 
+# #dotplot 
+# dotplot(
+#   ggo,
+#   x = "Cluster",
+#   color = "p.adjust",
+#   showCategory = 5,
+#   split = NULL,
+#   font.size = 12,
+#   title = "",
+#   size = NULL,
+#   label_format = 30,
+# )
+# 
+# #dotplot KEGG
+# cc <- compareCluster(list(f1=f_list_genes$f1$entrezgene_id, f2=f_list_genes$f2$entrezgene_id , f3=f_list_genes$f3$entrezgene_id), fun = "enrichKEGG")
+# pdf('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways/cluster_profiler/dotplot_kegg_cluster_profiler_all_factors.pdf', height = 14, width = 14)
+# dotplot(
+#   cc,
+#   x = "Cluster",
+#   color = "p.adjust",
+#   showCategory = 50,
+#   font.size = 5,
+#   title = "",
+# #  by = "geneRatio",
+#   size = NULL,
+#   includeAll = F,
+#   label_format = 5
+# )
+# dev.off()
+# 
+# #cnetplot KEGG
+# pdf('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways/cluster_profiler/network_kegg_cluster_profiler_all_factors.pdf', height = 14, width = 14)
+# cnetplot(cc, showCategory = 10, colorEdge=T, circular=F, node_label='all')
+# dev.off()
 
 
 
 
 #----try using semantic similarity measurement----------------------------------
-gprofiler_all<- readRDS('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways/gprofiler_object.RDS')
 
-go_f <- list()
-for(i in 1:3){
-      tt <- c('f1', 'f2', 'f3')[i]
-      go_f[[tt]] <- c(gprofiler_all$result[gprofiler_all$result$query==tt,]$term_id)
-      go_f[[tt]] <- go_f[[tt]][str_detect(go_f[[tt]], 'GO:')]
-}
-
-
-
-hsGO <- godata('org.Hs.eg.db', ont="BP")
-mgoSim(go_f$f1, go_f$f2, semData=hsGO, measure="Wang", combine='BMA')
-goSim(as.list(go_f$f1), semData=hsGO, measure="Wang")
-semsim <- mclusterSim(list(f1=f_list_genes$f1$entrezgene_id, f2=f_list_genes$f2$entrezgene_id , f3=f_list_genes$f3$entrezgene_id), semData=hsGO, measure="Wang", combine="BMA")
-corrplot(semsim, is.corr = T, addCoef.col = 'black', type = 'upper') #the information content shows that the genes are highly correlated in their semantics, althiugh they are different 
-
+# gprofiler_all<- readRDS('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways/g')
+# 
+# go_f <- list()
+# for(i in 1:3){
+#       tt <- c('f1', 'f2', 'f3')[i]
+#       go_f[[tt]] <- c(gprofiler_all$result[gprofiler_all$result$query==tt,]$term_id)
+#       go_f[[tt]] <- go_f[[tt]][str_detect(go_f[[tt]], 'GO:')]
+# }
+# 
+# 
+# 
+# hsGO <- godata('org.Hs.eg.db', ont="BP")
+# mgoSim(go_f$f1, go_f$f2, semData=hsGO, measure="Wang", combine='BMA')
+# goSim(as.list(go_f$f1), semData=hsGO, measure="Wang")
+# semsim <- mclusterSim(list(f1=f_list_genes$f1$entrezgene_id, f2=f_list_genes$f2$entrezgene_id , f3=f_list_genes$f3$entrezgene_id), semData=hsGO, measure="Wang", combine="BMA")
+# corrplot(semsim, is.corr = T, addCoef.col = 'black', type = 'upper') #the information content shows that the genes are highly correlated in their semantics, althiugh they are different 
+# 
 
 
 
@@ -379,7 +372,7 @@ gost_unique$result
 
 #the heatmap 
 he_u <- gost_unique$result[, c('query', 'term_name', 'p_value', "intersection") ] 
-genes <- unique(strsplit(paste0(he_u_u$intersection, collapse = ','), split = ',')[[1]])
+genes <- unique(strsplit(paste0(he_u$intersection, collapse = ','), split = ',')[[1]])
 genes_symbol <- getBM(filters= "ensembl_gene_id", attributes= c("entrezgene_id","ensembl_gene_id", 'hgnc_symbol'),values=  genes,mart= mart)
 
 genes
@@ -409,7 +402,7 @@ colori[c('f1', 'f2', 'f3')] <-  rcartocolor::carto_pal(12, 'Safe')[c(4,5,10)]#co
 colori[c('0','1')] <- c('#a6cee3','#1f78b4')
 c('#a6cee3','#1f78b4','#b2df8a')
 #column split
-sep <- c(rep('a', 30), rep('b', 2))
+sep <- c(rep('a', 35), rep('b', 2))
 names(sep)<- colnames(tt)
 dim(tt)
 
@@ -418,13 +411,13 @@ pdf('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways/he
 Heatmap(tt, column_title = "Genes and pathways Factor Unique Genes",
         rect_gp = gpar(col = "white", lwd = 0.25), 
         column_title_gp = gpar(fontsize = 20, fontface = "bold"),
-        left_annotation = rowAnnotation( '-log10(p_adjusted)' = anno_barplot(   axis_param = list(direction = "reverse"),-log10(as.numeric(tt[,32])), width = unit(2, "cm"))),
+        left_annotation = rowAnnotation( '-log10(p_adjusted)' = anno_barplot(   axis_param = list(direction = "reverse"),-log10(as.numeric(tt[,'p_value'])), width = unit(2, "cm"))),
         row_split = tt[,'trait'],
         column_split = sep,
         column_gap = unit(3, "mm"),
         row_gap = unit(5, "mm"), 
         row_names_gp = gpar(col =  rcartocolor::carto_pal(12, 'Safe')[c(4,5,10)], fontsize=10),
-        column_labels = c(colnames(tt)[1:30], 'Factor', '') ,
+        column_labels = c(colnames(tt)[1:35], 'Factor', '') ,
         column_names_side = 'bottom',
         show_heatmap_legend = F,
         row_title = "Pathways",
@@ -438,7 +431,7 @@ dev.off()
 
 #------ plot z score heatmap ---------------------------------------------------
 
-factor_loci <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/factor_loci_moloc_closest_gene_info.txt', data.table = F) 
+factor_loci <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways/factor_loci_moloc_closest_gene_info.txt', data.table = F) 
 
 f_list <- list()
 f_snps <- list()
