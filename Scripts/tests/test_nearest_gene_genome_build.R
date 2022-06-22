@@ -41,7 +41,7 @@ factor_loci$closest_gene <- rep('-', nrow(factor_loci))
 for(i in 1:3){
   tt <- c('f1', 'f2', 'f3')[i]
   f_lead[[tt]] <- GRanges(seqnames  =factor_loci[factor_loci$trait==tt, c('chr')],   IRanges(names =factor_loci[factor_loci$trait==tt, c('SNP')] , start = factor_loci[factor_loci$trait==tt, 'BP']))
-  elementMetadata(f_lead[[tt]])[['ensembl_gene_id']] <-  ref_genes[nearest(f_lead[[tt]], reg_genes_tss, select=c('arbitrary')),]@ranges@NAMES
+  elementMetadata(f_lead[[tt]])[['ensembl_gene_id']] <-  reg_genes_tss[nearest(f_lead[[tt]], reg_genes_tss, select=c('arbitrary')),]@ranges@NAMES
   
   #add a column with the ensemble gene id into the factor loci table
   factor_loci[factor_loci$trait==tt, ][match(factor_loci[factor_loci$trait==tt, ]$SNP, f_lead[[tt]]@ranges@NAMES),]$closest_gene  <- unlist(elementMetadata(f_lead[[tt]])[['ensembl_gene_id']])
