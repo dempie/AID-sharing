@@ -59,7 +59,7 @@ for(i in 1:2){
          highlight=list(f1=factor_loci[factor_loci$trait=='f1', ]$SNP, f2=factor_loci[factor_loci$trait=='f2', ]$SNP, f3=factor_loci[factor_loci$trait=='f3', ]$SNP),
          highlight.col='black',
          highlight.pch = 18, 
-         highlight.cex=1,
+         highlight.cex=1.6,
          file=c("jpg", 'pdf')[i],
          memo="v3",
          dpi=300,
@@ -71,7 +71,7 @@ for(i in 1:2){
          width=50, 
          height=10)
 }
-system('mv Mul* /project/aid_sharing/AID_sharing/outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/09_man_plot')
+system('mv Mul* /project/aid_sharing/AID_sharing/outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/figure1/man')
 
 
 
@@ -101,7 +101,7 @@ CMplot(circular,
        chr.border=F,
        width=50, 
        height=10)
-system('mv *jpg /project/aid_sharing/AID_sharing/outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/09_man_plot')
+system('mv *jpg /project/aid_sharing/AID_sharing/outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/figure1/man')
 
 #v2
 CMplot(circular, 
@@ -128,7 +128,7 @@ CMplot(circular,
        chr.border=F,
        width=50, 
        height=10)
-system('mv *jpg /project/aid_sharing/AID_sharing/outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/09_man_plot')
+system('mv *jpg /project/aid_sharing/AID_sharing/outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/figure1/man')
 
 
 
