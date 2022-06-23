@@ -17,7 +17,7 @@ library(circlize)
 
 
 #I used ensmble names, on build 37
-factor_loci <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/hyprcoloc_all_against_all/loci_all_traits.txt', data.table = F) 
+factor_loci <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/hyprcoloc_only_factors/factor_loci.txt', data.table = F) 
 factor_loci <- factor_loci[factor_loci$trait %in% c('f1', 'f2', 'f3'),]
 
 ref_genome <- EnsDb.Hsapiens.v75
