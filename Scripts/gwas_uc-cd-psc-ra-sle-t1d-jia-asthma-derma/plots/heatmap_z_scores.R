@@ -20,19 +20,19 @@ factor_loci$pan_locus <- paste0('locus', factor_loci$pan_locus)
 
 all_f_s<- do.call(rbind, f_snps)
 all_f_s$z_score <- all_f_s$BETA/all_f_s$SE
-to_plot <- data.frame(row.names = unique(factor_loci$pan_locus), 
-                      F1=rep(NA, length(unique(factor_loci$pan_locus))),  
-                      F2=rep(NA, length(unique(factor_loci$pan_locus))),
-                      F3=rep(NA, length(unique(factor_loci$pan_locus))), 
-                      traits=rep(NA, length(unique(factor_loci$pan_locus))),
-                      leads=rep(NA, length(unique(factor_loci$pan_locus))))
+to_plot <- data.frame(row.names = unique(factor_loci$pan_locus_name), 
+                      F1=rep(NA, length(unique(factor_loci$pan_locus_name))),  
+                      F2=rep(NA, length(unique(factor_loci$pan_locus_name))),
+                      F3=rep(NA, length(unique(factor_loci$pan_locus_name))), 
+                      traits=rep(NA, length(unique(factor_loci$pan_locus_name))),
+                      leads=rep(NA, length(unique(factor_loci$pan_locus_name))))
 
 
 
 for(i in 1:nrow(to_plot)){
   tt <- rownames(to_plot)[i]
-  to_plot[tt, ]$traits <- paste0(factor_loci[factor_loci$pan_locus== tt,]$trait, collapse = '-')
-  to_plot[tt, ]$leads <- paste0(factor_loci[factor_loci$pan_locus== tt, ]$SNP, collapse = '-')
+  to_plot[tt, ]$traits <- paste0(factor_loci[factor_loci$pan_locus_name== tt,]$trait, collapse = '-')
+  to_plot[tt, ]$leads <- paste0(factor_loci[factor_loci$pan_locus_name== tt, ]$SNP, collapse = '-')
   
 }
 
@@ -52,7 +52,7 @@ for(i in 1:3){
   
 }
 
-
+name_with_locus
 #----------- z scores only factor specific -------------------------------------
 RColorBrewer::display.brewer.all(colorblindFriendly = T)
 
@@ -74,7 +74,6 @@ Heatmap(as.matrix(abs(to_plot_f[,1:3])),
        # row_title='Lead SNP',
         heatmap_legend_param =list(title = "Absosule z score"))
 dev.off()
-?Heatmap
 
 #----------- z scores only factor shared-- -------------------------------------
 # 
