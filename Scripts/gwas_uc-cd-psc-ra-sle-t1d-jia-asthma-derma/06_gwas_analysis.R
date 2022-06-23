@@ -314,41 +314,7 @@ F3_shared <- loci_all_gwas$f3[c(16,25,48,50),]$SNP
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+dim(loci_all_gwas$f3)
 
 
 
