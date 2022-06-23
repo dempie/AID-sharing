@@ -52,7 +52,7 @@ for(i in 1:3){
   
 }
 
-name_with_locus
+
 #----------- z scores only factor specific -------------------------------------
 RColorBrewer::display.brewer.all(colorblindFriendly = T)
 
