@@ -427,4 +427,5 @@ CMplot(circular[1:20000], plot.type="m",multracks=TRUE,threshold=c(5e-10),thresh
        chr.den.col=c("darkgreen", "yellow", "red"), signal.col=c("red","green","blue"),
        signal.cex=1, file="jpg",memo="",dpi=300,file.output=TRUE,verbose=TRUE, LOG10=T,  width=40, height=5)
 
+#browseVignettes("karyoploteR")
 
