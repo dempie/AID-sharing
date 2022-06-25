@@ -40,7 +40,7 @@ factor_loci[,'Q_index_pvalue'] <- rep(0, nrow(factor_loci))
 gwas_list <- list()
 for(i in 1:3){
   #load the gwas 
-  tt <- c('F1', 'F2', 'F3')[i]
+  tt <- c('f1', 'f2', 'f3')[i]
   gwas_list[[tt]] <- fread(paste0('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_gwas_ouput/factor',i,'_gwas_final_withQindex.txt'), data.table = F)
   #add the qpval   
   for(k in 1:nrow(factor_loci[factor_loci$trait==tt, ])){
@@ -51,7 +51,7 @@ for(i in 1:3){
 }
 
 
-factor_loci
+factor_loci[factor_loci$gene_name=='BCL2L15',]
 
 
 
@@ -266,13 +266,11 @@ pdf('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/figure1/locus_zoom
 plot_locus_genes( list_of_files = f_list, trait_names = list('f1', 'f2', 'f3'), start = 204200000    ,end =  205200000 , chr = 2 ,colore = brewer.pal(5, 'Paired')[c(1,3,5)],  y_a = 0, y_b = 25  ) #only F2 but close in F1 CTLA$
 dev.off()
 
-pdf('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/figure1/locus_zoom/locus_chr1_1_113759855_114651076_bcl2l15_ptpn22_f2.pdf', width = 14, height = 10)
-plot_locus_genes( list_of_files = f_list, trait_names = list('f1', 'f2', 'f3'), start = 113600000    ,end =114900000 , chr = 1 ,colore = brewer.pal(5, 'Paired')[c(1,3,5)],  y_a = 0, y_b = 35  ) #only F2 ptpn22 and bcl2l15
-dev.off()
 
 pdf('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/figure1/locus_zoom/locus_chr1_67392496_68018455_c1orf141_il23r_f1.pdf', width = 14, height = 10)
 plot_locus_genes( list_of_files = f_list, trait_names = list('f1', 'f2', 'f3'), start = 67200000   ,end = 68100000 , chr = 1 ,colore = brewer.pal(5, 'Paired')[c(1,3,5)],  y_a = 0, y_b = 35  ) #only F1, c1orf141_il23r
 dev.off()
+
 
 pdf('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/figure1/locus_zoom/locus_chr17_47222663_47677191_ZNF652_f3.pdf', width = 14, height = 10)
 plot_locus_genes( list_of_files = f_list, trait_names = list('f1', 'f2', 'f3'), start = 47000000 ,end = 47900000 , chr = 17 ,colore = brewer.pal(5, 'Paired')[c(1,3,5)],  y_a = 0, y_b = 25 ) #only F3 ZNF652
@@ -288,5 +286,10 @@ plot_locus_genes( list_of_files = f_list, trait_names = list('f1', 'f2', 'f3'), 
 dev.off()
 
 
+#q index significant
+
+pdf('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/figure1/locus_zoom/locus_chr1_1_113759855_114651076_bcl2l15_ptpn22_f2_Q_index_significant.pdf', width = 14, height = 10)
+plot_locus_genes( list_of_files = f_list, trait_names = list('f1', 'f2', 'f3'), start = 113600000    ,end =114900000 , chr = 1 ,colore = brewer.pal(5, 'Paired')[c(1,3,5)],  y_a = 0, y_b = 35  ) #only F2 ptpn22 and bcl2l15, Q index significant
+dev.off()
 
 
