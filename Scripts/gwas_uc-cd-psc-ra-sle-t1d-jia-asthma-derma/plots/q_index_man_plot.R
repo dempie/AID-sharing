@@ -21,7 +21,7 @@ for(i in 1:3){
         b <- gw_q[[tt]][ ,c(1,2,3,12)]
         
         
-        jpeg(paste0('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/figure2/miami/',tt,'miami_Q_snp.jpg'), width=6000  , height= 3000, res = 300 )
+        jpeg(paste0('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/figure2/miami/',tt,'miami_Q_snp.jpg'), width=6000  , height= 3000, res = 300)
     
         par(mar=c(1, 0.5, 0.2, 0.2), mfrow=c(2,1),
             oma = c(4, 4, 0.2, 0.2))
@@ -41,7 +41,7 @@ for(i in 1:3){
                #signal.pch=c(1),
                signal.cex=0.5,
                col=matrix(c(brewer.pal(12, 'Paired')[c(1,3,5)], brewer.pal(12, 'Paired')[c(2,4,6)]),
-                          3,2,byrow=F),
+                          3,2,byrow=F)[i,],
                highlight= locus_q_index$SNP ,
                highlight.col='black',
                highlight.pch = 13, 
