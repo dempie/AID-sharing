@@ -1,8 +1,6 @@
 # in this script all the necessary steps for  preparation for the mungin for the colocalizzation will be performed 
 library(data.table)
 library(dplyr)
-library(MungeSumstats)
-library(GenomicRanges)
 library(tidyr)
 
 
@@ -17,7 +15,7 @@ library(tidyr)
 ## create a function to prepare the GWAS for the munging depends on dplyr and data.table
 ##the function changes the name of the columns as required by the library(MungeSumstats) package
 #and saves the files in the provided path (if the path is provided)
-
+#the rename function is from dplyr
 prepare_munge <- function(sum_stats, rsID, the_effect_allele, the_non_effect_allele, pvalue, the_OR=NA, the_Beta=NA, the_SE=NA, the_chr=NA, the_bp=NA, to_remove=NA, path = NA){
   #an error if arguments are not provided
   if (missing(sum_stats) | missing(rsID) | missing(the_effect_allele) | missing(the_non_effect_allele) |missing(pvalue) ) {
@@ -268,6 +266,7 @@ prepare_munge(derma,
 
 #---------- MungeSumstats ------------------------------------------------------
 #check the build
+library(MungeSumstats)
 a1 <- list.files('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/prepare_for_munge/')
 my_paths <- as.list(paste0('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/prepare_for_munge/', a1))
 my_paths <- my_paths [-10] #remove README
