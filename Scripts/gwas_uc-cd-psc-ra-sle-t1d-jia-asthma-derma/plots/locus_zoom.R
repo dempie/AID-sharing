@@ -95,9 +95,10 @@ plot_locus_genes <- function(list_of_files, trait_names, start, end, chr, y_a=0,
   dTrack <- list()
   for(n in 1:length(to_plot)){
     tt <- trait_names[[n]]
-    dTrack[[n]] <- DataTrack(list_of_granges[[n]], name = tt, start = start, end = end, chromosome = chr, genome = 'hg19', col=colore[n], ylim=c(y_a, y_b),
+    dTrack[[n]] <- DataTrack(list_of_granges[[n]], name = tt, start = start, end = end, chromosome = chr, genome = 'hg19', ylim=c(y_a, y_b),
                            grid=F, frame=T, baseline= -log10(5e-8), col.baseline= brewer.pal(9, 'Greys')[9], lty.baseline= 1, lwd.baseline=0.2, col.axis= "black",
-                              col.title="black" , background.title = c(brewer.pal(3,'Blues')[1],brewer.pal(3, 'Greens')[1], brewer.pal(3,'Reds')[1])[n]
+                              col.title="black" , background.title = c(brewer.pal(3,'Blues')[1],brewer.pal(3, 'Greens')[1], brewer.pal(3,'Reds')[1])[n],
+                              pch=21, col='black', fill=colore[n]
     )
     
   }
