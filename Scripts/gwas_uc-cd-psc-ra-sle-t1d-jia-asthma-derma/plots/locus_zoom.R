@@ -254,7 +254,7 @@ plot_locus_genes( list_of_files = f_list, trait_names = list('f1', 'f2', 'f3'), 
 dev.off()
 
 pdf('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/figure1/locus_zoom/locus_chr11_36336263_36530644_traf6_f3.pdf', width = 14, height = 10)
-plot_locus_genes( list_of_files = f_list, trait_names = list('f1', 'f2', 'f3'), start = 36200000    ,end =  36600000 , chr = 11 ,colore = brewer.pal(5, 'Paired')[c(1,3,5)] ,  y_a = 0, y_b = 15) ##ok, only f3 is TRAF6
+plot_locus_genes( list_of_files = f_list, trait_names = list('f1', 'f2', 'f3'), start = 36200000, end = 36650000 , chr = 11 ,colore = brewer.pal(5, 'Paired')[c(1,3,5)] ,  y_a = 0, y_b = 15) ##ok, only f3 is TRAF6
 dev.off()
 
 pdf('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/figure1/locus_zoom/locus_chr2_204450734_204804955_ctla4_f2.pdf', width = 14, height = 10)
