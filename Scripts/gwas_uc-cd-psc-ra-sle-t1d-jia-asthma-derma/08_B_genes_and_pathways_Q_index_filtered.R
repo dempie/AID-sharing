@@ -148,7 +148,7 @@ gwas_list <- list()
 for(i in 1:3){
   #load the gwas 
   tt <- c('f1', 'f2', 'f3')[i]
-  gwas_list[[tt]] <- fread(paste0('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_gwas_ouput/factor',i,'_gwas_final_withQindex.txt'), data.table = F)
+  gwas_list[[tt]] <- fread(paste0('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/q_index_munged/',tt,'_munged_q_index_build37.txt'), data.table = F)
   #add the qpval   
   for(k in 1:nrow(factor_loci[factor_loci$trait==tt, ])){
     to_take <- factor_loci[factor_loci$trait==tt,]$SNP[k]
@@ -159,7 +159,7 @@ for(i in 1:3){
 
 
 gwas_list
-a <- locus.breaker(gwas_list$f1, p.label = 'Q_chisq_pval')
+a <- locus.breaker(gwas_list$f1, p.label = 'Q_CHISQ_PVAL')
 
 
 a_range <- GRanges(seqnames = a$chr, IRanges(start = as.numeric(a$start), end = as.numeric(a$end)))
@@ -167,7 +167,6 @@ f_range <- GRanges(seqnames = factor_loci$chr, IRanges(start = as.numeric(factor
 
 ovl<- findOverlaps(f_range, a_range)
 
-ovl@from
 
 factor_loci$q_signif_loci_ovl <- rep(FALSE, nrow(factor_loci)) 
 factor_loci$q_signif_loci_ovl[ovl@from] <- TRUE
@@ -177,6 +176,7 @@ dim(factor_loci[(factor_loci$q_signif_loci_ovl==F) &factor_loci$trait=='f1',])
 dim(factor_loci[(factor_loci$q_signif_loci_ovl==F) &factor_loci$trait=='f2',])
 dim(factor_loci[(factor_loci$q_signif_loci_ovl==F) &factor_loci$trait=='f3',])
 
+fwrite(factor_loci, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways/factor_loci_list_with_q_index.txt')
 
 
 
