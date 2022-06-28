@@ -1,50 +1,87 @@
 library(data.table)
-library(qqman)
-library(dplyr)
 library(RColorBrewer)
-library(miamiplot)
+library(CMplot)
 
 
-#manathan plots
-gw <- list()
-g <- list()
-q <- list()
+#Q index 
+gw_q <- list()
 for(i in c(1:3)){
   tt <- c('f1', 'f2', 'f3')[i]
-  gw[[tt]] <- fread(paste0('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/munged/',tt,'_munged_build37.txt' ),
-                    data.table = F)
-  # g[[tt]] <-  gw[[tt]][gw[[tt]]$Pval_Estimate < 0.5 & (!is.na(gw[[tt]]$Pval_Estimate)),   ]
-  # g[[tt]] <-  gw[[tt]][gw[[tt]]$Pval_Estimate < 0.05 & (!is.na(gw[[tt]]$Pval_Estimate)),   ]
+  gw_q[[tt]] <- fread(paste0('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/q_index_munged/',tt,'_munged_q_index_build37.txt' ),
+                      data.table = F)
 }
 
+locus_q_index <- locus.breaker(gw_q$f1, p.label = 'Q_CHISQ_PVAL') 
 
-#add the Q index 
-q_index <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_gwas_ouput/factor1_gwas_final_withQindex.txt', data.table = F) 
-q_index <- q_index[q_index$SNP %in% gw$f1$SNP,] #keep only the snps that passed the munging 
 for(i in 1:3){
-  tt <- c('f1', 'f2', 'f3')[i]
-  gw[[tt]]$Q_chisq_pval <- rep(NA, nrow(gw[[tt]]))
-  gw[[tt]][match(q_index$SNP ,gw[[tt]]$SNP),]$Q_chisq_pval <- q_index$Q_chisq_pval
+        tt <- c('f1', 'f2', 'f3')[i]
+        gw_q[[tt]]$P <- -log10(gw_q[[tt]]$P)
+        gw_q[[tt]]$Q_CHISQ_PVAL <- log10(gw_q[[tt]]$Q_CHISQ_PVAL)
+        a <- gw_q[[tt]][ ,c(1,2,3,11)]
+        b <- gw_q[[tt]][ ,c(1,2,3,12)]
+        
+        
+        jpeg(paste0('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/figure2/miami/',tt,'miami_Q_snp.jpg'), width=6000  , height= 3000, res = 300 )
+    
+        par(mar=c(1, 0.5, 0.2, 0.2), mfrow=c(2,1),
+            oma = c(4, 4, 0.2, 0.2))
+        
+        CMplot(a, 
+               plot.type="m",
+               multracks=F,
+               threshold=c(-log10(5e-8)),
+               ylim = c(0,30),
+               threshold.lty=c(1), 
+               band = 1,
+               threshold.lwd=c(1), 
+               threshold.col=c("black"), 
+               amplify=F,
+               cex = 0.5,
+               #signal.col=list(brewer.pal(12, 'Paired')[c(1)], brewer.pal(12, 'Paired')[3], brewer.pal(12, 'Paired')[c(5)]),
+               #signal.pch=c(1),
+               signal.cex=0.5,
+               col=matrix(c(brewer.pal(12, 'Paired')[c(1,3,5)], brewer.pal(12, 'Paired')[c(2,4,6)]),
+                          3,2,byrow=F),
+               highlight= locus_q_index$SNP ,
+               highlight.col='black',
+               highlight.pch = 13, 
+               highlight.cex=1.6,
+               dpi=300,
+               file.output=F,
+               verbose=TRUE, 
+               LOG10=F,
+               chr.border=F,
+               cex.lab=2)
+        
+        
+        
+        CMplot(b, 
+               plot.type="m",
+               multracks=F,
+               threshold=c(log10(5e-8)),
+               ylim = c(-30,0),
+               threshold.lty=c(1), 
+               band = 1,
+               threshold.lwd=c(1), 
+               threshold.col=c("black"), 
+               amplify=F,
+               cex = 0.5,
+               #signal.col=list(brewer.pal(12, 'Paired')[c(1)], brewer.pal(12, 'Paired')[3], brewer.pal(12, 'Paired')[c(5)]),
+               #signal.pch=c(1),
+               signal.cex=0.5,
+               col=brewer.pal(9, 'Set2')[c(7,8)],
+               highlight=locus_q_index$SNP,
+               highlight.col=  'black',
+               highlight.pch = 18, 
+               highlight.cex=1.5,
+               dpi=300,
+               ylab = '-log10(Qsnp Pvalue)',
+               file.output=F,
+               verbose=TRUE, 
+               LOG10=F,
+               chr.border=F,
+               cex.lab=2)
+        
+        dev.off()
+
 }
-
-
-#prepare the data for plotting, merge 
-q_miami <- data.frame('rsid'= q_index$SNP,'chr'=q_index$CHR, 'pos'= q_index$BP, 'study'= rep('q', nrow(q_index)),'p'=q_index$Q_chisq_pval )
-plot_miami <- list()
-for(i in 1:3){
-    tt <- c('f1', 'f2', 'f3')[i]
-    plot_miami[[tt]] <- data.frame('rsid'= gw[[tt]]$SNP,'chr'=gw[[tt]]$CHR, 'pos'= gw[[tt]]$BP, 'study'=gw[[tt]]$LHS, 'p'= gw[[tt]]$P ) 
-    plot_miami[[tt]] <- rbind(plot_miami[[tt]], q_miami)
-}
-
-
-ggmiami(data = gwas_results, 
-        split_by = "study", split_at = 'A', p = "pval",  upper_ylab = "Study A", lower_ylab = "Study B", suggestive_line = F, chr_colors = NULL,
-        upper_chr_colors = brewer.pal(12, 'Paired')[c(1,2)],lower_chr_colors = c('black', 'grey'),  genome_line_color = "black" )
-
-
-ggmiami(data = plot_miami$f1, 
-        split_by = "study", split_at = 'study', p = "p",  upper_ylab = "Study A", lower_ylab = "Study B", suggestive_line = F, chr_colors = NULL,
-        upper_chr_colors = brewer.pal(12, 'Paired')[c(1,2)],lower_chr_colors = c('black', 'grey'),  genome_line_color = "black" )
-
-
