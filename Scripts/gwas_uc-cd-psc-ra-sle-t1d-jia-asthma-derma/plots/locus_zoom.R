@@ -19,9 +19,9 @@ colo <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalizat
 f_ranges <- list()
 f_list <- list()
 for(i in 1:3){
-  tt <- c('f1','f2', 'f3')[i]
-  f_list[[tt]] <- fread(paste0('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/munged/',tt,'_munged_build37.txt'), data.table = F)
-  f_ranges[[tt]] <- GRanges(seqnames = paste0('chr', f_list[[tt]]$CHR), IRanges(start= f_list[[tt]]$BP, end=f_list[[tt]]$BP, names = f_list[[tt]]$SNP ), pval=f_list[[tt]]$P) 
+        tt <- c('f1','f2', 'f3')[i]
+        f_list[[tt]] <- fread(paste0('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/munged/',tt,'_munged_build37.txt'), data.table = F)
+        f_ranges[[tt]] <- GRanges(seqnames = paste0('chr', f_list[[tt]]$CHR), IRanges(start= f_list[[tt]]$BP, end=f_list[[tt]]$BP, names = f_list[[tt]]$SNP ), pval=f_list[[tt]]$P) 
 }
   
 #add the gene names to the factor loci table
@@ -31,7 +31,7 @@ genes$hgnc_symbol[!str_detect(genes$hgnc_symbol, '')] <- genes$ensembl_gene_id[!
 
 factor_loci$gene_name <- rep(NA, nrow(factor_loci)) 
 for(i in 1:nrow(factor_loci)){
-  factor_loci[i ,]$gene_name <- genes[ genes$ensembl_gene_id==factor_loci[i ,]$closest_gene ,]$hgnc_symbol
+      factor_loci[i ,]$gene_name <- genes[ genes$ensembl_gene_id==factor_loci[i ,]$closest_gene ,]$hgnc_symbol
 } 
 
 
@@ -39,21 +39,16 @@ for(i in 1:nrow(factor_loci)){
 factor_loci[,'Q_index_pvalue'] <- rep(0, nrow(factor_loci))
 gwas_list <- list()
 for(i in 1:3){
-  #load the gwas 
-  tt <- c('f1', 'f2', 'f3')[i]
-  gwas_list[[tt]] <- fread(paste0('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_gwas_ouput/factor',i,'_gwas_final_withQindex.txt'), data.table = F)
-  #add the qpval   
-  for(k in 1:nrow(factor_loci[factor_loci$trait==tt, ])){
-    to_take <- factor_loci[factor_loci$trait==tt,]$SNP[k]
-    factor_loci[factor_loci$trait==tt & factor_loci$SNP==to_take,]$Q_index_pvalue <- gwas_list[[tt]][gwas_list[[tt]]$SNP==to_take, ]$Q_chisq_pval
-  }
+      #load the gwas 
+      tt <- c('f1', 'f2', 'f3')[i]
+      gwas_list[[tt]] <- fread(paste0('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_gwas_ouput/factor',i,'_gwas_final_withQindex.txt'), data.table = F)
+      #add the qpval   
+      for(k in 1:nrow(factor_loci[factor_loci$trait==tt, ])){
+              to_take <- factor_loci[factor_loci$trait==tt,]$SNP[k]
+              factor_loci[factor_loci$trait==tt & factor_loci$SNP==to_take,]$Q_index_pvalue <- gwas_list[[tt]][gwas_list[[tt]]$SNP==to_take, ]$Q_chisq_pval
+      }
   
 }
-
-
-factor_loci[factor_loci$gene_name=='BCL2L15',]
-
-
 
 #----- plot the locus plot and the genes ---------------------------------------
 
@@ -255,15 +250,15 @@ plot_locus_genes( list_of_files = f_list, trait_names = list('f1', 'f2', 'f3'), 
 dev.off()
 
 pdf('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/figure1/locus_zoom/locus_chr9_4963838_5270603_jak2_f1.pdf', width = 14, height = 10)
-plot_locus_genes( list_of_files = f_list, trait_names = list('f1', 'f2', 'f3'), start = 4650000    ,end =  5650000 , chr = 9 ,colore = brewer.pal(5, 'Paired')[c(1,3,5)] , y_a = 0, y_b = 20) ##ok, only f1 is JAK2
+plot_locus_genes( list_of_files = f_list, trait_names = list('f1', 'f2', 'f3'), start = 4850000    ,end =  5400000 , chr = 9 ,colore = brewer.pal(5, 'Paired')[c(1,3,5)] , y_a = 0, y_b = 20) ##ok, only f1 is JAK2
 dev.off()
 
 pdf('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/figure1/locus_zoom/locus_chr11_36336263_36530644_traf6_f3.pdf', width = 14, height = 10)
-plot_locus_genes( list_of_files = f_list, trait_names = list('f1', 'f2', 'f3'), start = 35900000    ,end =  36900000 , chr = 11 ,colore = brewer.pal(5, 'Paired')[c(1,3,5)] ,  y_a = 0, y_b = 15) ##ok, only f3 is TRAF6
+plot_locus_genes( list_of_files = f_list, trait_names = list('f1', 'f2', 'f3'), start = 36200000    ,end =  36600000 , chr = 11 ,colore = brewer.pal(5, 'Paired')[c(1,3,5)] ,  y_a = 0, y_b = 15) ##ok, only f3 is TRAF6
 dev.off()
 
 pdf('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/figure1/locus_zoom/locus_chr2_204450734_204804955_ctla4_f2.pdf', width = 14, height = 10)
-plot_locus_genes( list_of_files = f_list, trait_names = list('f1', 'f2', 'f3'), start = 204200000    ,end =  205200000 , chr = 2 ,colore = brewer.pal(5, 'Paired')[c(1,3,5)],  y_a = 0, y_b = 25  ) #only F2 but close in F1 CTLA$
+plot_locus_genes( list_of_files = f_list, trait_names = list('f1', 'f2', 'f3'), start = 204450000    ,end =  204950000 , chr = 2 ,colore = brewer.pal(5, 'Paired')[c(1,3,5)],  y_a = 0, y_b = 25  ) #only F2 but close in F1 CTLA$
 dev.off()
 
 
