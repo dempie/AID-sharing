@@ -136,47 +136,5 @@ saveRDS(gost_q, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and
 gost_q$result
 
 
-#--------------script for creating heterogeneity index loci and overlpa---------
-
-library(data.table)
-library(GenomicRanges)
-
-factor_loci <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways/factor_loci_moloc_closest_gene_info.txt', data.table = F) 
-
-factor_loci[,'Q_index_pvalue'] <- rep(0, nrow(factor_loci))
-gwas_list <- list()
-for(i in 1:3){
-  #load the gwas 
-  tt <- c('f1', 'f2', 'f3')[i]
-  gwas_list[[tt]] <- fread(paste0('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/q_index_munged/',tt,'_munged_q_index_build37.txt'), data.table = F)
-  #add the qpval   
-  for(k in 1:nrow(factor_loci[factor_loci$trait==tt, ])){
-    to_take <- factor_loci[factor_loci$trait==tt,]$SNP[k]
-    factor_loci[factor_loci$trait==tt & factor_loci$SNP==to_take,]$Q_index_pvalue <- gwas_list[[tt]][gwas_list[[tt]]$SNP==to_take, ]$Q_chisq_pval
-  }
-  
-}
-
-
-gwas_list
-a <- locus.breaker(gwas_list$f1, p.label = 'Q_CHISQ_PVAL')
-
-
-a_range <- GRanges(seqnames = a$chr, IRanges(start = as.numeric(a$start), end = as.numeric(a$end)))
-f_range <- GRanges(seqnames = factor_loci$chr, IRanges(start = as.numeric(factor_loci$start), end=as.numeric(factor_loci$end)))
-
-ovl<- findOverlaps(f_range, a_range)
-
-
-factor_loci$q_signif_loci_ovl <- rep(FALSE, nrow(factor_loci)) 
-factor_loci$q_signif_loci_ovl[ovl@from] <- TRUE
-
-factor_loci[(factor_loci$q_signif_loci_ovl==F),]
-dim(factor_loci[(factor_loci$q_signif_loci_ovl==F) &factor_loci$trait=='f1',])
-dim(factor_loci[(factor_loci$q_signif_loci_ovl==F) &factor_loci$trait=='f2',])
-dim(factor_loci[(factor_loci$q_signif_loci_ovl==F) &factor_loci$trait=='f3',])
-
-fwrite(factor_loci, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways/factor_loci_list_with_q_index.txt')
-
 
 
