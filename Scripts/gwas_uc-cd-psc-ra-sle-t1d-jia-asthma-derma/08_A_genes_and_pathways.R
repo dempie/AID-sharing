@@ -90,15 +90,20 @@ saveRDS(gost_test_GO, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_gen
 kegg <-  readRDS('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways/gprofiler_kegg_only.RDS')
 keggs <- kegg$result[,c('term_name', 'intersection', 'query')]
 out <- list()
+ent <- list()
 for(i in 1:3){
       pp<- keggs[duplicated(keggs$term_name),]$term_name[i]
             for(k in 1:nrow( kegg$result[kegg$result$term_name==pp,])){
           out[[pp]][[kegg$result[kegg$result$term_name==pp,][k, ]$query]] <- kegg$result[kegg$result$term_name==pp,][k, ]$intersection
+          ent[[pp]][[kegg$result[kegg$result$term_name==pp,][k, ]$query]]<- getBM(filters= "ensembl_gene_id", attributes= c("entrezgene_id","ensembl_gene_id", 'hgnc_symbol'),values=  kegg$result[kegg$result$term_name==pp,][k, ]$intersection,mart= mart)
       }
           
 }
 
-saveRDS(out, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways/genes_in_shared_pathways.RDS')
+
+saveRDS(ent        , 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways/genes_in_shared_pathways.RDS')
+
+
 
 #---- heatmap -----------------------------------------------------------------
 
