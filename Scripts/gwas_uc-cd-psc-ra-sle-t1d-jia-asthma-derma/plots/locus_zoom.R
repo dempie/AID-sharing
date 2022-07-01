@@ -98,7 +98,7 @@ plot_locus_genes <- function(list_of_files, trait_names, start, end, chr, y_a=0,
     dTrack[[n]] <- DataTrack(list_of_granges[[n]], name = tt, start = start, end = end, chromosome = chr, genome = 'hg19', ylim=c(y_a, y_b),
                            grid=F, frame=T, baseline= -log10(5e-8), col.baseline= brewer.pal(9, 'Greys')[9], lty.baseline= 1, lwd.baseline=0.2, col.axis= "black",
                               col.title="black" , background.title = c(brewer.pal(3,'Blues')[1],brewer.pal(3, 'Greens')[1], brewer.pal(3,'Reds')[1])[n],
-                              pch=21, col='black', fill=colore[n]
+                              cex=1.6, col=c(brewer.pal(9, 'Blues')[8], brewer.pal(9 ,'Greens')[8], brewer.pal(9, 'Reds')[8])[n], fill=colore[n], pch=21 
     )
     
   }
@@ -138,7 +138,7 @@ plot_locus_genes <- function(list_of_files, trait_names, start, end, chr, y_a=0,
   }
   
   d <- do.call(rbind, d) 
-  grt <- GeneRegionTrack(d, showTitle=F, fill='black', background.title='white', size=0.5)
+  grt <- GeneRegionTrack(d, showTitle=F, fill='grey', col='grey', background.title='white', size=0.5, fontsize=24)
   
   
   #plot it
