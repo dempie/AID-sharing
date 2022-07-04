@@ -6,12 +6,9 @@ library(GenomicRanges)
 library(EnsDb.Hsapiens.v75)
 library(biomaRt)
 library(ComplexHeatmap)
-library(clusterProfiler)
-library(enrichplot)
-library(GOSemSim)
 library(gtools)
 library(RColorBrewer)
-library(circlize)
+
 
 #load the dataset 
 
@@ -23,8 +20,6 @@ fwrite(loci.table,'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_a
 #create a table of only factors
 loci.table <- loci.table[loci.table$trait %in% c('f1', 'f2', 'f3'), ]
 fwrite(loci.table,'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways_conditional/loci_table_names_nicola_only_factors.csv', sep = ',')
-
-head(loci.table)
 
 #-----closest gene--------------------------------------------------------------
 
@@ -64,7 +59,8 @@ loci.table[loci.table$closest_gene_name=='', ]$closest_gene_name <- loci.table[l
 #save the output
 fwrite(loci.table, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways_conditional/loci_table_names_nicola_genes.csv', sep=',')
 
-
+#------ load the dataset -------------------------------------------------------
+loci.table <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways_conditional/loci_table_names_nicola_genes.csv', data.table = F)
 
 
 #----- make an upset plot-------------------------------------------------------
@@ -92,7 +88,8 @@ go <- gost(query = list(f1=unique(loci.table[loci.table$trait=='f1',]$closest_ge
            sources = c('GO'), significant = T, evcodes = T)
 saveRDS(go, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways_conditional/go_pathway_analysis.RDS')
 
-
+react <- gost(query = list(f1=unique(loci.table[loci.table$trait=='f1',]$closest_gene), f2=unique(loci.table[loci.table$trait=='f2',]$closest_gene), f3=unique(loci.table[loci.table$trait=='f3',]$closest_gene)),
+           sources = c('REAC'), significant = T, evcodes = T)
 #----plot the heatmap of the pathways-------------------------------------------
 
 
@@ -253,9 +250,30 @@ venn.diagram(
 
 
 
+#-------p value distribution of shared verus unique ----------------------------
+
+Reduce(intersect, list(go_f$f1$term_name, f2=go_f$f2$term_name, f3=go_f$f3$term_name))
+Reduce(setdiff, list(go_f$f1$term_name, f2=go_f$f2$term_name, f3=go_f$f3$term_name))
+a<-go$result[go$result$term_name %in% Reduce(intersect, list(go_f$f1$term_name, f2=go_f$f2$term_name, f3=go_f$f3$term_name)),]$p_value 
+b <- go$result[go$result$term_name %in% Reduce(setdiff, list(go_f$f1$term_name, f2=go_f$f2$term_name, f3=go_f$f3$term_name)),]$p_value 
+
+  f1_u <- go$result[go$result$term_name %in% Reduce(setdiff, list(go_f$f1$term_name, f2=go_f$f2$term_name, f3=go_f$f3$term_name)),]$p_value 
+  f2_u <- go$result[go$result$term_name %in% Reduce(setdiff, list(go_f$f2$term_name, f2=go_f$f1$term_name, f3=go_f$f3$term_name)),]$p_value 
+  f3_u <- go$result[go$result$term_name %in% Reduce(setdiff, list(go_f$f3$term_name, f2=go_f$f2$term_name, f1=go_f$f1$term_name)),]$p_value 
+  
+
+  
+  
+  a1 <- data.frame(a=a, info=rep('shared', length(a)))
+  b1 <- data.frame(a=c(f1_u, f2_u, f3_u), info=rep('unique', length(c(f1_u, f2_u, f3_u))))
+  ee <- rbind(a1, b1)
+
+
+library(ggplot2)
+
+ggplot(ee) + geom_density(aes( x=a, group=info,col=info)) +xlab('p_value') 
+ggplot(ee, aes( y=-log10(a), x=info,col=info)) + geom_boxplot() +  geom_jitter() +scale_y_log10() +ylab('-log10(pvalue)') 
 
 
 
-go_f$f1$term_name[!(go_f$f1$term_name %in% c(f2=go_f$f2$term_name, f3=go_f$f3$term_name))]
 
-Reduce(intersection, list(go_f$f1$term_name, f2=go_f$f2$term_name, f3=go_f$f3$term_name))
