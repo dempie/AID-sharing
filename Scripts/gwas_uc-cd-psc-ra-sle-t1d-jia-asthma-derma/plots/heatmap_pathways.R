@@ -262,7 +262,7 @@ formattable(plott,align =c("l","c","c" ,"r") ,
 )
 
 
-
+fwrite(plott, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/figure_pathways/go_results.csv',sep = ',', col.names = T, quote = F, row.names = F)
 
 
 
