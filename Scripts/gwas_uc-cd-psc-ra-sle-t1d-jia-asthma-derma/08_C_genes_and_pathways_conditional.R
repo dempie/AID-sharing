@@ -65,15 +65,15 @@ loci.table <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes
 
 
 #----- make an upset plot-------------------------------------------------------
-q <- make_comb_mat(list(f1=loci.table[loci.table$trait=='f1',]$closest_gene, f2=loci.table[loci.table$trait=='f2',]$closest_gene, f3=loci.table[loci.table$trait=='f3',]$closest_gene))
-pdf(width = 10, height = 5, file = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways_conditional/nearest_genes_upset_plot_factors.pdf')
+q <- make_comb_mat(list(f1=loci.table[loci.table$trait=='f1',]$final.locus, f2=loci.table[loci.table$trait=='f2',]$final.locus, f3=loci.table[loci.table$trait=='f3',]$final.locus))
+pdf(width = 10, height = 5, file = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways_conditional/upset_plot_final_loci_nicola.pdf')
 UpSet(q, set_order = c("f1", "f2", "f3"), 
       comb_order = order(comb_size(q), decreasing = T),
-      comb_col = c(rcartocolor::carto_pal(12, 'Safe')[c(1,2,3)][comb_degree(q)]),
+      comb_col = c(brewer.pal(12, 'Paired')[c(12,12,12,12,5,3,1)]),
       top_annotation = upset_top_annotation(q, add_numbers = TRUE, height = unit(6, "cm")),
       right_annotation = upset_right_annotation(q, add_numbers = TRUE, width = unit(5,'cm') ),
       row_title = "Factor", 
-      column_title = "Intersection of all genes ")
+      column_title = "Intersection of all loci")
 dev.off()
 
 
