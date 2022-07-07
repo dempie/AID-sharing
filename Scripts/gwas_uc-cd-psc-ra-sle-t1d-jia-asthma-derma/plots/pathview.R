@@ -24,20 +24,19 @@ for(i in 1:length(ent)){
               names(b) <- tt[[1]][[fs_inv[[2]]]]$entrezgene_id
               
           
-          if(length(intersect(a,b))!=0){
-                    q <- rep(0, length(intersect(a,b)))
-                    names(q) <- intersect(a,b)
-                    a <- a[!a %in% q]
-                    b <- b[!b %in% q]
+          if(length(intersect(names(a),names(b)))!=0){
+                    q <- rep(0, length(intersect(names(a),names(b))))
+                    names(q) <- intersect(names(a),names(b))
+                    a <- a[!names(a) %in% names(q)]
+                    b <- b[!names(b) %in% names(q)]
                     
                     pv.out <- pathview(gene.data =  c(a,b,q) , pathway.id = path,
                                        species = "hsa", sample.layer=F, out.suffix=paste0(path,'_', paste(unlist(fs_inv), collapse = '-'), collapse = '_' ), 
                                        low = list(gene = colfactor[fs_inv[[2]]], cpd = "blue"), 
                                        mid = list(gene = "yellow", cpd = "blue"), 
                                        high = list(gene = colfactor[fs_inv[[1]]], cpd = "yellow"))
-                    
           } else {
-            
+      
                     pv.out <- pathview(gene.data =  c(a,b) , pathway.id = path ,
                                    species = "hsa", sample.layer=F, out.suffix=paste0(path,'_', paste(unlist(fs_inv), collapse = '-'), collapse = '_' ),
                                    low = list(gene = colfactor[fs_inv[[2]]], cpd = "blue"), 
@@ -45,10 +44,6 @@ for(i in 1:length(ent)){
                                    high = list(gene = colfactor[fs_inv[[1]]], cpd = "yellow"))
               }
           
-          
-      
-
-
 }
 
 
