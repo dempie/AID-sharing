@@ -68,8 +68,8 @@ loci.table <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes
 q <- make_comb_mat(list(f1=loci.table[loci.table$trait=='f1',]$final.locus, f2=loci.table[loci.table$trait=='f2',]$final.locus, f3=loci.table[loci.table$trait=='f3',]$final.locus))
 pdf(width = 10, height = 5, file = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways_conditional/upset_plot_final_loci_nicola.pdf')
 UpSet(q, set_order = c("f1", "f2", "f3"), 
-      comb_order = order(comb_size(q), decreasing = T),
-      comb_col = c(brewer.pal(12, 'Paired')[c(12,12,12,12,5,3,1)]),
+      comb_order = c(5,6,7,2,3,4,1),
+      comb_col = c(brewer.pal(12, 'Paired')[c(12,12,12,12,1,3,5)]),
       top_annotation = upset_top_annotation(q, add_numbers = TRUE, height = unit(6, "cm")),
       right_annotation = upset_right_annotation(q, add_numbers = TRUE, width = unit(5,'cm') ),
       row_title = "Factor", 
