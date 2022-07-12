@@ -60,6 +60,37 @@ loci.table[loci.table$closest_gene_name=='', ]$closest_gene_name <- loci.table[l
 #save the output
 fwrite(loci.table, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways_conditional/loci_table_names_nicola_genes.csv', sep=',')
 
+#------ make a csv of genes for all the factors with ensemble_gened and gene symbol ----------
+for(i in 1:6){
+  tt<- names(ent)[i]
+  
+  for( k in 1:2){
+    ff <- names(ent[[tt]])[k]
+    ent[[tt]][[ff]]$trait <- rep(ff, nrow(ent[[tt]][[ff]]))
+    ent[[tt]][[ff]]$pathway <- rep(tt, nrow(ent[[tt]][[ff]]))
+  }
+  
+}
+
+
+tocall <- list()
+
+for(i in 1:6){
+  tt <- names(ent)[i]
+  
+  for( k in 1:2){
+    ff <- names(ent[[tt]])[k]
+    
+    tocall[[paste0(tt, ff, collapse = '-')]] <- ent[[tt]][[ff]]
+  }
+  
+}
+
+export <- do.call(rbind,tocall)
+
+write.table(export, row.names = T, quote = F, sep=',', file='outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways_conditional/genes_in_shared_pathways_table.csv')
+
+
 #------ load the dataset -------------------------------------------------------
 loci.table <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways_conditional/loci_table_names_nicola_genes.csv', data.table = F)
 
