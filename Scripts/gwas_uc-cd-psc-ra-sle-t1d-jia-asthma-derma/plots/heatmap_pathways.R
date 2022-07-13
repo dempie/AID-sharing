@@ -265,7 +265,12 @@ formattable(plott,align =c("l","c","c" ,"r") ,
 fwrite(plott, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/figure_pathways/go_results.csv',sep = ',', col.names = T, quote = F, row.names = F)
 
 
+
+
+################################################################################
+
 #----------- KEGG semaphor------------------------------------------------------
+
 he <- kegg$result
 genes <- unique(strsplit(paste0(he$intersection, collapse = ','), split = ',')[[1]])
 genes_symbol <- getBM(filters= "ensembl_gene_id", attributes= c("entrezgene_id","ensembl_gene_id", 'hgnc_symbol'),values=  genes,mart=mart )
@@ -302,7 +307,7 @@ rownames(mtp) <- unique(kg$term_name)
 
         for(i in c('f1', 'f2', 'f3')){
           kg[ kg$query==i,]$term_name
-          mtp[, i][match(  kg[ kg$query==i, ]$term_name, names(mtp[, i]))] <- -log(kg[ kg$query==i, ]$p_value, 10^100) #importat to set the radius of the circle
+          mtp[, i][base::match(  kg[ kg$query==i, ]$term_name, names(mtp[, i]))] <- -log(kg[ kg$query==i, ]$p_value, 10^100) #importat to set the radius of the circle
         }
         
         
@@ -315,7 +320,7 @@ rownames(mtp) <- unique(kg$term_name)
         #order mtp with the shared pathways on top and the genes to be clustereb by factors
         otp <- mtp[c(1,3,5,8,9,4,2,6,7,10,11,12,13,14,15),]
 
-        ggtp <-  gtp[rownames(otp),rownames(t_t)[1:48]]
+       
 
 #add the genes
 
@@ -344,7 +349,7 @@ for(k in 1:length(unique(kres$term_name)) ){
        gtp[tt ,a] <- paste0(u, collapse = '-')
        
        
-      #if there is no intersection proced as follows
+      #if there is no intersection proceed as follows
       } else{
                 
                 for(i in 1:nrow(kres[kres$term_name==tt,])){
@@ -355,7 +360,7 @@ for(k in 1:length(unique(kres$term_name)) ){
       
 }
 
- 
+ggtp <-  gtp[rownames(otp),rownames(t_t)[1:48]]
 
 #---------------------------------------------------
 colori<- ComplexHeatmap:::default_col(gtp[,rownames(t_t)[1:48]])
@@ -420,7 +425,7 @@ a<-Heatmap(ggtp,
              cell_fun = function(j, i, x, y, width, height, fill) {
                if(otp[i, j] > 0){
                  grid.circle(x = x, y = y, r = otp[i,j], gp = gpar(fill = brewer.pal(7,'BrBG')[3], col = 'black'))
-                 grid.text(signif((10^100)^(-otp[i,j]),2), x=x,  y = y, gp=gpar(fontsize=10))
+                 #grid.text(signif((10^100)^(-otp[i,j]),2), x=x,  y = y, gp=gpar(fontsize=10))
                  
                }
              }
@@ -448,7 +453,7 @@ lege[,2] <- -log(fp, base = 10^100)
 lege[,3] <- -log(fp, base = 10^100)
 rownames(lege) <- fp
 
-lege
+
 
 a<-Heatmap(ggtp, 
            #column_title = "Genes and pathways KEGG",
