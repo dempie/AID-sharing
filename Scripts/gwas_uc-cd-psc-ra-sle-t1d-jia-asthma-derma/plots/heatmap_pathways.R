@@ -21,8 +21,9 @@ go <- readRDS('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_p
 he <- kegg$result
 genes <- unique(strsplit(paste0(he$intersection, collapse = ','), split = ',')[[1]])
 genes_symbol <- getBM(filters= "ensembl_gene_id", attributes= c("entrezgene_id","ensembl_gene_id", 'hgnc_symbol'),values=  genes,mart=mart )
+genes_symbol <- genes_symbol[!duplicated(genes_symbol$ensembl_gene_id), ]
 
-genes
+
 t_t <- data.frame(genes) 
 for(i in 1:length(he$term_name)){
   t_t[, paste0(paste(strsplit(he$term_name[i], split=' ')[[1]], collapse = '_'),'_' , he$query[i])] <- as.numeric(genes %in% strsplit(he[he$term_name==he$term_name[i] & he$query==he$query[i], 'intersection'], split=',' )[[1]])
@@ -79,8 +80,9 @@ dev.off()
 he <- kegg$result
 genes <- unique(loci.table[order(loci.table$trait),]$closest_gene)
 genes_symbol <- getBM(filters= "ensembl_gene_id", attributes= c("entrezgene_id","ensembl_gene_id", 'hgnc_symbol'),values=  genes,mart=mart )
+genes_symbol <- genes_symbol[!duplicated(genes_symbol$ensembl_gene_id), ]
 
-genes
+
 t_t <- data.frame(genes) 
 for(i in 1:length(he$term_name)){
   t_t[, paste0(paste(strsplit(he$term_name[i], split=' ')[[1]], collapse = '_'),'_' , he$query[i])] <- as.numeric(genes %in% strsplit(he[he$term_name==he$term_name[i] & he$query==he$query[i], 'intersection'], split=',' )[[1]])
@@ -144,15 +146,15 @@ dev.off()
 
 
 
+
+
 #-------------------heatmpap and go terms------------------------------------
-
-
 
 he <- go$result
 genes <- unique(strsplit(paste0(he$intersection, collapse = ','), split = ',')[[1]])
 genes_symbol <- getBM(filters= "ensembl_gene_id", attributes= c("entrezgene_id","ensembl_gene_id", 'hgnc_symbol'),values=  genes,mart=mart )
+genes_symbol <- genes_symbol[!duplicated(genes_symbol$ensembl_gene_id), ]
 
-genes
 t_t <- data.frame(genes) 
 for(i in 1:length(he$term_name)){
   t_t[, paste0(paste(strsplit(he$term_name[i], split=' ')[[1]], collapse = '_'),'_' , he$query[i])] <- as.numeric(genes %in% strsplit(he[he$term_name==he$term_name[i] & he$query==he$query[i], 'intersection'], split=',' )[[1]])
@@ -205,15 +207,6 @@ Heatmap(tt, column_title = "Genes and pathways GO terms",
 dev.off()
 
 
-head(go$result[order(go$result$p_value), c('query', 'p_value', 'term_name')],10)
-
-go_f <- list()
-for(i in 1:3){
-  tt <- c('f1', 'f2', 'f3')[i]
-  go_f[[tt]] <- go$result[ go$result$query==tt,]
-}
-
-
 
 #-------------------table of pathways-------------------------------------------
 
@@ -224,6 +217,7 @@ kg <- kegg$result[, c('query','p_value', 'term_name', 'intersection')]
 he <- kegg$result
 genes <- unique(strsplit(paste0(he$intersection, collapse = ','), split = ',')[[1]])
 genes_symbol <- getBM(filters= "ensembl_gene_id", attributes= c("entrezgene_id","ensembl_gene_id", 'hgnc_symbol'),values=  genes,mart=mart )
+genes_symbol <- genes_symbol[!duplicated(genes_symbol$ensembl_gene_id), ]
 
 kg$hgnc <- rep('NA', nrow(kg))
 for(i in 1:nrow(kg)){
@@ -233,6 +227,7 @@ for(i in 1:nrow(kg)){
 colnames(kg) <- c('Trait', 'P-value (adjusted)', 'Pathway', 'ENSEMBL', 'Gene symbols')
 kg$Trait <- toupper(kg$Trait)
 plott <- kg[,c(3,1,2, 5)]
+plott$`P-value (adjusted)` <- signif(plott$`P-value (adjusted)`, 2)
 
 
 
@@ -242,8 +237,10 @@ formattable(plott,align =c("l","c","c" ,"r") ,
 
 fwrite(plott, file = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/figure_pathways/kegg_results.csv',sep = ',', col.names = T, quote = F, row.names = F)
 
-#go table
 
+
+
+#go table
 gg <-  go$result[, c('query','p_value', 'term_name', 'intersection')] 
 gg <- head(gg[order(gg$p_value), ],20)
 genes <- unique(strsplit(paste0(gg$intersection, collapse = ','), split = ',')[[1]])
@@ -257,6 +254,9 @@ for(i in 1:nrow(gg)){
 colnames(gg) <- c('Trait', 'P-value (adjusted)', 'GO term', 'ENSEMBL', 'Gene symbols')
 gg$Trait <- toupper(gg$Trait)
 plott <- gg[,c(3,1,2, 5)]
+plott$`P-value (adjusted)` <- signif(plott$`P-value (adjusted)`, 2)
+
+rownames(plott) <- NULL
 formattable(plott,align =c("l","c","c" ,"r") ,
             list( 'GO term' = formatter( "span", style = style(color = "grey",font.weight = "bold")))
 )
@@ -275,7 +275,10 @@ he <- kegg$result
 genes <- unique(strsplit(paste0(he$intersection, collapse = ','), split = ',')[[1]])
 genes_symbol <- getBM(filters= "ensembl_gene_id", attributes= c("entrezgene_id","ensembl_gene_id", 'hgnc_symbol'),values=  genes,mart=mart )
 
-genes
+#ecxclude the duplicated ones
+genes_symbol <- genes_symbol[!duplicated(genes_symbol$ensembl_gene_id), ]
+
+
 t_t <- data.frame(genes) 
 for(i in 1:length(he$term_name)){
   t_t[, paste0(paste(strsplit(he$term_name[i], split=' ')[[1]], collapse = '_'),'_' , he$query[i])] <- as.numeric(genes %in% strsplit(he[he$term_name==he$term_name[i] & he$query==he$query[i], 'intersection'], split=',' )[[1]])
@@ -286,17 +289,6 @@ t_t
 #add gene symbol and remove ENSEMBLE
 rownames(t_t) <- genes_symbol$hgnc_symbol[match(t_t$genes, genes_symbol$ensembl_gene_id)]   
 t_t$genes <- NULL
-t_t
-
-t_t['trait',] <- c(he$query) 
-t_t['p_value',] <- c(he$p_value)
-tt <- t(t_t)
-
-#column split
-sep <- c(rep('a', nrow(t_t)-2), rep('b', 2))
-names(sep) <- colnames(tt)
-
-
 
 #--------------
 kg <- kegg$result[,c('query', 'p_value', 'term_name')]
