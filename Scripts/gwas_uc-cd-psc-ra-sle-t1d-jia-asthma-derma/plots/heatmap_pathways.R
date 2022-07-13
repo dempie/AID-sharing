@@ -9,6 +9,7 @@ library(ComplexHeatmap)
 library(gtools)
 library(RColorBrewer)
 library(formattable)
+library(ggplot2)
 
 mart <- useDataset("hsapiens_gene_ensembl", useMart(biomart="ENSEMBL_MART_ENSEMBL", host="https://grch37.ensembl.org", path="/biomart/martservice" ,dataset="hsapiens_gene_ensembl"))
 loci.table <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways_conditional/loci_table_names_nicola_genes.csv', data.table = F)
@@ -445,6 +446,85 @@ for(k in 1:6) {
 
 dev.off()
 
+
+
+#----- go circle plot-----------------------------------------------------------
+
+go <- readRDS('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways_conditional/go_pathway_analysis.RDS')
+
+
+top_10 <- go$result[order(go$result$p_value, decreasing = F),][1:20,c('query', 'p_value', 'term_name')]
+
+top_10$p_log <- -log10(top_10$p_value)
+
+ggplot(top_10, aes(x = term_name, y=p_log, fill=query)) + geom_col(position = position_dodge2(width = 0.9, preserve = "single"), col='grey') + 
+  scale_fill_manual(values=brewer.pal(5,'Paired')[c(1,3,5)]) +
+  ylab('-log10(P-adjusted)') + xlab('GO term')+ ggtitle('Top 20 GO terms')+
+  coord_flip()  +theme_classic() 
+
+
+#search the top 10 unique pathways and searcj the pvalues for all the factors for the top 10 pathways
+top_10_pathways <- unique(go$result[order(go$result$p_value, decreasing = F),][,'term_name'])[(1:10)]
+kg <- go$result[go$result$term_name %in% top_10_pathways,c('query', 'p_value', 'term_name')]
+
+mtp <- matrix(nrow = length(unique(kg$term_name)), ncol = 3)
+colnames(mtp) <- c('f1', 'f2', 'f3')
+rownames(mtp) <- unique(kg$term_name)
+
+for(i in c('f1', 'f2', 'f3')){
+  ko <- kg[ kg$query==i,]$term_name
+  mtp[kg[ kg$query==i, ]$term_name , i] <- -log10(kg[ kg$query==i, ]$p_value) #importat to set the radius of the circle
+}
+
+
+for(i in c('f1', 'f2', 'f3')){
+  mtp[,i][is.na(mtp[,i])] <- 0
+}
+
+colnames(mtp) <- toupper(colnames(mtp))
+
+pdf('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/figure_pathways/go_path_top10.pdf', height = 20, width = 10)
+Heatmap(mtp,  
+        rect_gp = gpar(col = brewer.pal(5, 'Greys')[2], lwd = 0.25), 
+        column_title = 'Top 10 GO terms',
+        cluster_rows = F,
+        col = c('white', 'white'), 
+        border=T,
+        show_column_dend = F,
+        show_row_dend = F,
+        cluster_columns = F,
+        row_names_gp = gpar(fontsize=10),
+        row_names_side = 'left',
+        width = unit(10, 'cm'),
+        height = unit(30, 'cm'),
+        show_heatmap_legend = F,
+        column_names_gp = gpar(fontsize=25),
+        column_names_side = 'bottom',
+        column_names_rot = 360,
+        top_annotation =  columnAnnotation(legend = anno_empty(border = F,
+                                                               width =  unit(10, "cm"), height = unit(2, 'cm'))), #space for the legend annotation
+        
+        cell_fun = function(j, i, x, y, width, height, fill) {
+          if(mtp[i, j] > 0){
+            grid.circle(x = x, y = y, r = unit(mtp[i,j], 'mm'), gp = gpar(fill = brewer.pal(7,'BrBG')[4], col = 'black'))
+            #grid.text(signif(mtp[i,j],2), x=x,  y = y, gp=gpar(fontsize=10))
+          }
+        }
+        
+)
+
+
+for(k in 1:5) {
+  i <- c(0.05,0.30,0.50, 0.70, 0.80)[k] #this are the positions 
+  
+  decorate_annotation('legend', {
+    
+    grid.circle(x=i, r= unit(-log10(c(10^-15,10^-12,10^-9,10^-6,10^-3)), 'mm')[k],gp = gpar(fill = brewer.pal(7,'BrBG')[4], col = 'black')) #this are the pvalues that are shown in the legend, the dimension of the -log10(p) is in mm
+    grid.text(x=i, round(-log10(c(10^-15,10^-12,10^-9,10^-6,10^-3)), 3)[k]) #show the p
+  })
+}
+
+dev.off()
 
 
 #------ react -----------
