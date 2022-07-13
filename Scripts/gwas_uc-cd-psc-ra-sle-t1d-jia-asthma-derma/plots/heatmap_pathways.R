@@ -245,6 +245,7 @@ gg <-  go$result[, c('query','p_value', 'term_name', 'intersection')]
 gg <- head(gg[order(gg$p_value), ],20)
 genes <- unique(strsplit(paste0(gg$intersection, collapse = ','), split = ',')[[1]])
 genes_symbol <- getBM(filters= "ensembl_gene_id", attributes= c("entrezgene_id","ensembl_gene_id", 'hgnc_symbol'),values=  genes,mart=mart )
+genes_symbol <- genes_symbol[!duplicated(genes_symbol$ensembl_gene_id), ]
 gg$hgnc <- rep('NA', nrow(gg))
 
 for(i in 1:nrow(gg)){
@@ -266,7 +267,6 @@ fwrite(plott, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/figure_p
 
 
 
-
 ################################################################################
 
 #----------- KEGG semaphor------------------------------------------------------
@@ -285,7 +285,6 @@ for(i in 1:length(he$term_name)){
   
 }
 
-t_t
 #add gene symbol and remove ENSEMBLE
 rownames(t_t) <- genes_symbol$hgnc_symbol[match(t_t$genes, genes_symbol$ensembl_gene_id)]   
 t_t$genes <- NULL
@@ -299,7 +298,7 @@ rownames(mtp) <- unique(kg$term_name)
 
         for(i in c('f1', 'f2', 'f3')){
           kg[ kg$query==i,]$term_name
-          mtp[, i][base::match(  kg[ kg$query==i, ]$term_name, names(mtp[, i]))] <- -log(kg[ kg$query==i, ]$p_value, 10^100) #importat to set the radius of the circle
+          mtp[, i][base::match(  kg[ kg$query==i, ]$term_name, names(mtp[, i]))] <- -log10(kg[ kg$query==i, ]$p_value) #importat to set the radius of the circle
         }
         
         
@@ -370,27 +369,28 @@ a<-Heatmap(ggtp,
            show_heatmap_legend = F,
            row_title = "Pathways",
            na_col = 'white', 
-           height = unit(8, 'cm'), width = 28,
+           height = unit(6.5, 'cm'), width = 28, 
+           top_annotation =  columnAnnotation(legend = anno_empty(border = F, width =  unit(28, "cm"), height = unit(2, 'cm'))), #make space for the annotation
            
            
            cell_fun = function(j, i, x, y, width, height, fill) {
              if(!is.na(ggtp[,rownames(t_t)[1:48]][i, j] )){
                
                if(ggtp[,rownames(t_t)[1:48]][i, j]== 'f1' ){
-                 grid.points(x = x, y = y, pch = 22, size = unit(12, "mm"), gp = gpar(col = brewer.pal(5, 'Paired')[2], fill=brewer.pal(5, 'Paired')[1] ))
+                 grid.points(x = x, y = y, pch = 22, size = unit(18, "mm"), gp = gpar(col = brewer.pal(5, 'Paired')[2], fill=brewer.pal(5, 'Paired')[1] ))
                }
                
                
                if(ggtp[,rownames(t_t)[1:48]][i, j]== 'f2' ){
-                 grid.points(x = x, y = y, pch = 22, size = unit(12, "mm"), gp = gpar(col = brewer.pal(5, 'Paired')[4], fill=brewer.pal(5, 'Paired')[3]))
+                 grid.points(x = x, y = y, pch = 22, size = unit(18, "mm"), gp = gpar(col = brewer.pal(5, 'Paired')[4], fill=brewer.pal(5, 'Paired')[3]))
                }
                
                if(ggtp[,rownames(t_t)[1:48]][i, j]== 'f3' ){
-                 grid.points(x = x, y = y, pch = 22, size = unit(12, "mm"), gp = gpar(col = brewer.pal(6, 'Paired')[6], fill=brewer.pal(5, 'Paired')[5]))
+                 grid.points(x = x, y = y, pch = 22, size = unit(18, "mm"), gp = gpar(col = brewer.pal(6, 'Paired')[6], fill=brewer.pal(5, 'Paired')[5]))
                }
                
                if(ggtp[,rownames(t_t)[1:48]][i, j]== 'f1-f3' ){
-                 grid.points(x = x, y = y, pch=22, size = unit(12, "mm"), gp = gpar(col = 'grey', fill='black'))
+                 grid.points(x = x, y = y, pch=22, size = unit(18, "mm"), gp = gpar(col = 'grey', fill='black'))
                }
              }
              
@@ -398,126 +398,53 @@ a<-Heatmap(ggtp,
 )
 
 
- b <- Heatmap(otp,  
+b <- Heatmap(otp,  
              rect_gp = gpar(col = brewer.pal(5, 'Greys')[2], lwd = 0.25), 
              cluster_rows = F,
              col = c('white', 'white'), 
              border=T,
              show_column_dend = F,
              show_row_dend = F,
-             row_names_gp = gpar(fontsize=10),
+             row_names_gp = gpar(fontsize=3),
              row_names_side = 'left',
-             width = unit(8, 'cm'),
-             height = unit(20, 'cm'),
+             width = unit(6.5, 'cm'),
+             height = unit(28, 'cm'),
              show_heatmap_legend = F,
              column_names_gp = gpar(fontsize=25),
              column_names_side = 'bottom',
              column_names_rot = 360,
-             
+             top_annotation =  columnAnnotation(legend = anno_empty(border = F,
+                                                  width =  unit(28, "cm"), height = unit(2, 'cm'))), #create an empty annotation for adding the legend elements 
+
              cell_fun = function(j, i, x, y, width, height, fill) {
                if(otp[i, j] > 0){
-                 grid.circle(x = x, y = y, r = otp[i,j], gp = gpar(fill = brewer.pal(7,'BrBG')[3], col = 'black'))
-                 #grid.text(signif((10^100)^(-otp[i,j]),2), x=x,  y = y, gp=gpar(fontsize=10))
+                 grid.circle(x = x, y = y, r = unit(otp[i,j], 'mm'), gp = gpar(fill = brewer.pal(7,'BrBG')[3], col = 'black')) #the unit of the -log10(pvalues) is mm as in the legend
+                 #grid.text(signif((10^100)^(-otp[i,j]),2), x=x,  y = y, gp=gpar(fontsize=10)) #in case you want to see the pvalues in the centre of the circle
                  
                }
              }
-             
-)
+      )
 
+ 
+ 
 
-
-
-pdf('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/figure_pathways/semaphor_plot.pdf', height = 25, width = 30)
+#save as pdf
+pdf('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/figure_pathways/semaphor_plot.pdf', height = 36, width = 36)
+#plot the heatmaps
 b+a
-dev.off()
-
-
-
-
 #for adding the legend on the pvalues scales, create the same heatmap with fixed values and copy paste them in illustrator 
+for(k in 1:6) {
+  i <- c(0.05,0.30,0.50, 0.70, 0.80,0.90)[k] #this are the positions 
+  
+  decorate_annotation('legend', {
+    
+    grid.circle(x=i, r= unit(-log10(c(10^-10,10^-8,10^-6,10^-4,10^-2,0.05)), 'mm')[k],gp = gpar(fill = brewer.pal(7,'BrBG')[3], col = 'black')) #this are the pvalues that are shown in the legend, the dimension of the -log10(p) is in mm
+    grid.text(x=i, round(-log10(c(10^-10,10^-8,10^-6,10^-4,10^-2,0.05)), 3)[k]) #show the p
+  })
+}
 
-fp <- c(10^-10,10^-8,10^-6,10^-4,10^-2,0.05,1,1,1,1,1,1,1,1,1)
-
--log(fp, base = 10^100)
-lege <- otp
-lege[,1] <- -log(fp, base = 10^100)
-lege[,2] <- -log(fp, base = 10^100)
-lege[,3] <- -log(fp, base = 10^100)
-rownames(lege) <- fp
-
-
-
-a<-Heatmap(ggtp, 
-           #column_title = "Genes and pathways KEGG",
-           rect_gp = gpar(col = brewer.pal(5, 'Greys')[2], lwd = 0.25), 
-           column_title_gp = gpar(fontsize = 20, fontface = "bold"),
-           col=colori, 
-           border=T,
-           row_names_gp = gpar( fontsize=0),
-           column_names_gp = gpar(fontsize=25),
-           column_names_side = 'bottom',
-           show_heatmap_legend = F,
-           row_title = "Pathways",
-           na_col = 'white', 
-           height = unit(8, 'cm'), width = 28,
-           
-           
-           cell_fun = function(j, i, x, y, width, height, fill) {
-             if(!is.na(ggtp[,rownames(t_t)[1:48]][i, j] )){
-               
-               if(ggtp[,rownames(t_t)[1:48]][i, j]== 'f1' ){
-                 grid.points(x = x, y = y, pch = 22, size = unit(12, "mm"), gp = gpar(col = brewer.pal(5, 'Paired')[2], fill=brewer.pal(5, 'Paired')[1] ))
-               }
-               
-               
-               if(ggtp[,rownames(t_t)[1:48]][i, j]== 'f2' ){
-                 grid.points(x = x, y = y, pch = 22, size = unit(12, "mm"), gp = gpar(col = brewer.pal(5, 'Paired')[4], fill=brewer.pal(5, 'Paired')[3]))
-               }
-               
-               if(ggtp[,rownames(t_t)[1:48]][i, j]== 'f3' ){
-                 grid.points(x = x, y = y, pch = 22, size = unit(12, "mm"), gp = gpar(col = brewer.pal(6, 'Paired')[6], fill=brewer.pal(5, 'Paired')[5]))
-               }
-               
-               if(ggtp[,rownames(t_t)[1:48]][i, j]== 'f1-f3' ){
-                 grid.points(x = x, y = y, pch=22, size = unit(12, "mm"), gp = gpar(col = 'grey', fill='black'))
-               }
-             }
-             
-           }
-)
-
-
-
-
-b <- Heatmap(lege,  
-             rect_gp = gpar(col = brewer.pal(5, 'Greys')[2], lwd = 0.25), 
-             cluster_rows = F,
-             col = c('white', 'white'), 
-             border=T,
-             show_column_dend = F,
-             show_row_dend = F,
-             row_names_gp = gpar(fontsize=10),
-             row_names_side = 'left',
-             width = unit(8, 'cm'),
-             height = unit(20, 'cm'),
-             show_heatmap_legend = F,
-             column_names_gp = gpar(fontsize=25),
-             column_names_side = 'bottom',
-             column_names_rot = 360,
-             
-             cell_fun = function(j, i, x, y, width, height, fill) {
-               if(lege[i, j] > 0){
-                 grid.circle(x = x, y = y, r = lege[i,j], gp = gpar(fill = brewer.pal(7,'BrBG')[3], col = 'black'))
-                 
-               }
-             }
-             
-)
-
-
-pdf('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/figure_pathways/semaphor_plot_legend_pvalues_reference.pdf', height = 25, width = 30)
-b+a
 dev.off()
+
 
 
 #------ react -----------
