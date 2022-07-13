@@ -265,7 +265,7 @@ formattable(plott,align =c("l","c","c" ,"r") ,
 fwrite(plott, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/figure_pathways/go_results.csv',sep = ',', col.names = T, quote = F, row.names = F)
 
 
-#----------- KEGG barplot ------------------------------------------------------
+#----------- KEGG semaphor------------------------------------------------------
 he <- kegg$result
 genes <- unique(strsplit(paste0(he$intersection, collapse = ','), split = ',')[[1]])
 genes_symbol <- getBM(filters= "ensembl_gene_id", attributes= c("entrezgene_id","ensembl_gene_id", 'hgnc_symbol'),values=  genes,mart=mart )
@@ -302,7 +302,7 @@ rownames(mtp) <- unique(kg$term_name)
 
         for(i in c('f1', 'f2', 'f3')){
           kg[ kg$query==i,]$term_name
-          mtp[, i][names(mtp[, i]) %in% kg[ kg$query==i, ]$term_name] <- -log(kg[ kg$query==i, ]$p_value, 10^100) #importat to set the radius of the circle
+          mtp[, i][match(  kg[ kg$query==i, ]$term_name, names(mtp[, i]))] <- -log(kg[ kg$query==i, ]$p_value, 10^100) #importat to set the radius of the circle
         }
         
         
@@ -420,6 +420,7 @@ a<-Heatmap(ggtp,
              cell_fun = function(j, i, x, y, width, height, fill) {
                if(otp[i, j] > 0){
                  grid.circle(x = x, y = y, r = otp[i,j], gp = gpar(fill = brewer.pal(7,'BrBG')[3], col = 'black'))
+                 grid.text(signif((10^100)^(-otp[i,j]),2), x=x,  y = y, gp=gpar(fontsize=10))
                  
                }
              }
