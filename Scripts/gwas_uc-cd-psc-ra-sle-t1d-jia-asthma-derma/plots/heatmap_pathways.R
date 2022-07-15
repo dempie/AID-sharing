@@ -378,16 +378,16 @@ a<-Heatmap(ggtp,
              if(!is.na(ggtp[,rownames(t_t)[1:48]][i, j] )){
                
                if(ggtp[,rownames(t_t)[1:48]][i, j]== 'f1' ){
-                 grid.points(x = x, y = y, pch = 22, size = unit(18, "mm"), gp = gpar(col = brewer.pal(5, 'Paired')[2], fill=brewer.pal(5, 'Paired')[1] ))
+                 grid.points(x = x, y = y, pch = 22, size = unit(18, "mm"), gp = gpar(col = brewer.pal(6, 'Paired')[1], fill=brewer.pal(5, 'Paired')[2] ))
                }
                
                
                if(ggtp[,rownames(t_t)[1:48]][i, j]== 'f2' ){
-                 grid.points(x = x, y = y, pch = 22, size = unit(18, "mm"), gp = gpar(col = brewer.pal(5, 'Paired')[4], fill=brewer.pal(5, 'Paired')[3]))
+                 grid.points(x = x, y = y, pch = 22, size = unit(18, "mm"), gp = gpar(col = brewer.pal(5, 'Paired')[3], fill=brewer.pal(5, 'Paired')[4]))
                }
                
                if(ggtp[,rownames(t_t)[1:48]][i, j]== 'f3' ){
-                 grid.points(x = x, y = y, pch = 22, size = unit(18, "mm"), gp = gpar(col = brewer.pal(6, 'Paired')[6], fill=brewer.pal(5, 'Paired')[5]))
+                 grid.points(x = x, y = y, pch = 22, size = unit(18, "mm"), gp = gpar(col = brewer.pal(6, 'Paired')[5], fill=brewer.pal(6, 'Paired')[6]))
                }
                
                if(ggtp[,rownames(t_t)[1:48]][i, j]== 'f1-f3' ){
