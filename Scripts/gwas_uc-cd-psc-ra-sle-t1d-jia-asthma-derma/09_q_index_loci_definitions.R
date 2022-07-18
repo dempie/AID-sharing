@@ -1,5 +1,7 @@
 library(LDlinkR)
+library(haploR)
 library(data.table)
+library(stringr)
 
 #---- use LD to search for Heterogeniety loci ---------------------------------
 factor_loci <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways/factor_loci_moloc_closest_gene_info.txt', data.table = F)
@@ -57,10 +59,33 @@ for(i in 1:3){
 saveRDS(ld_matr,'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/09_q_index_loci_definitions/ld_matrix_heterogeneity_factor.RDS')
 saveRDS(matr,'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/09_q_index_loci_definitions/ld_matrix_heterogeneity_factor_snps.RDS')
 
+ld_matrix_heterogeneity_factor <- readRDS("outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/09_q_index_loci_definitions/ld_matrix_heterogeneity_factor.RDS")
+
+ld_matrix_heterogeneity_factor
+
+factor_loci$het_loc <- rep(NA, nrow(factor_loci))
+
+for(i in 1:3){
+  tt <- c('f1', 'f2','f3')[i]
+  
+    #for each locus in the chromosome for that trait
+    for(j in 1:length(ld_matrix_heterogeneity_factor[[tt]])){
+      
+              lead <- names(ld_matrix_heterogeneity_factor[[tt]])[j]
+              rownames(ld_matrix_heterogeneity_factor[[tt]][[lead]]) <- names(ld_matrix_heterogeneity_factor[[tt]][[lead]][1,])[-1]
+              ld_matrix_heterogeneity_factor[[tt]][[lead]][lead, lead] <- 0
+              factor_loci[factor_loci$trait==tt & factor_loci$SNP==lead,]$het_loc <- any(ld_matrix_heterogeneity_factor[[tt]][[lead]][lead, ] >0.1)
+       
+      }
+      
+}
+
+
 
 
 #-------------------------------------------------------------------------------
 
+#look at the ld between lead snps of the factor loci table
 ldmatrix <- list()
 for(i in 1:3){
   tt <- c('f1', 'f2','f3')[i]
@@ -87,22 +112,52 @@ for(i in 1:3){
 saveRDS( ldmatrix ,'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/09_q_index_loci_definitions/ld_matrix_factor_loci.RDS')
 
 
+factor_loci <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways/factor_loci_moloc_closest_gene_info.txt', data.table = F)
+ld_matrix_factor_loci <- readRDS("/project/aid_sharing/AID_sharing/outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/09_q_index_loci_definitions/ld_matrix_factor_loci.RDS")
+
+#add_column for independent ld
+factor_loci$indipendent_ld <- rep(0, nrow(factor_loci))
+for(i in 1:3){
+  tt <- c('f1', 'f2','f3')[i]
+  
+  #cycle through the chromosomes
+  for(k in 1:length(unique(factor_loci[factor_loci$trait==tt,]$chr))) {
+    
+    ch <- unique(factor_loci[factor_loci$trait==tt,]$chr)[k] 
+    snps <- factor_loci[factor_loci$trait==tt & factor_loci$chr==ch, ]$SNP 
+    
+    #run only if there are at least 2 SNPS to compare
+    if(length(snps)>=2){
+      ld_matrix_factor_loci[[tt]][[ch]]
+    } else {
+      ld_matrix_factor_loci[[tt]][[ch]] 
+    }
+    
+    
+    for(j in 1: nrow(factor_loci[factor_loci$trait==tt &factor_loci$chr==ch,])){
+          qq <- factor_loci[factor_loci$trait==tt &factor_loci$chr==ch,][j,]$SNP 
+          rownames(ld_matrix_factor_loci[[tt]][[ch]]) <- colnames(ld_matrix_factor_loci[[tt]][[ch]][-1])
+          
+          if( nrow(factor_loci[factor_loci$trait==tt &factor_loci$chr==ch,])==1 ){
+            factor_loci[factor_loci$trait==tt &factor_loci$chr==ch,][j,]$indipendent_ld <- 'only in the chr'
+          } else {
+            ld_matrix_factor_loci[[tt]][[ch]][qq, qq] <- 0
+            factor_loci[factor_loci$trait==tt &factor_loci$chr==ch,][j,]$indipendent_ld <- any(ld_matrix_factor_loci[[tt]][[ch]][,qq]>0.1 )
+            
+          }
+          
+    }
+    
+    
+  }
+  
+}
 
 
+table(factor_loci$indipendent_ld)
 
 
-
-
-
-
-
-
-
-
-
-
-
-
+#-------------------------------------------------------------------------------
 
 
 
