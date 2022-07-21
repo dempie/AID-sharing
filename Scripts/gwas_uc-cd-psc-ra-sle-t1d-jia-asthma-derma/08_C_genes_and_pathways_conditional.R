@@ -98,7 +98,7 @@ write.table(export, row.names = T, quote = F, sep=',', file='outputs/gwas_uc-cd-
 loci.table <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways_conditional/loci_table_names_nicola_genes.csv', data.table = F)
 
 #remove hla locus
-no_hla<- loci.table[loci.table$Chr==6 & data.table(loci.table$bp, 29000000, 34000000),]
+no_hla <- loci.table[! (loci.table$Chr==6 & data.table::between(loci.table$bp, 29000000, 34000000)),]
 fwrite(no_hla, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways_conditional/loci_table_names_nicola_genes_no_HLA.csv', sep = ',', col.names = T)
 
 
