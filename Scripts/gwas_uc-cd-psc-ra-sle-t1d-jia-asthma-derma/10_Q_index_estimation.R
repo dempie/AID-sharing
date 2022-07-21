@@ -79,7 +79,7 @@ output <- list()
 for(i in 1:3){
   tt <-  c('f1', 'f2', 'f3')[i]
   output[[tt]] <- userGWAS(covstruc = ldsc_model, 
-                           SNPs = loci_snps[1,], 
+                           SNPs = loci_snps, 
                            model = c(aid_model_f1, aid_model_f2, aid_model_f3)[i], 
                            sub=c('F1~~F2'),
                            parallel = T,cores = 2 )
