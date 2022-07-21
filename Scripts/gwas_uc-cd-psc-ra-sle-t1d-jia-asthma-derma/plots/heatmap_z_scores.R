@@ -59,7 +59,7 @@ RColorBrewer::display.brewer.all(colorblindFriendly = T)
 
 pdf('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/figure1/heatmap_complete_absolute_z_scores_specifc_factors.pdf', height = 16, width = 6)
 Heatmap(as.matrix(abs(to_plot_f[,1:3])),
-        col = colorRamp2(c(seq(1,13, length.out=9)), c(RColorBrewer::brewer.pal(9,'Blues'))), 
+        col = colorRamp2(c(seq(1,13, length.out=9)), c(RColorBrewer::brewer.pal(9,'Purples'))), 
         column_title = "Heatmap of absolute z scores" , 
         cluster_rows = T,
         cluster_columns = F,
@@ -75,42 +75,7 @@ Heatmap(as.matrix(abs(to_plot_f[,1:3])),
         heatmap_legend_param =list(title = "Absosule z score"))
 dev.off()
 
-#----------- z scores only factor shared-- -------------------------------------
-# 
-# RColorBrewer::display.brewer.all(colorblindFriendly = T)
-# 
-# to_pl_f_shared <- to_plot[!to_plot$TYPE %in% c('F1', 'F2', 'F3'),]
-# 
-# #pdf('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/figure1/heatmap_complete_absolute_z_scores_overlapping_factors.pdf', height = 16, width = 6)
-# Heatmap(as.matrix(abs(to_pl_f_shared[,1:3])),
-#         col = colorRamp2(c(seq(1,13, length.out=9)), c(RColorBrewer::brewer.pal(9,'Blues'))), 
-#         column_title = "Heatmap of absolute z scores" , 
-#         cluster_rows = F,
-#         cluster_columns = F,
-#         cluster_column_slices = T,
-#         cluster_row_slices =  F,
-#         show_row_dend = F,
-#         row_split = factor(to_pl_f_shared[,4], levels = c('F1-F2', 'F1-F3', 'F2-F3', 'F1-F2-F3' )),
-#         column_gap = unit(3, "mm"),
-#         row_gap = unit(5, "mm") ,
-#         border = T,
-#         row_names_gp = gpar( fontsize=10), 
-#         heatmap_legend_param =list(title = ""))
-# dev.off()
-# 
-# 
-# #plot the lead SNPs for that locus, and call locus by name
-# to_plot$pan_locus <- rep(NA, nrow(to_plot))
-# to_pl_f_shared <- to_plot[!to_plot$TYPE %in% c('F1', 'F2', 'F3'),]
-# 
-# 
-# for(i in 1:nrow(to_pl_f_shared)){
-# to_pl_f_shared$pan_locus[i] <- factor_loci[factor_loci$SNP %in% rownames(to_pl_f_shared)[i],]$pan_locus_name
-# }
-# 
-# 
-# to_pl_f_shared
-# 
+
 
 
 
