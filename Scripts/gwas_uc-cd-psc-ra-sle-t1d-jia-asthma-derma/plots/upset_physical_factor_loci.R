@@ -78,7 +78,7 @@ up_n <- lists_forupset(ovl_f = ovl_f, traits = c('f1', 'f2', 'f3'))
 cm <- make_comb_mat(up_n$traits_overlap, mode = 'distinct')
 pdf(width = 10, height = 5, file = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/figure1/upset_plot_loci_ranges_factors.pdf')
 UpSet(cm, set_order = c("f1", "f2", "f3"), comb_order = order(comb_size(cm), decreasing = T),
-      comb_col = c(brewer.pal(12, 'Paired')[c(10,9,9,9,2,4,6)]),
+      comb_col = c(brewer.pal(8, 'Set2')[c(7,6,6,6)],brewer.pal(12, 'Paired')[c(2,4,6)]),
       top_annotation = upset_top_annotation(cm, add_numbers = TRUE, height = unit(6, "cm")),
       right_annotation = upset_right_annotation(cm, add_numbers = TRUE, width = unit(5,'cm'), gp = gpar(fill = brewer.pal(5, 'Greys')[1])  ),
       row_title = "Factor", 
