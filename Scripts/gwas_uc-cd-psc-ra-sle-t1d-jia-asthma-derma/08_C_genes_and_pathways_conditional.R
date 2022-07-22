@@ -113,7 +113,7 @@ for(i in 1:length(unique( keggs$term_name[duplicated(keggs$term_name)]))){
   kid <- keggs[duplicated(keggs$term_name),]$term_id[i]
   for(k in 1:nrow( kegg$result[kegg$result$term_name==pp,])){
     out[[pp]][[kegg$result[kegg$result$term_name==pp,][k, ]$query]] <- kegg$result[kegg$result$term_name==pp,][k, ]$intersection
-    ent[[paste0(pp, kid,collapse = ':') ]][[paste0(kegg$result[kegg$result$term_name==pp,][k, ]$query, kid, collapse = ':')]]<- getBM(filters= "ensembl_gene_id", attributes= c("entrezgene_id","ensembl_gene_id", 'hgnc_symbol'),values=  kegg$result[kegg$result$term_name==pp,][k, ]$intersection,mart= mart)
+    ent[[paste0(pp, kid,collapse = ':') ]][[kegg$result[kegg$result$term_name==pp,][k, ]$query]]<- getBM(filters= "ensembl_gene_id", attributes= c("entrezgene_id","ensembl_gene_id", 'hgnc_symbol'),values=  kegg$result[kegg$result$term_name==pp,][k, ]$intersection,mart= mart)
   }
   
 }
