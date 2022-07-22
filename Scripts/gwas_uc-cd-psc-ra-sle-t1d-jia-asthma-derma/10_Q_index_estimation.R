@@ -1,5 +1,6 @@
 library(GenomicSEM)
 library(data.table)
+library(ggplot2)
 
 aid_sumstats <- readRDS('/project/aid_sharing/AID_sharing/outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/04_sumstat_outputs/sumstats_output/sumstats_uc-cd-psc-ra-sle-t1d-jia-asthma-derma.RDS')
 ldsc_model <- readRDS('/project/aid_sharing/AID_sharing/outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/04_sumstat_outputs/ldsc_output/ldsc_uc-cd-psc-ra-sle-t1d-jia-asthma-derma.RDS')
@@ -86,6 +87,83 @@ for(i in 1:3){
 }
 
 saveRDS(output, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/10_Q_index_estimation/output_model_estimation.RDS')
+
+
+#-------- calculation of Q index for the lead SNP ------------------------------
+q_ind <- readRDS('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/10_Q_index_estimation/output_model_estimation.RDS') 
+
+fac <- list()
+for(i in 1:3){
+  tt<- c('f1', 'f2', 'f3')[i]
+  fac[[tt]]<- fread(paste0('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_gwas_ouput/factor',i,'_gwas_final_withQindex.txt' ))
+}
+
+loci.table$Q_chisq_pval <- rep(NA, nrow(loci.table))
+
+
+
+for(i in 1:3){
+tt <- c('f1', 'f2', 'f3')[i]
+q_act <- q_ind[[tt]][[1]]
+q_act_2 <- q_act[q_act$SNP %in% loci.table[loci.table$trait==tt,]$SNP,]
+gwas <- fac[[tt]][fac[[tt]]$SNP %in% q_act_2$SNP, ]
+      
+      #put all of them in the same order
+      gwas_2 <- gwas[match(q_act_2$SNP, gwas$SNP),]
+      
+      #substract the Chisquare
+      Q <- gwas_2$chisq - q_act_2$chisq
+      df <- gwas_2$chisq_df - q_act_2$chisq_df
+      #put all of them in the same order
+      loci.table[loci.table$trait==tt,][match(q_act_2$SNP, loci.table[loci.table$trait==tt,]$SNP, nomatch = NA),]$Q_chisq_pval<- pchisq(Q,df,lower.tail=FALSE)
+      print(table(pchisq(Q,df,lower.tail=FALSE)<5e-8))
+
+}
+
+
+loci.table$het<- ifelse(loci.table$Q_chisq_pval<5e-8, TRUE, FALSE)
+
+#plot the heterogeneity stakced bar plot
+a<- ggplot(data=loci.table, aes(x=trait, fill=het) ) + 
+  geom_bar(stat='count',position = position_stack(reverse=T),  color='black')+ 
+  scale_fill_manual(values = c("grey80", "white")) + 
+  geom_text(aes(label = paste0("n=", ..count..)),position= position_stack(vjust = 0.5, reverse=T),stat='count')+
+  labs(y = 'Number of loci', x = '')+
+  theme_classic() +
+  theme(legend.position="bottom") + ggtitle('Conditional loci')
+
+
+
+factor_loci <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways/factor_loci_moloc_closest_gene_info.txt', data.table = F)
+
+
+b<- ggplot(data=loci.table[loci.table$SNP %in% factor_loci$SNP,], aes(x=trait, fill=het) ) + 
+  geom_bar(stat='count',position = position_stack(reverse=T),  color='black')+ 
+  scale_fill_manual(values = c("grey80", "white")) + 
+  geom_text(aes(label = paste0("n=", ..count..)),position= position_stack(vjust = 0.5, reverse=T),stat='count')+
+  labs(y = 'Number of loci', x = '')+
+  theme_classic() +
+  theme(legend.position="bottom") + ggtitle('GWAS loci')
+
+
+
+
+
+
+
+
+
+ 
+ 
+
+
+
+
+
+
+
+
+
 
 
 
