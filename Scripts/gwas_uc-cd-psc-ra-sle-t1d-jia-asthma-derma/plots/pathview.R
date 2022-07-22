@@ -1,9 +1,9 @@
 library(pathview)
 library(RColorBrewer)
+library(stringr)
 
 
-
-ent <- readRDS('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways_conditional/genes_in_shared_pathways.RDS')
+ent <- readRDS('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways_conditional/kegg_genes_in_shared_pathway_analysis.RDS')
 setwd('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/figure_pathways/kegg_color_pathview/')
 colfactor <- RColorBrewer::brewer.pal(5, 'Paired')[c(1,3,5)]
 names(colfactor) <- c('f1', 'f2', 'f3')
