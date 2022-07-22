@@ -105,14 +105,15 @@ saveRDS(react, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_
 
 #---------------------list of genes for plotting the pathways-------------------
 kegg <-  readRDS('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways_conditional/kegg_pathway_analysis.RDS')
-keggs <- kegg$result[,c('term_name', 'intersection', 'query')]
+keggs <- kegg$result[,c('term_name', 'intersection', 'query', 'term_id')]
 out <- list()
 ent <- list()
 for(i in 1:length(unique( keggs$term_name[duplicated(keggs$term_name)]))){
   pp<- keggs[duplicated(keggs$term_name),]$term_name[i]
+  kid <- keggs[duplicated(keggs$term_name),]$term_id[i]
   for(k in 1:nrow( kegg$result[kegg$result$term_name==pp,])){
     out[[pp]][[kegg$result[kegg$result$term_name==pp,][k, ]$query]] <- kegg$result[kegg$result$term_name==pp,][k, ]$intersection
-    ent[[pp]][[kegg$result[kegg$result$term_name==pp,][k, ]$query]]<- getBM(filters= "ensembl_gene_id", attributes= c("entrezgene_id","ensembl_gene_id", 'hgnc_symbol'),values=  kegg$result[kegg$result$term_name==pp,][k, ]$intersection,mart= mart)
+    ent[[paste0(pp, kid,collapse = ':') ]][[paste0(kegg$result[kegg$result$term_name==pp,][k, ]$query, kid, collapse = ':')]]<- getBM(filters= "ensembl_gene_id", attributes= c("entrezgene_id","ensembl_gene_id", 'hgnc_symbol'),values=  kegg$result[kegg$result$term_name==pp,][k, ]$intersection,mart= mart)
   }
   
 }
