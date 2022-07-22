@@ -103,21 +103,21 @@ loci.table$Q_chisq_pval <- rep(NA, nrow(loci.table))
 
 
 for(i in 1:3){
-tt <- c('f1', 'f2', 'f3')[i]
-q_act <- q_ind[[tt]][[1]]
-q_act_2 <- q_act[q_act$SNP %in% loci.table[loci.table$trait==tt,]$SNP,]
-gwas <- fac[[tt]][fac[[tt]]$SNP %in% q_act_2$SNP, ]
-      
-      #put all of them in the same order
-      gwas_2 <- gwas[match(q_act_2$SNP, gwas$SNP),]
-      
-      #substract the Chisquare
-      Q <- gwas_2$chisq - q_act_2$chisq
-      df <- gwas_2$chisq_df - q_act_2$chisq_df
-      #put all of them in the same order
-      loci.table[loci.table$trait==tt,][match(q_act_2$SNP, loci.table[loci.table$trait==tt,]$SNP, nomatch = NA),]$Q_chisq_pval<- pchisq(Q,df,lower.tail=FALSE)
-      print(table(pchisq(Q,df,lower.tail=FALSE)<5e-8))
-
+  tt <- c('f1', 'f2', 'f3')[i]
+  q_act <- q_ind[[tt]][[1]]
+  q_act_2 <- q_act[q_act$SNP %in% loci.table[loci.table$trait==tt,]$SNP,]
+  gwas <- fac[[tt]][fac[[tt]]$SNP %in% q_act_2$SNP, ]
+  
+  #put all of them in the same order
+  gwas_2 <- gwas[match(q_act_2$SNP, gwas$SNP),]
+  
+  #substract the Chisquare
+  Q <- gwas_2$chisq - q_act_2$chisq
+  df <- gwas_2$chisq_df - q_act_2$chisq_df
+  #put all of them in the same order
+  loci.table[loci.table$trait==tt,][match(q_act_2$SNP, loci.table[loci.table$trait==tt,]$SNP, nomatch = NA),]$Q_chisq_pval<- pchisq(Q,df,lower.tail=FALSE)
+  print(table(pchisq(Q,df,lower.tail=FALSE)<5e-8))
+  
 }
 
 
@@ -150,13 +150,19 @@ b<- ggplot(data=loci.table[loci.table$SNP %in% factor_loci$SNP,], aes(x=trait, f
 
 
 
+######à a function to test if eveyrhting is ok with the Q het 
+test <- function(){
+  x <- sample(nrow(loci.table),1)
+  snp <- loci.table[x,]$SNP
+  tt <- loci.table[x, ]$trait
+  Q <- fac[[tt]][fac[[tt]]$SNP==snp,]$chisq  - q_ind[[tt]][[1]][q_ind[[tt]][[1]]$SNP==snp,]$chisq
+  df <- fac[[tt]][fac[[tt]]$SNP==snp,]$chisq_df  - q_ind[[tt]][[1]][q_ind[[tt]][[1]]$SNP==snp,]$chisq_df
+  print(pchisq(Q,df,lower.tail=FALSE) == loci.table[loci.table$SNP==snp& loci.table$trait==tt ,]$Q_chisq_pval)
+  
+  
+}
 
-
-
- 
- 
-
-
+for(i in 1:500){test()}  
 
 
 
