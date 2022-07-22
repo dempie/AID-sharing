@@ -42,7 +42,7 @@ for(i in 1:3){
   elementMetadata(f_lead[[tt]])[['ensembl_gene_id']] <-  reg_genes_tss[nearest(f_lead[[tt]], reg_genes_tss),]@ranges@NAMES
   
   #add a column with the ensemble gene id into the factor loci table
-  loci.table[loci.table$trait==tt, ][match(loci.table[loci.table$trait==tt, ]$SNP, f_lead[[tt]]@ranges@NAMES),]$closest_gene  <- unlist(elementMetadata(f_lead[[tt]])[['ensembl_gene_id']])
+  loci.table[loci.table$trait==tt, ][match( f_lead[[tt]]@ranges@NAMES, loci.table[loci.table$trait==tt, ]$SNP),]$closest_gene  <- unlist(elementMetadata(f_lead[[tt]])[['ensembl_gene_id']])
 }
 
 
@@ -60,37 +60,6 @@ loci.table[loci.table$closest_gene_name=='', ]$closest_gene_name <- loci.table[l
 
 #save the output
 fwrite(loci.table, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways_conditional/loci_table_names_nicola_genes.csv', sep=',')
-
-#------ make a csv of genes for all the factors with ensemble_gened and gene symbol ----------
-for(i in 1:6){
-  tt<- names(ent)[i]
-  
-  for( k in 1:2){
-    ff <- names(ent[[tt]])[k]
-    ent[[tt]][[ff]]$trait <- rep(ff, nrow(ent[[tt]][[ff]]))
-    ent[[tt]][[ff]]$pathway <- rep(tt, nrow(ent[[tt]][[ff]]))
-  }
-  
-}
-
-
-tocall <- list()
-
-for(i in 1:6){
-  tt <- names(ent)[i]
-  
-  for( k in 1:2){
-    ff <- names(ent[[tt]])[k]
-    
-    tocall[[paste0(tt, ff, collapse = '-')]] <- ent[[tt]][[ff]]
-  }
-  
-}
-
-export <- do.call(rbind,tocall)
-
-write.table(export, row.names = T, quote = F, sep=',', file='outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways_conditional/genes_in_shared_pathways_table.csv')
-
 
 
 
@@ -130,6 +99,56 @@ saveRDS(go, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pat
 react <- gost(query = list(f1=unique(loci.table[loci.table$trait=='f1',]$closest_gene), f2=unique(loci.table[loci.table$trait=='f2',]$closest_gene), f3=unique(loci.table[loci.table$trait=='f3',]$closest_gene)),
            sources = c('REAC'), significant = T, evcodes = T)
 saveRDS(react, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways_conditional/react_pathway_analysis.RDS')
+
+
+#------ make a csv of genes for all the factors with ensemble_gened and gene symbol ----------
+
+#---------------------list of genes for plotting the pathways-------------------
+kegg <-  readRDS('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways_conditional/kegg_pathway_analysis.RDS')
+keggs <- kegg$result[,c('term_name', 'intersection', 'query')]
+out <- list()
+ent <- list()
+for(i in 1:length(unique( keggs$term_name[duplicated(keggs$term_name)]))){
+  pp<- keggs[duplicated(keggs$term_name),]$term_name[i]
+  for(k in 1:nrow( kegg$result[kegg$result$term_name==pp,])){
+    out[[pp]][[kegg$result[kegg$result$term_name==pp,][k, ]$query]] <- kegg$result[kegg$result$term_name==pp,][k, ]$intersection
+    ent[[pp]][[kegg$result[kegg$result$term_name==pp,][k, ]$query]]<- getBM(filters= "ensembl_gene_id", attributes= c("entrezgene_id","ensembl_gene_id", 'hgnc_symbol'),values=  kegg$result[kegg$result$term_name==pp,][k, ]$intersection,mart= mart)
+  }
+  
+}
+
+
+saveRDS(ent        , 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways_conditional/kegg_genes_in_shared_pathway_analysis.RDS')
+
+
+for(i in 1:6){
+  tt<- names(ent)[i]
+  
+  for( k in 1:2){
+    ff <- names(ent[[tt]])[k]
+    ent[[tt]][[ff]]$trait <- rep(ff, nrow(ent[[tt]][[ff]]))
+    ent[[tt]][[ff]]$pathway <- rep(tt, nrow(ent[[tt]][[ff]]))
+  }
+  
+}
+
+
+tocall <- list()
+
+for(i in 1:6){
+  tt <- names(ent)[i]
+  
+  for( k in 1:2){
+    ff <- names(ent[[tt]])[k]
+    
+    tocall[[paste0(tt, ff, collapse = '-')]] <- ent[[tt]][[ff]]
+  }
+  
+}
+
+export <- do.call(rbind,tocall)
+
+write.table(export, row.names = T, quote = F, sep=',', file='outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways_conditional/genes_in_shared_pathways_table.csv')
 
 
 #-------------------table of pathways---------------------------------
@@ -184,18 +203,18 @@ he <- kegg$result
 genes <- unique(strsplit(paste0(he$intersection, collapse = ','), split = ',')[[1]])
 genes_symbol <- getBM(filters= "ensembl_gene_id", attributes= c("entrezgene_id","ensembl_gene_id", 'hgnc_symbol'),values=  genes,mart=mart )
 
-genes
+
 t_t <- data.frame(genes) 
 for(i in 1:length(he$term_name)){
   t_t[, paste0(paste(strsplit(he$term_name[i], split=' ')[[1]], collapse = '_'),'_' , he$query[i])] <- as.numeric(genes %in% strsplit(he[he$term_name==he$term_name[i] & he$query==he$query[i], 'intersection'], split=',' )[[1]])
   
 }
 
-t_t
+
 #add gene symbol and remove ENSEMBLE
 rownames(t_t) <- genes_symbol$hgnc_symbol[match(t_t$genes, genes_symbol$ensembl_gene_id)]   
 t_t$genes <- NULL
-t_t
+
 
 t_t['trait',] <- c(he$query) 
 t_t['p_value',] <- c(he$p_value)
@@ -242,7 +261,7 @@ he <- kegg$result
 genes <- unique(loci.table[order(loci.table$trait),]$closest_gene)
 genes_symbol <- getBM(filters= "ensembl_gene_id", attributes= c("entrezgene_id","ensembl_gene_id", 'hgnc_symbol'),values=  genes,mart=mart )
 
-genes
+
 t_t <- data.frame(genes) 
 for(i in 1:length(he$term_name)){
   t_t[, paste0(paste(strsplit(he$term_name[i], split=' ')[[1]], collapse = '_'),'_' , he$query[i])] <- as.numeric(genes %in% strsplit(he[he$term_name==he$term_name[i] & he$query==he$query[i], 'intersection'], split=',' )[[1]])
@@ -253,7 +272,7 @@ genes_symbol[!str_detect(genes_symbol$hgnc_symbol,'' ),]$hgnc_symbol <- genes_sy
 #add gene symbol and remove ENSEMBLE
 rownames(t_t) <- genes_symbol$hgnc_symbol[match(t_t$genes, genes_symbol$ensembl_gene_id)]   
 t_t$genes <- NULL
-t_t
+
 
 t_t['trait',] <- c(he$query) 
 t_t['p_value',] <- c(he$p_value)
@@ -313,11 +332,11 @@ for(i in 1:length(he$term_name)){
   
 }
 
-t_t
+
 #add gene symbol and remove ENSEMBLE
 rownames(t_t) <- genes_symbol$hgnc_symbol[match(t_t$genes, genes_symbol$ensembl_gene_id)]   
 t_t$genes <- NULL
-t_t
+
 
 t_t['trait',] <- c(he$query) 
 t_t['p_value',] <- c(he$p_value)
