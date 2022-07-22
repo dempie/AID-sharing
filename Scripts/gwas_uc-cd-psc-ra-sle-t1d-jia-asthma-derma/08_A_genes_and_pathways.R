@@ -37,7 +37,7 @@ for(i in 1:3){
   elementMetadata(f_lead[[tt]])[['ensembl_gene_id']] <-  reg_genes_tss[nearest(f_lead[[tt]], reg_genes_tss),]@ranges@NAMES
   
   #add a column with the ensemble gene id into the factor loci table
-  factor_loci[factor_loci$trait==tt, ][match(factor_loci[factor_loci$trait==tt, ]$SNP, f_lead[[tt]]@ranges@NAMES),]$closest_gene  <- unlist(elementMetadata(f_lead[[tt]])[['ensembl_gene_id']])
+  factor_loci[factor_loci$trait==tt, ][match(f_lead[[tt]]@ranges@NAMES,factor_loci[factor_loci$trait==tt, ]$SNP),]$closest_gene  <- unlist(elementMetadata(f_lead[[tt]])[['ensembl_gene_id']])
 }
 
 
