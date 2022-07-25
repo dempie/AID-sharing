@@ -34,7 +34,7 @@ formattable(kegg.table,align =c("l","c","c" ,"r") ,
 )
 
 #save the csv
-write.table(kegg.table, sep = ',', file = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/supplementary/kegg.table.csv')
+write.table(kegg.table, sep = ',', file = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/supplementary/gene_enrichment/tables/kegg.table.csv')
 
 
 
@@ -57,7 +57,7 @@ gg$Trait <- toupper(gg$Trait)
 go.table <- gg[,c(3,1,2, 5)]
 
 #save the table ascsv
-write.table(go.table, sep = ',', file = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/supplementary/go.table.csv')
+write.table(go.table, sep = ',', file = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/supplementary/gene_enrichment/tables/go.table.csv')
 
 formattable(plott,align =c("l","c","c" ,"r") ,
             list( 'GO term' = formatter( "span", style = style(color = "grey",font.weight = "bold")))
@@ -72,7 +72,7 @@ gg$Trait <- toupper(gg$Trait)
 go.table_top_20 <- gg[1:20,c(3,1,2, 5)]
 
 #save the table ascsv
-write.table(go.table_top_20, sep = ',', file = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/supplementary/go.table_top20.csv')
+write.table(go.table_top_20, sep = ',', file = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/supplementary/gene_enrichment/tables/go.table_top20.csv')
 
 
 formattable(go.table_top_20,align =c("l","c","c" ,"r") ,
@@ -100,12 +100,11 @@ react$Trait <- toupper(react$Trait)
 react.table <- react[,c(3,1,2, 5)]
 
 #save the table ascsv
-write.table(react.table, sep = ',', file = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/supplementary/react.table.csv')
+write.table(react.table, sep = ',', file = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/supplementary/gene_enrichment/tables/react.table.csv')
 
 formattable(react.table,align =c("l","c","c" ,"r") ,
             list( 'Reactome' = formatter( "span", style = style(color = "grey",font.weight = "bold")))
 )
-
 
 
 
