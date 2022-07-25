@@ -123,6 +123,8 @@ for(i in 1:3){
 
 loci.table$het<- ifelse(loci.table$Q_chisq_pval<5e-8, TRUE, FALSE)
 
+fwrite(loci.table, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/10_Q_index_estimation/loci_table_nicola_heterogeneity_column.txt', sep = '\t', col.names = T)
+
 #plot the heterogeneity stakced bar plot
 a<- ggplot(data=loci.table, aes(x=trait, fill=het) ) + 
   geom_bar(stat='count',position = position_stack(reverse=T),  color='black')+ 
