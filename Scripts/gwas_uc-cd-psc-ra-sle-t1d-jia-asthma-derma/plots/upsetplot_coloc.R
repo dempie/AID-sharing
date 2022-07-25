@@ -2,96 +2,24 @@ library(data.table)
 library(ComplexHeatmap)
 library(RColorBrewer)
 library(qgraph)
-library(ChIPpeakAnno)
-library(stringr)
 #------ load the dataset -------------------------------------------------------
-loci_factors <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways/factor_loci_moloc_closest_gene_info.txt', data.table = F) #take the original factor loci list
+loci.table <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways_conditional/loci_table_names_nicola_genes.csv', data.table = F) #take the original factor loci list
 no_hla <- fread( 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways_conditional/loci_table_names_nicola_genes_no_HLA.csv', data.table=F)
 
 
-#------ upse tplot of the genomic regions of the plot --------------------------
 
-f1_range <- GRanges(seqnames = loci_factors[loci_factors$trait=='f1',]$chr, IRanges(loci_factors[loci_factors$trait=='f1',]$start, loci_factors[loci_factors$trait=='f1',]$end))
-f2_range <- GRanges(seqnames = loci_factors[loci_factors$trait=='f2',]$chr, IRanges(loci_factors[loci_factors$trait=='f2',]$start, loci_factors[loci_factors$trait=='f2',]$end))
-f3_range <- GRanges(seqnames = loci_factors[loci_factors$trait=='f3',]$chr, IRanges(loci_factors[loci_factors$trait=='f3',]$start, loci_factors[loci_factors$trait=='f3',]$end))
-
-
-#find the loci that are physically overlapping among all the three factors 
-ovl_f <- findOverlapsOfPeaks(f1_range, f2_range, f3_range , connectedPeaks = 'keepAll')
-
-#a loop to create as many list as the number of traits that have at least one unique locus
-#it takes the output from findoverlapps function and the names of the traits as in findoverlapps!!
-lists_forupset <- function(ovl_f, traits){ 
-      #allocate lists
-      require(ComplexHeatmap)
-      require(stringr)
+for(i in 1:3){
+      tt <- c('f1', 'f2', 'f3')[i]
+      actf <- loci_table[loci_table$trait==tt,]
       
-      un <- list()
-      final <- list(list())
-      sh <- list()
-      #create the lists and put it the elements that are unique for each trait
-      for( i in 1:length(traits)){
-        tt<-traits[i]
-        filt <- str_starts(names(ovl_f$uniquePeaks@ranges),tt, negate = FALSE)
-        un[[tt]] <- names(ovl_f$uniquePeaks@ranges)[filt]
-      }
-      
-      #put into the lists the element that are shared among the lists
-      for(k in 1:length(ovl_f$mergedPeaks$peakNames)){
-        
-        chek_in <- traits %in% substring(ovl_f$mergedPeaks$peakNames[[k]], first = 1, last = 2) #check if there is f1, f2 or f3
-        
-        for(u in 1:length(chek_in)){
-          tt<-traits[u]
-          if(chek_in[u]==T){
-            un[[tt]][[length(un[[tt]])+1]]<- paste0(ovl_f$mergedPeaks$peakNames[[k]], collapse = '-')
-          }
-          
-        }
-      }
-      
-      #-generate a matrix showing which locus is present in each disease
-      output <- list()
-      for(k in 1:length(un)){
-        tt <- c(names(un))[k]
-        to_get <- strsplit(unlist(strsplit(un[[tt]], split = '-')), split='__')
-        
-        for(i in c(1:length(to_get))){
-          output[[tt]][[i]]<-to_get[[i]][2]
-          
-        }
-        output[[tt]]<- unlist(output[[tt]])
-        
-      }
-      output <- list_to_matrix(output)
-      output <- output[order(as.numeric(rownames(output))),]
-      
-      #generate the output
-      return(list(loci=output, traits_overlap=un))
+     actf[actf$final.locus %in% unique(actf$final.locus[ duplicated(actf$final.locus)]), ]
 }
 
 
 
-up_n <- lists_forupset(ovl_f = ovl_f, traits = c('f1', 'f2', 'f3')) 
-
-
-cm <- make_comb_mat(up_n$traits_overlap, mode = 'distinct')
-pdf(width = 10, height = 5, file = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/figure1/upset_plot_loci_ranges_factors.pdf')
-UpSet(cm, set_order = c("f1", "f2", "f3"), comb_order = order(comb_size(cm), decreasing = T),
-      comb_col = c(brewer.pal(12, 'Paired')[c(10,9,9,9,2,4,6)]),
-      top_annotation = upset_top_annotation(cm, add_numbers = TRUE, height = unit(6, "cm")),
-      right_annotation = upset_right_annotation(cm, add_numbers = TRUE, width = unit(5,'cm'), gp = gpar(fill = brewer.pal(5, 'Greys')[1])  ),
-      row_title = "Factor", 
-      column_title = " Physical intersection of factor loci"
-)
-dev.off()
 
 
 
-
-#venn diagram as control -------------------------------------------------------
-
-makeVennDiagram(list(f1_range, f2_range, f3_range))
 
 #----- make an upset plot-------------------------------------------------------
 q <- make_comb_mat(list(f1=loci.table[loci.table$trait=='f1',]$final.locus, f2=loci.table[loci.table$trait=='f2',]$final.locus, f3=loci.table[loci.table$trait=='f3',]$final.locus), mode = 'distinct')
@@ -99,7 +27,7 @@ q <- make_comb_mat(list(f1=loci.table[loci.table$trait=='f1',]$final.locus, f2=l
 pdf(width = 10, height = 4, file = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/figure_coloc/upset_plot_final_loci_nicola.pdf')
 UpSet(q, set_order = c("f1", "f2", "f3"), 
       comb_order = c(5,6,7,2,3,4,1),
-      comb_col = c(brewer.pal(12, 'Paired')[c(12,12,12,12,2,4,6)]),
+      comb_col = c(brewer.pal(8, 'Set2')[c(7,6,6,6)],brewer.pal(12, 'Paired')[c(2,4,6)]),
       top_annotation = upset_top_annotation(q, add_numbers = TRUE, height = unit(6, "cm")),
       right_annotation = upset_right_annotation(q, add_numbers = TRUE, width = unit(5,'cm'),gp = gpar(fill = brewer.pal(5, 'Greys')[1])  ),
       row_title = "Factor", 
@@ -109,19 +37,28 @@ dev.off()
 
 head(loci.table)
 coloc_tab <-  fread('loci_definitions/final_locus_table.tsv', data.table = F)
+coloc_tab$final.locus=paste0(coloc_tab$Chr,":",coloc_tab$start,"-",coloc_tab$end,"_",coloc_tab$sub_locus)
 
-topl <- coloc_tab[coloc_tab$pan.locus==23, c('trait', 'sub_locus', 'SNP')]
-
+topl_204 <- coloc_tab[coloc_tab$pan.locus==204, c('trait', 'sub_locus', 'SNP', 'final.locus')]
+topl_23 <- coloc_tab[coloc_tab$pan.locus==23, c('trait', 'sub_locus', 'SNP', 'final.locus')]
 
 topl$trait <- toupper(topl$trait)
 
-pdf('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/figure_coloc/qgraph_locus_23_factors.pdf', width = 16, height = 16)
-qgraph(topl[, c(2,1)], directed=F, layout='spring', 
-       edge.labels=F, 
-       groups=list(c(1,7), c(2,3,8), c(4,5,6,9)), 
-       color=brewer.pal(5, 'Paired')[c(1,3,5)],
-       edge.color=brewer.pal(5, 'Paired')[c(1,3,3,5,5,5)])
+pdf('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/figure_coloc/qgraph_locus_204_factors.pdf', width = 16, height = 16)
+qgraph(topl_204[!topl_204$sub_locus %in% c(7, 10, 9, 8), c(1,4)], 
+       directed=F, 
+       layout='groups',
+       groups=list(c(1,3,7,8,9), c(4,6,11,12), c(2,5,10)),
+       border.color=c("#1F78B4" , "#E31A1C", "#1F78B4" ,"#33A02C", "#E31A1C" ,"#33A02C" ,
+                      "#A6CEE3" ,"#A6CEE3", '#A6CEE3' ,"#FB9A99" ,"#B2DF8A", "#B2DF8A" ),
+      # label.color= c("#1F78B4" , "#E31A1C", "#1F78B4" ,"#33A02C", "#E31A1C" ,"#33A02C" ,"#1F78B4" ,"#1F78B4", "#1F78B4" ,"#E31A1C" ,"#33A02C", "#33A02C" ),
+       border.width= rep(2, 12),
+       color=c("#1F78B4" , "#E31A1C", "#1F78B4" ,"#33A02C", "#E31A1C" ,"#33A02C" , "#A6CEE3" ,"#A6CEE3", '#A6CEE3' ,"#FB9A99" ,"#B2DF8A", "#B2DF8A" ),
+       #edge.labels=topl_204[!topl_204$sub_locus %in% c(7, 10, 9, 8), 3], 
+       edge.label.cex=0.5)
 dev.off()
+
+
 
 
 
