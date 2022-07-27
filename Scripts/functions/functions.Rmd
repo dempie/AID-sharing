@@ -1129,3 +1129,51 @@ lists_forupset <- function(ovl_f, traits){
 
 ```
 
+## plot locus genes
+this function plots the genes in the genomic coordinates that are proved. It's base on build 37
+
+```{r}
+plot_locus_genes <- function(start, end, chr){
+  require(Gviz)
+  require(EnsDb.Hsapiens.v75)
+  require(GenomicRanges)
+  #retrieve the info on the genes
+  ref_genes <- genes(EnsDb.Hsapiens.v75)
+  ref_genes <- ref_genes[ref_genes@elementMetadata$gene_biotype=='protein_coding',]
+  ind <- findOverlaps(GRanges(seqnames = chr ,IRanges(start = start, end = end)), ref_genes, type = 'any' )
+  a <- ref_genes[ind@to,]
+  #function for plotting
+  granges2df <- function(x) {
+    df <- as(x, "data.frame")
+    df <- df[,c("seqnames","start","end","strand","group_name", 'exon_id')]
+    colnames(df)[1] <- "chromosome"
+    colnames(df)[5] <- "transcript"
+    df
+  }
+  txdf <- select(EnsDb.Hsapiens.v75,
+                 keys=keys(EnsDb.Hsapiens.v75, "GENEID"),
+                 columns=c("GENEID","TXID", 'SYMBOL'),
+                 keytype="GENEID")
+  ebt <- exonsBy(EnsDb.Hsapiens.v75, by="tx")
+  d <- list()
+  for(i in 1:length(a@elementMetadata$gene_id)){
+    idx <- txdf$GENEID ==  a@elementMetadata$gene_id[i]
+    txs <- txdf$TXID[idx]
+    #all the xons for these transcripts
+    ebt2 <- ebt[txs]
+    df <- granges2df(ebt2)
+    df$gene <- a@elementMetadata$gene_id[i]
+    df$symbol <-  txdf[match(df$gene, txdf$GENEID), ]$SYMBOL 
+    d[[i]] <- df
+  }
+  d <- do.call(rbind, d) 
+  grt <- GeneRegionTrack(d, showTitle=F, fill='black', background.title='white', size=0.5)
+  #plot it
+  #ideoTrack <- IdeogramTrack(genome = "hg19", chromosome = chr)
+  axisTrack <- GenomeAxisTrack()
+  plotTracks(c(axisTrack, grt) ,from = start, to = end, transcriptAnnotation="symbol", collapseTranscripts = 'longest', title.width=1,
+             type=c('p'), lwd.grid=0.05
+  )
+}
+```
+
