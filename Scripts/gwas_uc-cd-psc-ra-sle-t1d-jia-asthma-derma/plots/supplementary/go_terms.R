@@ -52,10 +52,10 @@ for(i in 1:3){
 }
 
 #Make the plot
-venn.diagram(
+a <- venn.diagram(
   x = genes,
   category.names = c('F1', 'F2', 'F3'),
-  filename = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/figure_enrichments/venn-diagram_go_lymphocyte_activationvenn.png',
+  filename = NULL,
   output = TRUE ,
   imagetype="png" ,
   height = 1200 , 
@@ -75,3 +75,11 @@ venn.diagram(
   cat.col = brewer.pal(6, 'Paired')[c(2,4,6)],
   rotation = 1
 )
+
+
+pdf('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/figure_enrichments/venn-diagram_go_lymphocyte_activationvenn.pdf', width = 16, height = 16)
+grid.draw(a)
+dev.off()
+
+
+
