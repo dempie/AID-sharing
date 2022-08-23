@@ -44,7 +44,7 @@ lists_forupset <- function(ovl_f, traits){
             for(u in 1:length(chek_in)){
               tt<-traits[u]
               if(chek_in[u]==T){
-                un[[tt]][[length(un[[tt]])+1]]<- paste0(ovl_f$mergedPeaks$peakNames[[k]], collapse = '-')
+                un[[tt]][[length(un[[tt]])+1]] <- paste0(ovl_f$mergedPeaks$peakNames[[k]], collapse = '-')
               }
               
             }
