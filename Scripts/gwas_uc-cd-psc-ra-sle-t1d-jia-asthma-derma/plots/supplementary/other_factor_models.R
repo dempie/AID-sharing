@@ -83,18 +83,18 @@ a>0.001
 aid_factor <-usermodel(ldsc_ok, estimation = "DWLS", model = aid_model, CFIcalc = TRUE, std.lv = TRUE, imp_cov = FALSE)
 aid_factor$modelfit
 
-pdf('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/supplementary/factor_models/three_factor_model.pdf', height = 16, width = 16)
+pdf('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/supplementary/factor_models/three_factor_model.pdf', height = 20, width = 18)
 semPaths(semPlotModel_GSEM(aid_factor), 
          what = 'path' , 
          whatLabels= 'est',
          residuals = T, 
-         sizeMan = 7, 
-         sizeInt = 2,
+         sizeMan = 8, 
+         sizeInt = 10,
          label.cex=1, 
          theme="colorblind", 
          rotation = 4, 
          layout = "tree2", 
-         sizeLat = 7,
+         sizeLat = 12,
          edge.color = "black",
          edge.label.cex = 1,
          curve = 2,
@@ -103,7 +103,7 @@ semPaths(semPlotModel_GSEM(aid_factor),
          label.cex = 1.5, 
          color = list( lat=brewer.pal(12, 'Paired')[c(1,3,5)]),
          groups=list(c("crohn","uc","psc"),c("jia","sle","ra_eu","t1d"), c( "asthma" ,"derma")),
-         height = 10, width = 16, 
+         height = 18, width = 18, 
          edge.label.position=0.5,
          asize=3,
          esize=1,
