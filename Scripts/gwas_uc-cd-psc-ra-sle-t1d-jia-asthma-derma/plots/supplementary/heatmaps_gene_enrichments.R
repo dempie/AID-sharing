@@ -5,7 +5,8 @@ library(biomaRt)
 library(ComplexHeatmap)
 library(RColorBrewer)
 library(ggplot2)
-
+library(clusterProfiler)
+library(org.Hs.eg.db)
 
 
 mart <- useDataset("hsapiens_gene_ensembl", useMart(biomart="ENSEMBL_MART_ENSEMBL", host="https://grch37.ensembl.org", path="/biomart/martservice" ,dataset="hsapiens_gene_ensembl")) #select the database to convert and maake sure it is build 37 
@@ -210,6 +211,80 @@ Heatmap(tt, column_title = "Genes and pathways GO terms",
         col = colori
 )
 dev.off()
+
+
+#-----heatmap clusterprofiler---------------------------------------------------
+# 
+# go <- readRDS('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways_conditional/go_pathway_analysis.RDS')
+# 
+# 
+# 
+# #----clusterprofiler go terms -------------------------------------------------
+# loci.table <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways_conditional/loci_table_names_nicola_genes.csv', data.table = F)
+# mart <- useDataset("hsapiens_gene_ensembl", useMart(biomart="ENSEMBL_MART_ENSEMBL", host="https://grch37.ensembl.org", path="/biomart/martservice" ,dataset="hsapiens_gene_ensembl")) #select the database to convert and maake sure it is build 37
+# 
+# 
+# 
+# f_list_genes <- list()
+# for(i in 1:3){
+#   tt <- c('f1', 'f2', 'f3')[i]
+#   f_list_genes[[tt]] <- getBM(filters= "ensembl_gene_id", attributes= c("entrezgene_id","ensembl_gene_id", 'hgnc_symbol'),values= loci.table[loci.table$trait==tt, ]$closest_gene ,mart= mart)
+# 
+# }
+# 
+# 
+# aaa <-list(f1=as.character(unique(f_list_genes$f1$entrezgene_id)), f2=as.character(unique(f_list_genes$f2$entrezgene_id)), f3=as.character(unique(f_list_genes$f3$entrezgene_id)))
+# #bbb <-list(f1=as.character(unique(f_list_genes$f1$ensembl_gene_id)), f2=as.character(unique(f_list_genes$f2$ensembl_gene_id)), f3=as.character(unique(f_list_genes$f3$ensembl_gene_id))) ensemble gene name
+# 
+# 
+# test_enrich <- compareCluster(geneCluster = aaa,
+#                              ont           = "BP",
+#                               OrgDb = org.Hs.eg.db,
+#                               #pAdjustMethod = "BH",
+#                               pvalueCutoff  = 0.01,
+#                               qvalueCutoff  = 0.05,
+#                               readable      = TRUE,
+#                               fun =  enrichGO)
+# 
+# 
+# 
+# dotplot(test_enrich, showCategory=5)
+# 
+# 
+# 
+# 
+# 
+# 
+# go_order <- go$result[order(go$result$p_value), c('query', 'p_value', 'term_name')]
+# go_order$logp <- -log10(go_order$p_value)
+# 
+# 
+# a <- list()
+# for(i in 1:3){
+#   tt <- c('f1', 'f2', 'f3')[i]
+#   a[[tt]]<- go_order[go_order$query==tt,][1:5,]
+#   a[[tt]]$top <- rep('top', 5)
+# }
+# toplot<- Reduce(rbind, a)
+# 
+# ggplot(toplot,aes(x=query,y=term_name,color=logp)) +geom_point(size=10)+scale_colour_gradient(low="red",high="blue")
+# 
+# 
+# ###
+# 
+# 
+# to_plot_shape <- go_order[go_order$term_name %in% toplot$term_name,]
+# to_plot_shape$top <- rep('n', nrow(to_plot_shape))
+# for(i in 1:nrow(toplot)){
+#   to_plot_shape[to_plot_shape$query==toplot$query[i] & to_plot_shape$term_name == toplot$term_name[i], ]$top <- 'top'
+# }
+# 
+# 
+# ggplot(to_plot_shape,aes(x=query,y=term_name,color=logp, shape=top)) +geom_point(size=10) +scale_colour_gradient(low="red",high="blue") + theme_light()
+# 
+# 
+
+
 
 
 
