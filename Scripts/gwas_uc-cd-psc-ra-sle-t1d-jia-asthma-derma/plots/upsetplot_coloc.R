@@ -62,12 +62,34 @@ dev.off()
 
 
 
+##### naming the nodes as the SNP that has the lower pvalue
+topl_204 <- coloc_tab[coloc_tab$pan.locus==204, ]
+topl_204$to_name <- rep(0, nrow(topl_204))
+
+
+for(i in 1: length(unique(topl_204[!topl_204$sub_locus %in% c(7, 10, 9, 8),]$final.locus))){
+    ll <- unique(topl_204[!topl_204$sub_locus %in% c(7, 10, 9, 8),]$final.locus)[i]
+    act <- topl_204[!topl_204$sub_locus %in% c(7, 10, 9, 8) & topl_204$final.locus==ll, ]
+    topl_204[!topl_204$sub_locus %in% c(7, 10, 9, 8) & topl_204$final.locus==ll, ]$to_name <- rep(act[order(act$pJ),]$SNP[1], length(topl_204[!topl_204$sub_locus %in% c(7, 10, 9, 8) & topl_204$final.locus==ll, ]$to_name))
+}
+
+topl_204
+
+topl_204[!topl_204$sub_locus %in% c(7, 10, 9, 8), c('trait', 'to_name')]
 
 
 
-
-
-
+qgraph(topl_204[!topl_204$sub_locus %in% c(7, 10, 9, 8), c('trait','to_name')], 
+       directed=F, 
+       layout='groups',
+       groups=list(c(1,3,7,8,9), c(4,6,11,12), c(2,5,10)),
+       border.color=c("#1F78B4" , "#E31A1C", "#1F78B4" ,"#33A02C", "#E31A1C" ,"#33A02C" ,
+                      "#A6CEE3" ,"#A6CEE3", '#A6CEE3' ,"#FB9A99" ,"#B2DF8A", "#B2DF8A" ),
+       # label.color= c("#1F78B4" , "#E31A1C", "#1F78B4" ,"#33A02C", "#E31A1C" ,"#33A02C" ,"#1F78B4" ,"#1F78B4", "#1F78B4" ,"#E31A1C" ,"#33A02C", "#33A02C" ),
+       border.width= rep(2, 12),
+       color=c("#1F78B4" , "#E31A1C", "#1F78B4" ,"#33A02C", "#E31A1C" ,"#33A02C" , "#A6CEE3" ,"#A6CEE3", '#A6CEE3' ,"#FB9A99" ,"#B2DF8A", "#B2DF8A" ),
+       #edge.labels=topl_204[!topl_204$sub_locus %in% c(7, 10, 9, 8), 3], 
+       edge.label.cex=0.5)
 
 
 
