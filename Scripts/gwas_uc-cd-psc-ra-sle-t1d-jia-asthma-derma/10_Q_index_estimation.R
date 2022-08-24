@@ -151,14 +151,14 @@ for(i in 1:3){
   fac[[tt]]<- fread(paste0('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_gwas_ouput/factor',i,'_gwas_final_withQindex.txt' ))
 }
 
-loci.table$Q_chisq_pval <- rep(NA, nrow(loci.table))
+factor_loci$Q_chisq_pval <- rep(NA, nrow(factor_loci))
 
 
 
 for(i in 1:3){
   tt <- c('f1', 'f2', 'f3')[i]
   q_act <- q_ind[[tt]][[1]]
-  q_act_2 <- q_act[q_act$SNP %in% loci.table[loci.table$trait==tt,]$SNP,]
+  q_act_2 <- q_act[q_act$SNP %in% factor_loci[factor_loci$trait==tt,]$SNP,]
   gwas <- fac[[tt]][fac[[tt]]$SNP %in% q_act_2$SNP, ]
   
   #put all of them in the same order
@@ -168,60 +168,46 @@ for(i in 1:3){
   Q <- gwas_2$chisq - q_act_2$chisq
   df <- gwas_2$chisq_df - q_act_2$chisq_df
   #put all of them in the same order
-  loci.table[loci.table$trait==tt,][match(q_act_2$SNP, loci.table[loci.table$trait==tt,]$SNP, nomatch = NA),]$Q_chisq_pval<- pchisq(Q,df,lower.tail=FALSE)
+  factor_loci[factor_loci$trait==tt,][match(q_act_2$SNP, factor_loci[factor_loci$trait==tt,]$SNP, nomatch = NA),]$Q_chisq_pval<- pchisq(Q,df,lower.tail=FALSE)
   print(table(pchisq(Q,df,lower.tail=FALSE)<5e-8))
   
 }
 
 
-loci.table$het<- ifelse(loci.table$Q_chisq_pval<5e-8, TRUE, FALSE)
+factor_loci$het<- ifelse(factor_loci$Q_chisq_pval<5e-8, TRUE, FALSE)
 
-fwrite(loci.table, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/10_Q_index_estimation/genomic_regions_table_heterogeneity_column.txt', sep = '\t', col.names = T)
+fwrite(factor_loci, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/10_Q_index_estimation/genomic_regions_table_heterogeneity_column.txt', sep = '\t', col.names = T)
 
-# loci.table <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/10_Q_index_estimation/loci_table_nicola_heterogeneity_column.txt')
-# #plot the heterogeneity stakced bar plot
-# a<- ggplot(data=loci.table, aes(x=trait, fill=het) ) +
-#   geom_bar(stat='count',position = position_stack(reverse=T),  color='black')+
-#   scale_fill_manual(values = c("grey80", "white")) +
-#   geom_text(aes(label = paste0("n=", ..count..)),position= position_stack(vjust = 0.5, reverse=T),stat='count')+
-#   labs(y = 'Number of loci', x = '')+
-#   theme_classic() +
-#   theme(legend.position="bottom") + ggtitle('Conditional loci')
-# 
-# 
-# 
-# factor_loci <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways/factor_loci_moloc_closest_gene_info.txt', data.table = F)
-# 
-# 
-# b<- ggplot(data=loci.table[loci.table$SNP %in% factor_loci$SNP,], aes(x=trait, fill=het) ) +
-#   geom_bar(stat='count',position = position_stack(reverse=T),  color='black')+
-#   scale_fill_manual(values = c("grey80", "white")) +
-#   geom_text(aes(label = paste0("n=", ..count..)),position= position_stack(vjust = 0.5, reverse=T),stat='count')+
-#   labs(y = 'Number of loci', x = '')+
-#   theme_classic() +
-#   theme(legend.position="bottom") + ggtitle('GWAS loci')
-# 
-# 
-# 
-# 
-# 
-# 
-# ######à a function to test if eveyrhting is ok with the Q het
-# test <- function(){
-#   x <- sample(nrow(loci.table),1)
-#   snp <- loci.table[x,]$SNP
-#   tt <- loci.table[x, ]$trait
-#   Q <- fac[[tt]][fac[[tt]]$SNP==snp,]$chisq  - q_ind[[tt]][[1]][q_ind[[tt]][[1]]$SNP==snp,]$chisq
-#   df <- fac[[tt]][fac[[tt]]$SNP==snp,]$chisq_df  - q_ind[[tt]][[1]][q_ind[[tt]][[1]]$SNP==snp,]$chisq_df
-#   print(pchisq(Q,df,lower.tail=FALSE) == loci.table[loci.table$SNP==snp& loci.table$trait==tt ,]$Q_chisq_pval)
-# 
-# 
-# }
-# 
-# for(i in 1:500){test()}
-# 
-# table(factor_loci$SNP %in% loci.table$SNP)
-# 
+
+ggplot(data=factor_loci, aes(x=trait, fill=het) ) +
+  geom_bar(stat='count',position = position_stack(reverse=T),  color='black')+
+  scale_fill_manual(values = c("grey80", "white")) +
+  geom_text(aes(label = paste0("n=", ..count..)),position= position_stack(vjust = 0.5, reverse=T),stat='count')+
+  labs(y = 'Number of genomic regions', x = '')+
+  theme_classic() +
+  theme(legend.position="bottom") + ggtitle('Q heterogeneoity index lead SNPs genomic regions')
+
+
+
+
+
+
+######à a function to test if eveyrhting is ok with the Q het
+test <- function(){
+  x <- sample(nrow(factor_loci),1)
+  snp <- factor_loci[x,]$SNP
+  tt <- factor_loci[x, ]$trait
+  Q <- fac[[tt]][fac[[tt]]$SNP==snp,]$chisq  - q_ind[[tt]][[1]][q_ind[[tt]][[1]]$SNP==snp,]$chisq
+  df <- fac[[tt]][fac[[tt]]$SNP==snp,]$chisq_df  - q_ind[[tt]][[1]][q_ind[[tt]][[1]]$SNP==snp,]$chisq_df
+  print(pchisq(Q,df,lower.tail=FALSE) == factor_loci[factor_loci$SNP==snp& factor_loci$trait==tt ,]$Q_chisq_pval)
+
+
+}
+
+for(i in 1:500){test()}
+
+table(factor_loci$SNP %in% factor_loci$SNP)
+
 
 
 
