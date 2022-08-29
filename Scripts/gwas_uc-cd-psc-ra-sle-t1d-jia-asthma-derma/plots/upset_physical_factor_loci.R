@@ -6,7 +6,6 @@ library(ChIPpeakAnno)
 library(stringr)
 #------ load the dataset -------------------------------------------------------
 loci_factors <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways/factor_loci_moloc_closest_gene_info.txt', data.table = F) #take the original factor loci list
-no_hla <- fread( 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways_conditional/loci_table_names_nicola_genes_no_HLA.csv', data.table=F)
 
 
 #------ upse tplot of the genomic regions of the plot --------------------------
@@ -85,4 +84,8 @@ UpSet(cm, set_order = c("f1", "f2", "f3"), comb_order = order(comb_size(cm), dec
       column_title = " Physical intersection of factor loci"
 )
 dev.off()
+
+
+
+
 
