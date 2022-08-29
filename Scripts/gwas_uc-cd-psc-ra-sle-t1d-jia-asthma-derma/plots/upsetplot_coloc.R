@@ -8,12 +8,12 @@ no_hla <- fread( 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_an
 
 
 
-for(i in 1:3){
-      tt <- c('f1', 'f2', 'f3')[i]
-      actf <- loci_table[loci_table$trait==tt,]
-      
-     actf[actf$final.locus %in% unique(actf$final.locus[ duplicated(actf$final.locus)]), ]
-}
+# for(i in 1:3){
+#       tt <- c('f1', 'f2', 'f3')[i]
+#       actf <- loci_table[loci_table$trait==tt,]
+#       
+#      actf[actf$final.locus %in% unique(actf$final.locus[ duplicated(actf$final.locus)]), ]
+# }
 
 
 
@@ -90,6 +90,51 @@ qgraph(topl_204[!topl_204$sub_locus %in% c(7, 10, 9, 8), c('trait','to_name')],
        color=c("#1F78B4" , "#E31A1C", "#1F78B4" ,"#33A02C", "#E31A1C" ,"#33A02C" , "#A6CEE3" ,"#A6CEE3", '#A6CEE3' ,"#FB9A99" ,"#B2DF8A", "#B2DF8A" ),
        #edge.labels=topl_204[!topl_204$sub_locus %in% c(7, 10, 9, 8), 3], 
        edge.label.cex=0.5)
+
+
+
+#---HLA multiple names problem --------------------
+dim(loci.table)
+
+length(loci.table[loci.table$trait=='f1',]$final.locus) #96
+length(unique(loci.table[loci.table$trait=='f1',]$final.locus)) #94
+
+length(loci.table[loci.table$trait=='f2',]$final.locus) #141
+length(unique(loci.table[loci.table$trait=='f2',]$final.locus)) #124
+
+length(loci.table[loci.table$trait=='f3',]$final.locus) #90
+length(unique(loci.table[loci.table$trait=='f3',]$final.locus)) #86
+
+
+
+#f1
+length(unique(loci.table[loci.table$trait=='f1',][duplicated(loci.table[loci.table$trait=='f1',]$final.locus),]$final.locus)) #2
+
+
+#f2
+length(unique(loci.table[loci.table$trait=='f2',][duplicated(loci.table[loci.table$trait=='f2',]$final.locus),]$final.locus)) #7
+
+#f3
+length(unique(loci.table[loci.table$trait=='f3',][duplicated(loci.table[loci.table$trait=='f3',]$final.locus),]$final.locus)) #2
+
+
+#f1 with no hla
+length(unique(no_hla[no_hla$trait=='f1',][duplicated(no_hla[no_hla$trait=='f1',]$final.locus),]$final.locus)) #1
+
+
+#f2 with no hla
+length(unique(no_hla[no_hla$trait=='f2',][duplicated(no_hla[no_hla$trait=='f2',]$final.locus),]$final.locus)) #5
+
+#f3 with no hla
+length(unique(no_hla[no_hla$trait=='f3',][duplicated(no_hla[no_hla$trait=='f3',]$final.locus),]$final.locus)) #1
+
+
+
+
+
+
+
+
 
 
 
