@@ -20,7 +20,7 @@ genes_symbol <- getBM(filters= "ensembl_gene_id", attributes= c("entrezgene_id",
 #add the gene symbols to each row (i.e. each pathway)
 kg$hgnc <- rep('NA', nrow(kg))
 for(i in 1:nrow(kg)){
-  kg$hgnc[i] <- paste0(genes_symbol[ genes_symbol$ensembl_gene_id %in% strsplit( kg$intersection[i], split = ',')[[1]] ,]$hgnc_symbol, collapse = ',  ')
+  kg$hgnc[i] <- paste0(genes_symbol[ genes_symbol$ensembl_gene_id %in% strsplit( kg$intersection[i], split = ',')[[1]] ,]$hgnc_symbol, collapse = ', ')
 }
 
 #format for exporting with the rigth names
@@ -29,12 +29,16 @@ kg$Trait <- toupper(kg$Trait)
 kegg.table <- kg[,c(3,1,2, 5)]
 
 
-formattable(kegg.table,align =c("l","c","c" ,"r") ,
-            list( 'Pathway' = formatter( "span", style = style(color = "grey",font.weight = "bold")))
-)
+#renmae the factors
+kegg.table[kegg.table$Trait=='F1',]$Trait <- 'Fgut'
+kegg.table[kegg.table$Trait=='F2',]$Trait <- 'Faid'
+kegg.table[kegg.table$Trait=='F3',]$Trait <- 'Falrg'
+
+#round the pvalues
+kegg.table$`P-value (adjusted)` <- signif(kegg.table$`P-value (adjusted)`,4)
 
 #save the csv
-write.table(kegg.table, sep = ',', file = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/supplementary/gene_enrichment/tables/kegg.table.csv')
+write.table(kegg.table, sep = ',', file = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/supplementary/gene_enrichment/tables/kegg.table.csv', row.names = F)
 
 
 
@@ -56,28 +60,35 @@ colnames(gg) <- c('Trait', 'P-value (adjusted)', 'GO term', 'ENSEMBL', 'Gene sym
 gg$Trait <- toupper(gg$Trait)
 go.table <- gg[,c(3,1,2, 5)]
 
+
+
+#renmae the factors
+go.table[go.table$Trait=='F1',]$Trait <- 'Fgut'
+go.table[go.table$Trait=='F2',]$Trait <- 'Faid'
+go.table[go.table$Trait=='F3',]$Trait <- 'Falrg'
+
+#round the pvalues
+go.table$`P-value (adjusted)` <- signif(go.table$`P-value (adjusted)`,4)
+
+
 #save the table ascsv
-write.table(go.table, sep = ',', file = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/supplementary/gene_enrichment/tables/go.table.csv')
-
-formattable(plott,align =c("l","c","c" ,"r") ,
-            list( 'GO term' = formatter( "span", style = style(color = "grey",font.weight = "bold")))
-)
+write.table(go.table, sep = ',', file = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/supplementary/gene_enrichment/tables/go.table.csv', row.names = F)
 
 
-#--------- go table top 20  ---------------------------------------------
+
+#--------- go table top 10  ---------------------------------------------
 
 #add the names
 colnames(gg) <- c('Trait', 'P-value (adjusted)', 'GO term', 'ENSEMBL', 'Gene symbols')
 gg$Trait <- toupper(gg$Trait)
-go.table_top_20 <- gg[1:20,c(3,1,2, 5)]
+
+top_10_pathways <- unique(gg[order(gg$`P-value (adjusted)`, decreasing = F),][,'GO term'])[(1:10)]
+
+go.table_top_10 <- go.table[go.table$`GO term`%in% top_10_pathways,]
+
 
 #save the table ascsv
-write.table(go.table_top_20, sep = ',', file = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/supplementary/gene_enrichment/tables/go.table_top20.csv')
-
-
-formattable(go.table_top_20,align =c("l","c","c" ,"r") ,
-            list( 'GO term' = formatter( "span", style = style(color = "grey",font.weight = "bold")))
-)
+write.table(go.table_top_10, sep = ',', file = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/supplementary/gene_enrichment/tables/go.table_top10.csv', row.names = F)
 
 
 
@@ -101,10 +112,6 @@ react.table <- react[,c(3,1,2, 5)]
 
 #save the table ascsv
 write.table(react.table, sep = ',', file = 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/supplementary/gene_enrichment/tables/react.table.csv')
-
-formattable(react.table,align =c("l","c","c" ,"r") ,
-            list( 'Reactome' = formatter( "span", style = style(color = "grey",font.weight = "bold")))
-)
 
 
 
