@@ -14,6 +14,5 @@ This is the home directory of the project and here is a description of what is c
    e) Sripts/ contains the code that I wrote, and here the anlysis is conducted. 
    f) SNP/ contains a reference file of the rsID needed by the package, info in the github of genomicSEM. Used by me also to add rsID to summary stats. 
    g) Summary_Stats/ contains the the raw summary_stats downloaded from the papers, (mostly by GWAScatalog)
-   h) loci_definitions/ is the first version of the defiontion of the loci with conditional analysis and colocalization (the table final_locus_table.tsv is identical to the second version in       Nicola/)
-   i) Nicola/ folder contains the latest version of final_locus_table.tsv (even if it is identical to the loci_definitions/final_locus_table.tsv described in point  h)). It also contains the       results of the latest sc_eQtl analysis 
+   h) loci_definitions are different verisons that Nicola generated. The final version is the one that is the last used. 
    
