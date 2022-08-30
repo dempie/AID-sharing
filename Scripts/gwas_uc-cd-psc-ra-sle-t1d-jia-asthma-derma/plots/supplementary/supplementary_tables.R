@@ -50,3 +50,4 @@ colnames(loci) <- toupper(colnames(loci))
 
 #save
 fwrite(loci,'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/supplementary/supplementary_tables/Supplementary_table_2_conditional_loci.csv', sep = ',', col.names = T, quote = F)
+
