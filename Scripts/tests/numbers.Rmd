@@ -1,0 +1,64 @@
+---
+title: "Numbers"
+output: html_document
+---
+
+
+```{r Number of genomic regions}
+library(data.table)
+gen_reg <- fread('/project/aid_sharing/AID_sharing/outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways/factor_loci_moloc_closest_gene_info.txt', data.table = F) 
+
+cat(paste0('There are ', nrow(gen_reg), ' genomic regions in total', '\n'))
+
+cat(paste0('NUmber of genomic regions per factor (including the overlapping ones)'))
+table(gen_reg$trait)
+
+
+```
+
+
+```{r Numbers of factor specific loci conditional}
+library(data.table)
+
+loci.table <- fread('/project/aid_sharing/AID_sharing/outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways_conditional/loci_table_names_nicola_genes.csv', data.table = F) 
+no_hla <- fread( '/project/aid_sharing/AID_sharing/outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways_conditional/loci_table_names_nicola_genes_no_HLA.csv', data.table=F)
+
+
+
+cat(paste0('Total number of loci identified: ', nrow(loci.table), '\n',
+       'Fgut unique loci: ', length(unique(loci.table[loci.table$trait=='f1',]$final.locus)), '\n',
+       'Faid unique loci: ', length(unique(loci.table[loci.table$trait=='f2',]$final.locus)), '\n',
+        'Falrg unique loci: ', length(unique(loci.table[loci.table$trait=='f3',]$final.locus)), '\n',
+       'Sum of unique-names for all Factors: ', sum(length(unique(loci.table[loci.table$trait=='f1',]$final.locus)), 
+                                              length(unique(loci.table[loci.table$trait=='f2',]$final.locus)), 
+                                              length(unique(loci.table[loci.table$trait=='f3',]$final.locus))), '\n', 
+       'Number of shared loci at least between 2 Factors: ', 
+       length(unique(c(intersect( unique(loci.table[loci.table$trait=='f1',]$final.locus), unique(loci.table[loci.table$trait=='f2',]$final.locus) ),
+       intersect( unique(loci.table[loci.table$trait=='f1',]$final.locus), unique(loci.table[loci.table$trait=='f3',]$final.locus) ),
+        intersect( unique(loci.table[loci.table$trait=='f2',]$final.locus), unique(loci.table[loci.table$trait=='f3',]$final.locus) )))), '\n', '\n',
+                                                        
+      'Number of loci showing multiple independent signals for fgut: ', #f1
+       length(unique(loci.table[loci.table$trait=='f1',][duplicated(loci.table[loci.table$trait=='f1',]$final.locus),]$final.locus)), '\n',
+      'Number of loci showing multiple independent signals for fgut NOT in HLA: ', 
+       length(unique(no_hla[no_hla$trait=='f1',][duplicated(no_hla[no_hla$trait=='f1',]$final.locus),]$final.locus)), '\n', '\n',
+      
+      'Number of loci showing multiple independent signals for faid: ', #f1
+       length(unique(loci.table[loci.table$trait=='f2',][duplicated(loci.table[loci.table$trait=='f2',]$final.locus),]$final.locus)) ,'\n',
+      'Number of loci showing multiple independent signals for faid NOT in HLA: ', 
+       length(unique(no_hla[no_hla$trait=='f2',][duplicated(no_hla[no_hla$trait=='f2',]$final.locus),]$final.locus)), '\n', '\n',
+      
+        'Number of loci showing multiple independent signals for falrg: ', #f1
+       length(unique(loci.table[loci.table$trait=='f3',][duplicated(loci.table[loci.table$trait=='f3',]$final.locus),]$final.locus)) ,'\n',
+      'Number of loci showing multiple independent signals for falrg NOT in HLA: ', 
+       length(unique(no_hla[no_hla$trait=='f3',][duplicated(no_hla[no_hla$trait=='f3',]$final.locus),]$final.locus)), '\n'
+
+    
+
+       ))
+
+```
+
+```{}
+
+```
+
