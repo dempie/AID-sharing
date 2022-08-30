@@ -81,7 +81,9 @@ a>0.001
 '
 
 aid_factor <-usermodel(ldsc_ok, estimation = "DWLS", model = aid_model, CFIcalc = TRUE, std.lv = TRUE, imp_cov = FALSE)
-aid_factor$modelfit
+signif(aid_factor$modelfit,4)
+
+
 
 pdf('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/supplementary/factor_models/three_factor_model.pdf', height = 20, width = 18)
 semPaths(semPlotModel_GSEM(aid_factor), 
@@ -113,7 +115,7 @@ dev.off()
 
 
 pdf('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/supplementary/factor_models/three_factor_model_fit.pdf', height = 16, width = 16)
-grid.table(aid_factor$modelfit)
+grid.table(signif(aid_factor$modelfit,4))
 dev.off()
 
 #------ two factor model -----------------------------------------------------
@@ -160,7 +162,7 @@ semPaths(semPlotModel_GSEM(two_factor), what = 'path' ,
 dev.off()
 
 pdf('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/supplementary/factor_models/two_factor_model_fit.pdf', height = 16, width = 16)
-grid.table(two_factor$modelfit)
+grid.table(signif(two_factor$modelfit),4)
 dev.off()
 
 #------ one factro model -------------------------------------------------------
@@ -202,7 +204,7 @@ semPaths(semPlotModel_GSEM(one_factor), what = 'path' ,
 dev.off()
 
 pdf('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/supplementary/factor_models/one_factor_model_fit.pdf', height = 16, width = 16)
-grid.table(one_factor$modelfit)
+grid.table(signif(one_factor$modelfit),4)
 dev.off()
 
 
