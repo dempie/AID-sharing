@@ -11,7 +11,7 @@ loci_factors$trait[loci_factors$trait=='f2'] <- 'Faid'
 loci_factors$trait[loci_factors$trait=='f3'] <- 'Falrg'
 
 #rename the columns
-gen_reg <- loci_factors %>% rename('p-value'=P , Factor ='trait', 'Genomic region number'= pan_locus, 'Genomic region name (chr_start_end)'= pan_locus_name, 'Lead SNP'=SNP ) %>% select(-c(closest_gene)) 
+gen_reg <- loci_factors %>% rename('p-value'=P , Factor ='trait',  'genomic_region(chr_start_end)'= pan_locus_name, 'lead_SNP'=SNP, 'OTHA'=A2, 'REFA'=A1) %>% select(-c(closest_gene, pan_locus)) 
 colnames(gen_reg) <- toupper(colnames(gen_reg))
 
 #save
@@ -43,9 +43,9 @@ loci.table$trait[loci.table$trait=='f2'] <- 'Faid'
 loci.table$trait[loci.table$trait=='f3'] <- 'Falrg'
 
 #renmae the columns
-loci <- loci.table %>% rename(Factor=trait, 'ENSEMBLE ID CLOSEST PROTEIN CODING GENE'=closest_gene, 
-                              'GENE NAME CLOSEST PROTEIN CODING GENE'=closest_gene_name, 'GENOMIC REGION'=pan.locus, 
-                              'SUB LOCUS'=sub_locus, 'LOCUS NAME (CHR_START_END)'= final.locus, 'NOTE'=indip_coloc  )
+loci <- loci.table %>% rename(Factor=trait, 'ENSEMBLEID_CLOSEST_PROTEIN_CODING_GENE'=closest_gene, 
+                              'GENE_NAME_CLOSEST_PROTEIN_CODING_GENE'=closest_gene_name, 'LOCUS_NAME(CHR_START_END)'= final.locus, 'NOTE'=indip_coloc  ) %>% 
+                                select(-c(pan.locus, sub_locus) )
 colnames(loci) <- toupper(colnames(loci))
 
 #save
