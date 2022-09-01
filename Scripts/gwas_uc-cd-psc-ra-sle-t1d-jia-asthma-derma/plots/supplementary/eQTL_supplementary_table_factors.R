@@ -25,17 +25,17 @@ for(i in mr_list){
 mr_res<- Reduce(rbind, mr_ok)
 mr_factors <- mr_res[mr_res$trait%in% c('f1', 'f2', 'f3')]
 #add the locus name to the table
-loci <- fread('/project/aid_sharing/AID_sharing/outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/supplementary/supplementary_tables/Supplementary_table_2_conditional_loci.csv')
-loci$tmp <- paste0(loci$`GENOMIC REGION`, '_',loci$`SUB LOCUS`)
+loci <- fread('/project/aid_sharing/AID_sharing/outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways_conditional/loci_table_names_nicola_genes.csv', data.table = F)
+loci$tmp <- paste0(loci$pan.locus, '_',loci$sub_locus)
 head(loci)
 
 mr_factors$locus_name <- rep('', nrow(mr_factors))
 for(i in 1:nrow(mr_factors)){
-  mr_factors[i, ]$locus_name <- loci[loci$tmp==mr_factors[i, ]$locus,]$`LOCUS NAME (CHR_START_END)`[1]
+  mr_factors[i, ]$locus_name <- loci[loci$tmp==mr_factors[i, ]$locus,]$final.locus[1]
   
 }
 
-mr_final <- mr_factors %>% rename('locus number'= locus, 'locus name (chr:start_end)'=locus_name, 'cell type'=cell.type)
+mr_final <- mr_factors %>% rename( 'locus_name_(chr:start_end)'=locus_name, 'cell_type'=cell.type) %>% select(-c('locus'))
 
 mr_final$trait[mr_final$trait=='f1'] <- 'Fgut'
 mr_final$trait[mr_final$trait=='f2'] <- 'Faid'
@@ -70,7 +70,7 @@ qtl_res<- Reduce(rbind, qtl_ok)
 qtl_factors <- qtl_res[qtl_res$t1%in% c('f1', 'f2', 'f3')]
 
 
-qtl_final <- qtl_factors %>% rename('hit trait 1'=hit1, 'hit trait 2'=hit2, 'cell type'=cell_type, 'trait 1'= t1, 'trait 2'=t2  )
+qtl_final <- qtl_factors %>% rename('hit_trait_1'=hit1, 'hit_trait_2'=hit2, 'cell_type'=cell_type, 'trait_1'= t1, 'trait_2'=t2  )
 
 qtl_final$trait[qtl_final$`trait 1`=='f1'] <- 'Fgut'
 qtl_final$trait[qtl_final$`trait 1`=='f2'] <- 'Faid'
