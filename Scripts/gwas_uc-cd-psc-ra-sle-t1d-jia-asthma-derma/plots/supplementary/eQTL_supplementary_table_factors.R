@@ -72,9 +72,9 @@ qtl_factors <- qtl_res[qtl_res$t1 %in% c('f1', 'f2', 'f3'),]
 
 qtl_final <- qtl_factors %>% rename('hit_trait_1'=hit1, 'hit_trait_2'=hit2, 'cell_type'=cell_type, 'trait_1'= t1, 'trait_2'=t2  )
 
-qtl_final$TRAIT_1[qtl_final$TRAIT_1=='f1'] <- 'Fgut'
-qtl_final$TRAIT_1[qtl_final$TRAIT_1=='f2'] <- 'Faid'
-qtl_final$TRAIT_1[qtl_final$TRAIT_1=='f3'] <- 'Falrg'
+qtl_final$trait_1[qtl_final$trait_1=='f1'] <- 'Fgut'
+qtl_final$trait_1[qtl_final$trait_1=='f2'] <- 'Faid'
+qtl_final$trait_1[qtl_final$trait_1=='f3'] <- 'Falrg'
 
 colnames(qtl_final) <- toupper(colnames(qtl_final))
 
