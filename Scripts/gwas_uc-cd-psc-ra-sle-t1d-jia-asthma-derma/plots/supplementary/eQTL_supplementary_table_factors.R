@@ -2,6 +2,8 @@ library(stringr)
 library(data.table)
 library(dplyr)
 
+
+#mr table
 mr_list <- list.files('/project/aid_sharing/sc_eqtl/')[str_ends(list.files('/project/aid_sharing/sc_eqtl/'), 'MR.tsv')]
 
 setwd('/project/aid_sharing/sc_eqtl/')
@@ -23,7 +25,7 @@ for(i in mr_list){
 mr_res<- Reduce(rbind, mr_ok)
 mr_factors <- mr_res[mr_res$trait%in% c('f1', 'f2', 'f3')]
 #add the locus name to the table
-loci <- fread('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/supplementary/supplementary_tables/Supplementary_table_2_conditional_loci.csv')
+loci <- fread('/project/aid_sharing/AID_sharing/outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/supplementary/supplementary_tables/Supplementary_table_2_conditional_loci.csv')
 loci$tmp <- paste0(loci$`GENOMIC REGION`, '_',loci$`SUB LOCUS`)
 head(loci)
 
@@ -42,13 +44,44 @@ mr_final$trait[mr_final$trait=='f3'] <- 'Falrg'
 names(mr_final) <- toupper(names(mr_final))
 
 #save
-fwrite(loci,'/project/aid_sharing/AID_sharing/outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/supplementary/supplementary_tables/Supplementary_table_3_MR_results.csv', sep = ',', col.names = T, quote = F)
+fwrite(mr_final,'/project/aid_sharing/AID_sharing/outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/supplementary/supplementary_tables/Supplementary_table_3_MR_results.csv', sep = ',', col.names = T, quote = F)
 
 
-# 
-# 
-# 
-# 
+
+#--------eQTL table-------------------------------------------------------------
+qtl_names <- list.files()[str_ends(list.files(), 'coloc.tsv')]
+list.files()
+
+qtl_l <- list()
+qtl_ok <- list()
+
+for(i in qtl_names){
+  
+  qtl_l[[i]] <- try(fread(i))
+  
+  if(c(!is(qtl_l[[i]], 'try-error') & !ncol(qtl_l[[i]])==1)){
+    qtl_ok[[i]] <- qtl_l[[i]]
+  }
+  
+}
+
+
+qtl_res<- Reduce(rbind, qtl_ok)
+qtl_factors <- qtl_res[qtl_res$t1%in% c('f1', 'f2', 'f3')]
+
+
+qtl_final <- qtl_factors %>% rename('hit trait 1'=hit1, 'hit trait 2'=hit2, 'cell type'=cell_type, 'trait 1'= t1, 'trait 2'=t2  )
+
+qtl_final$trait[qtl_final$`trait 1`=='f1'] <- 'Fgut'
+qtl_final$trait[qtl_final$`trait 1`=='f2'] <- 'Faid'
+qtl_final$trait[qtl_final$`trait 1`=='f3'] <- 'Falrg'
+
+colnames(qtl_final) <- toupper(colnames(qtl_final))
+
+head(qtl_final)
+
+#save
+fwrite(qtl_final,'/project/aid_sharing/AID_sharing/outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/supplementary/supplementary_tables/Supplementary_table_4_eQTL_results.csv', sep = ',', col.names = T, quote = F)
 # 
 # final_table<- do.call(rbind, chunk_ok)
 # only_f <- final_table[final_table$V9 %in% c('f1', 'f2', 'f3'),]
