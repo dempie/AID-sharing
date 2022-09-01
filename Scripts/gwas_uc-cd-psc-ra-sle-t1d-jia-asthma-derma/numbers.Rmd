@@ -10,7 +10,7 @@ gen_reg <- fread('/project/aid_sharing/AID_sharing/outputs/gwas_uc-cd-psc-ra-sle
 
 cat(paste0('There are ', nrow(gen_reg), ' genomic regions in total', '\n'))
 
-cat(paste0('NUmber of genomic regions per factor (including the overlapping ones)'))
+cat(paste0('Number of genomic regions per factor (including the overlapping ones)'))
 table(gen_reg$trait)
 
 
@@ -58,7 +58,38 @@ cat(paste0('Total number of loci identified: ', nrow(loci.table), '\n',
 
 ```
 
-```{}
+```{r eqtl numbers}
+eQTL <-fread('/project/aid_sharing/AID_sharing/outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/supplementary/supplementary_tables/Supplementary_table_4_eQTL_results.csv')
+
+cat(paste0( 'Number of total eQTLs PP4>0.90:  ', nrow(unique(eQTL[round(eQTL$PP.H4.ABF,2)>0.90,])), '\n', 
+            'Number of total eQTLs PP4>0.90 for Fgut:  ', nrow(unique(eQTL[round(eQTL$PP.H4.ABF,2)>0.90 & eQTL$TRAIT_1=='Fgut',])), '\n',
+            'Number of total eQTLs PP4>0.90 for Faid:  ', nrow(unique(eQTL[round(eQTL$PP.H4.ABF,2)>0.90 & eQTL$TRAIT_1=='Faid',])), '\n',
+            'Number of total eQTLs PP4>0.90 for Falrg:  ', nrow(unique(eQTL[round(eQTL$PP.H4.ABF,2)>0.90 & eQTL$TRAIT_1=='Falrg',])), '\n', '\n',
+            
+            'Number of genes with eQTL: ' ,length(unique(eQTL[eQTL$PP.H4.ABF>0.90 ,]$TRAIT_2)), '\n', 
+            'Number of genes with eQTL for Fgut: ' ,length(unique(eQTL[round(eQTL$PP.H4.ABF,2)>0.90 & eQTL$TRAIT_1=='Fgut' ,]$TRAIT_2)), '\n',
+            'Number of genes with eQTL for Faid: ' ,length(unique(eQTL[round(eQTL$PP.H4.ABF,2)>0.90 & eQTL$TRAIT_1=='Faid' ,]$TRAIT_2)), '\n',
+            'Number of genes with eQTL for Falrg: ' ,length(unique(eQTL[round(eQTL$PP.H4.ABF,2)>0.90 & eQTL$TRAIT_1=='Falrg' ,]$TRAIT_2))
+                                                                
+))
+
+
 
 ```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
