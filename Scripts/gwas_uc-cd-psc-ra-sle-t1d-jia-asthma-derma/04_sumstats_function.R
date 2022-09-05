@@ -250,7 +250,7 @@ psc_p <- 14890
 jia_p <- 12501
 sle_p <- calculate_prevalence('Prevalences/CSV_prevalences/sle_benthman-2015.csv')
 ra_p <- calculate_prevalence('Prevalences/CSV_prevalences/ra_okada-2014_only-eu.csv')
-asthma_p <- calculate_prevalence('Prevalences/CSV_prevalences/asthma_demeanis-2018.csv')
+asthma_p <- calculate_prevalence('Prevalences/CSV_prevalences/asthma_demeanis-2018.csv') #this is wrong but N is not used by sumstats
 derma_p <- calculate_prevalence('Prevalences/CSV_prevalences/derma_sliz-2021.csv')
 
 
