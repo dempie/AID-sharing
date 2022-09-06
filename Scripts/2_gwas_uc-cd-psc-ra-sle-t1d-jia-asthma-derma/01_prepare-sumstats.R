@@ -161,6 +161,8 @@ crohn <- merge.data.table(crohn, referenceSNP,
                           by.x = 'SNP', by.y = 'chrPosition', 
                           all.x = T, all.y = F, sort = T)
 
+crohn <- crohn %>% select(-c(SNP)) %>%rename( 'SNP'=SNP.y)
+
 dim(crohn) #9570787      18
 
 
