@@ -266,7 +266,6 @@ system('mv *log  outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/02_sumstat
 
 saveRDS(aid_sumstats, file= 'outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/02_sumstats_function/sumstats_uc-cd-psc-ra-sle-t1d-jia-asthma-derma.RDS')
 
-#aid_sumstats_noPBC <- readRDS('outputs/version3/04_output_sumstats-function/aid_sumstats_newRA.RDS') 
 
 dim(aid_sumstats) #3 344 158      24
 head(aid_sumstats)
