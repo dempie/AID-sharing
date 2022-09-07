@@ -166,19 +166,13 @@ chunks_1_335<- assemble_f(1:335, 'outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma
 
 #--------missing chunks---------------------------------------------------------
 
-#chunk 12 was divided in 10 subchuks and re-estimated 
 
-chunk_12 <- assemble_f(1:10, 'outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/03_gwas_estimation/P_value_gwas_estimation/missing_chunks/chunk_12/12_', '_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma.RDS_v2', 3 )
-chunk_131 <- assemble_f(1:10, 'outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/03_gwas_estimation/P_value_gwas_estimation/missing_chunks/chunk_131/131_', '_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma.RDS_v2', 3 )
-chunk_203 <- assemble_f(1:10, 'outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/03_gwas_estimation/P_value_gwas_estimation/missing_chunks/chunk_203/203_', '_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma.RDS_v2', 3 )
-chunk_250 <- assemble_f(1:10, 'outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/03_gwas_estimation/P_value_gwas_estimation/missing_chunks/chunk_250/250_', '_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma.RDS_v2', 3 )
 
-#  SOME CHUNKS ARE MISSING!
-# 9 chunks were found!
-# 1 chunks were NOT found!
-# The missing chunks are the 7
+chunk_12 <- assemble_f(1:10, 'outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/03_gwas_estimation/P_value_gwas_estimation/missing_chunks/chunk_12/12_','_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_2.RDS', 3 )
+chunk_131 <- assemble_f(1:10, 'outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/03_gwas_estimation/P_value_gwas_estimation/missing_chunks/chunk_131/131_', '_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_2.RDS', 3 )
+chunk_203 <- assemble_f(1:10, 'outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/03_gwas_estimation/P_value_gwas_estimation/missing_chunks/chunk_203/203_', '_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_2.RDS', 3 )
+chunk_250 <- assemble_f(1:10, 'outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/03_gwas_estimation/P_value_gwas_estimation/missing_chunks/chunk_250/250_', '_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_2.RDS', 3 )
 
-chunk_203 <-  assemble_f(1:10, 'outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_gwas_ouput/chunks/chunk_203/chunk_203_1-10/203_', '_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma.RDS', 3) 
 
 
 #put all the chunks together and save the output 
