@@ -86,6 +86,8 @@ UpSet(cm, set_order = c("f1", "f2", "f3"), comb_order = order(comb_size(cm), dec
 dev.off()
 
 
+#to check if all of this is true makeVennDiagram(ovl_f)
+
 
 
 
