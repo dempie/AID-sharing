@@ -62,7 +62,7 @@ names_plot = c('Type 1 Diabetes','Crohn\'s disease', 'Ulcerative colitis',
 
 #----- load the correlation matrix ---------------------------------------------
 
-ldsc_ok <- readRDS('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/04_sumstat_outputs/ldsc_output/ldsc_uc-cd-psc-ra-sle-t1d-jia-asthma-derma.RDS')
+ldsc_ok <- readRDS('outputs/3_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_NO_MAF_INFO/02_sumstats_function/ldsc_uc-cd-psc-ra-sle-t1d-jia-asthma-derma.RDS')
 
 
 #---- Three factor model ---------------------------------------------------------
@@ -85,7 +85,7 @@ signif(aid_factor$modelfit,4)
 
 
 
-pdf('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/supplementary/factor_models/three_factor_model.pdf', height = 20, width = 18)
+pdf('outputs/3_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_NO_MAF_INFO/plots/figure1/three_factor_model.pdf', height = 20, width = 18)
 semPaths(semPlotModel_GSEM(aid_factor), 
          what = 'path' , 
          whatLabels= 'est',
@@ -114,7 +114,7 @@ semPaths(semPlotModel_GSEM(aid_factor),
 dev.off()
 
 
-pdf('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/supplementary/factor_models/three_factor_model_fit.pdf', height = 16, width = 16)
+pdf('outputs/3_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_NO_MAF_INFO/plots/figure1/three_factor_model_fit.pdf', height = 16, width = 16)
 grid.table(signif(aid_factor$modelfit,4))
 dev.off()
 
@@ -136,7 +136,7 @@ two_factor <-usermodel(ldsc_ok, estimation = "DWLS", model = two_f_model, CFIcal
 two_factor$modelfit
 
 
-pdf('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/supplementary/factor_models/two_factor_model.pdf', height = 16, width = 16)
+pdf('outputs/3_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_NO_MAF_INFO/plots/figure1/two_factor_model.pdf', height = 16, width = 16)
 semPaths(semPlotModel_GSEM(two_factor), what = 'path' , 
          whatLabels= 'est',
          residuals = T, 
@@ -161,7 +161,7 @@ semPaths(semPlotModel_GSEM(two_factor), what = 'path' ,
          esize=1)
 dev.off()
 
-pdf('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/supplementary/factor_models/two_factor_model_fit.pdf', height = 16, width = 16)
+pdf('outputs/3_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_NO_MAF_INFO/plots/figure1/two_factor_model_fit.pdf', height = 16, width = 16)
 grid.table(signif(two_factor$modelfit),4)
 dev.off()
 
@@ -178,7 +178,7 @@ one_factor <-usermodel(ldsc_ok, estimation = "DWLS", model = one_f_model, CFIcal
 one_factor$modelfit
 
 
-pdf('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/supplementary/factor_models/one_factor_model.pdf', height = 16, width = 16)
+pdf('outputs/3_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_NO_MAF_INFO/plots/figure1/one_factor_model.pdf', height = 16, width = 16)
 semPaths(semPlotModel_GSEM(one_factor), what = 'path' , 
          whatLabels= 'est',
          residuals = T, 
@@ -203,7 +203,7 @@ semPaths(semPlotModel_GSEM(one_factor), what = 'path' ,
          esize=1)
 dev.off()
 
-pdf('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/supplementary/factor_models/one_factor_model_fit.pdf', height = 16, width = 16)
+pdf('outputs/3_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_NO_MAF_INFO/plots/figure1/one_factor_model_fit.pdf', height = 16, width = 16)
 grid.table(signif(one_factor$modelfit),4)
 dev.off()
 
