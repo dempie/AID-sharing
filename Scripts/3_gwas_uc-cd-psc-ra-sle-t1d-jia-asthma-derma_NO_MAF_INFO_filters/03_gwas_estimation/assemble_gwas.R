@@ -1,5 +1,4 @@
 ##  in this script I will assemble the chuks of the GWAS that has been produced
-#in /sbatch_scripts/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma
 
 #The tutorial and info on the package and how to run the code are here:  
 #https://github.com/GenomicSEM/GenomicSEM/wiki/5.-User-Specified-Models-with-SNP-Effects
