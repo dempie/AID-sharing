@@ -101,7 +101,11 @@ fwrite(all_regions, 'outputs/3_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_NO_MAF
 
 
 
+
 #------- search for ovelapping genomic regions between factors and their respective traits ---------
+regions_factors <- fread('outputs/3_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_NO_MAF_INFO/06_genomic_regions_all_traits_munged/factor.regions.txt', data.table = F)
+all_regions <- fread('outputs/3_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_NO_MAF_INFO/06_genomic_regions_all_traits_munged/all_regions.txt', data.table=F)
+
 f_ranges <- list()
 for(i in c('f1', 'f2', 'f3')){
   
@@ -110,7 +114,7 @@ for(i in c('f1', 'f2', 'f3')){
 }
 
 #plot venndiagram
-pdf(width = 14, height = 14, file = 'outputs/3_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_NO_MAF_INFO/04_genomic_regions_factors/venn_f1_f2_f3_loci.pdf')
+pdf(width = 14, height = 14, file = 'outputs/3_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_NO_MAF_INFO/06_genomic_regions_all_traits_munged/venn_f1_f2_f3_loci.pdf')
 venn_f1_f2_f3_loci<- makeVennDiagram(Peaks=f_ranges,connectedPeaks = 'keepAll',
                                      NameOfPeaks=c("F1", "F2", "F3"),
                                      imagetype="png" ,
@@ -177,7 +181,7 @@ lists_forupset <- function(peaks, traits){
 
 cm <- lists_forupset(f_ranges, traits = c('f1', 'f2', 'f3')) 
 
-pdf(width = 14, height = 14, file = 'outputs/3_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_NO_MAF_INFO/04_genomic_regions_factors/upset_f1_f2_f3_loci.pdf')
+pdf(width = 14, height = 14, file = 'outputs/3_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_NO_MAF_INFO/06_genomic_regions_all_traits_munged/upset_f1_f2_f3_loci.pdf')
 UpSet(cm, set_order = c("f1", "f2", "f3"), comb_order = order(comb_size(cm), decreasing = F),
       comb_col = c(brewer.pal(8, 'Set2')[c(7,6,6,6)],brewer.pal(12, 'Paired')[c(2,4,6)]),
       top_annotation = upset_top_annotation(cm, add_numbers = TRUE, height = unit(6, "cm")),
@@ -188,11 +192,65 @@ UpSet(cm, set_order = c("f1", "f2", "f3"), comb_order = order(comb_size(cm), dec
 dev.off()
 
 
-#---------------- unique new loci ----------------------------------------------
-
-
-
-
-
+#---------------- f1 and its loci -----------------------------------------------------
+# 
+# 
+# f1_ranges <- list()
+# for(i in c('f1', 'cd', 'uc', 'psc')){
+#   
+#   f1_ranges[[i]] <- GRanges(seqnames = all_regions[all_regions$trait==i,]$chr, IRanges(as.numeric(all_regions[all_regions$trait==i,]$start),as.numeric(all_regions[all_regions$trait==i,]$end)))
+#   
+# }
+# 
+# 
+# cm<- lists_forupset(f1_ranges, c('f1', 'cd', 'uc', 'ps'))
+# UpSet(cm)
+# 
+# 
+# 
+# UpSet(cm, set_order = c('f1', 'cd', 'uc', 'ps'),
+#       top_annotation = upset_top_annotation(cm, add_numbers = TRUE, height = unit(6, "cm")),
+#       left_annotation = upset_left_annotation(cm, add_numbers = TRUE, width = unit(3,'cm'), gp = gpar(fill = brewer.pal(5, 'Greys')[1])  ),
+#       row_title = "Factor", 
+#       column_title = " Physical intersection of F1 with its trait loci"
+# )
+# #plot venndiagram
+# #pdf(width = 14, height = 14, file = 'outputs/3_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_NO_MAF_INFO/06_genomic_regions_all_traits_munged/venn_f1_uc_cd_psc.pdf')
+# venn_f1_f2_f3_loci<- makeVennDiagram(Peaks=f1_ranges,connectedPeaks = 'keepAll',
+#                                      NameOfPeaks=c('f1', 'cd', 'uc', 'psc'),
+#                                      imagetype="png" ,
+#                                  
+# )
+# 
+# 
+# 
+# #-----f2 and its loci --------------------------------------------------------
+# 
+# f2_ranges <- list()
+# for(i in c('f2', 't1d', 'ra', 'sle', 'jia')){
+#   
+#   f2_ranges[[i]] <- GRanges(seqnames = all_regions[all_regions$trait==i,]$chr, IRanges(as.numeric(all_regions[all_regions$trait==i,]$start),as.numeric(all_regions[all_regions$trait==i,]$end)))
+#   
+# }
+# 
+# 
+# cm<- lists_forupset(f2_ranges, c('f2', 't1', 'ra', 'sl', 'ji'))
+# UpSet(cm)
+# 
+# 
+# 
+# UpSet(cm, set_order =  c('f2', 't1', 'ra', 'sl', 'ji'),
+#       top_annotation = upset_top_annotation(cm, add_numbers = TRUE, height = unit(6, "cm")),
+#       left_annotation = upset_left_annotation(cm, add_numbers = TRUE, width = unit(3,'cm'), gp = gpar(fill = brewer.pal(5, 'Greys')[1])  ),
+#       row_title = "Factor", 
+#       column_title = " Physical intersection of F2 with its trait loci"
+# )
+# #plot venndiagram
+# #pdf(width = 14, height = 14, file = 'outputs/3_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_NO_MAF_INFO/06_genomic_regions_all_traits_munged/venn_f1_uc_cd_psc.pdf')
+# venn_f1_f2_f3_loci<- makeVennDiagram(Peaks=f1_ranges,connectedPeaks = 'keepAll',
+#                                      NameOfPeaks=c('f1', 'cd', 'uc', 'psc'),
+#                                      imagetype="png" ,
+#                                      
+# )
 
 
