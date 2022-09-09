@@ -69,7 +69,7 @@ for(i in c(1:12)){
     remove_multi_rs_snp = T,     
     frq_is_maf = TRUE,
     sort_coordinates = TRUE,
-    nThread = 12,
+    nThread = 10,
     save_path = paste0('outputs/3_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_NO_MAF_INFO/05_munge_for_nicola/munged/', gwas_names[[i]], '_munged_build37.txt' ),
     write_vcf = FALSE,
     tabix_index = FALSE,
@@ -87,4 +87,4 @@ for(i in c(1:12)){
 }
 
 
-saveRDS(output, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/07_colocalization/munged/output_removed_SNPs/removed_SNP.RDS')
+saveRDS(output, 'outputs/3_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_NO_MAF_INFO/05_munge_for_nicola/munged/removed_snps/removed_SNP.RDS')
