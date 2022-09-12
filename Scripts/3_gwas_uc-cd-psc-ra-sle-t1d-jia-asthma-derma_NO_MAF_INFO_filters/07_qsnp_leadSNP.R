@@ -4,7 +4,7 @@ library(ggplot2)
 
 aid_sumstats <- readRDS('outputs/3_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_NO_MAF_INFO/02_sumstats_function/sumstats_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_3.RDS')
 ldsc_model <- readRDS('outputs/3_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_NO_MAF_INFO/02_sumstats_function/ldsc_uc-cd-psc-ra-sle-t1d-jia-asthma-derma.RDS')
-factor_loci <- fread('outputs/3_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_NO_MAF_INFO/06_genomic_regions_all_traits_munged/factor.regions.txt', data.table = F)
+factor_loci <-fread('outputs/3_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_NO_MAF_INFO/06_genomic_regions_all_traits_munged/factor.regions.txt', data.table = F)
 
 
 loci_snps  <- aid_sumstats[aid_sumstats$SNP %in% factor_loci$SNP,]
@@ -143,50 +143,57 @@ saveRDS(output, 'outputs/3_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_NO_MAF_INF
 
 
 # #-------- calculation of Q index for the lead SNP ------------------------------
-# q_ind <- readRDS('outputs/3_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_NO_MAF_INFO/07_qsnp_leadSNP/output_model_estimation.RDS') 
-# 
-# fac <- list()
-# for(i in 1:3){
-#   tt<- c('f1', 'f2', 'f3')[i]
-#   fac[[tt]]<- fread(paste0('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_gwas_ouput/factor',i,'_gwas_final_withQindex.txt' ))
-# }
-# 
-# factor_loci$Q_chisq_pval <- rep(NA, nrow(factor_loci))
-# 
-# 
-# 
-# for(i in 1:3){
-#   tt <- c('f1', 'f2', 'f3')[i]
-#   q_act <- q_ind[[tt]][[1]]
-#   q_act_2 <- q_act[q_act$SNP %in% factor_loci[factor_loci$trait==tt,]$SNP,]
-#   gwas <- fac[[tt]][fac[[tt]]$SNP %in% q_act_2$SNP, ]
-#   
-#   #put all of them in the same order
-#   gwas_2 <- gwas[match(q_act_2$SNP, gwas$SNP),]
-#   
-#   #substract the Chisquare
-#   Q <- gwas_2$chisq - q_act_2$chisq
-#   df <- gwas_2$chisq_df - q_act_2$chisq_df
-#   #put all of them in the same order
-#   factor_loci[factor_loci$trait==tt,][match(q_act_2$SNP, factor_loci[factor_loci$trait==tt,]$SNP, nomatch = NA),]$Q_chisq_pval<- pchisq(Q,df,lower.tail=FALSE)
-#   print(table(pchisq(Q,df,lower.tail=FALSE)<5e-8))
-#   
-# }
-# 
-# 
-# factor_loci$het<- ifelse(factor_loci$Q_chisq_pval<5e-8, TRUE, FALSE)
-# 
-# fwrite(factor_loci, 'outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/10_Q_index_estimation/genomic_regions_table_heterogeneity_column.txt', sep = '\t', col.names = T)
-# 
-# 
-# pdf('outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/supplementary/heterogeneity_index_genomic_regions.pdf', width = 10, height = 10)
-# ggplot(data=factor_loci, aes(x=trait, fill=het) ) +
-#   geom_bar(stat='count',position = position_stack(reverse=T),  color='black')+
-#   scale_fill_manual(values = c("grey80", "white")) +
-#   geom_text(aes(label = paste0("n=", ..count..)),position= position_stack(vjust = 0.5, reverse=T),stat='count')+
-#   labs(y = 'Number of genomic regions', x = '')+
-#   theme_classic() +
-#   theme(legend.position="bottom") + ggtitle('Q heterogeneoity index lead SNPs genomic regions')
-# dev.off()
-# 
-# 
+q_ind <- readRDS('outputs/3_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_NO_MAF_INFO/07_qsnp_leadSNP/output_model_estimation.RDS')
+
+fac <- readRDS('outputs/3_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_NO_MAF_INFO/03_estimation/factors_summary_stats.RDS')
+
+head(fac)
+factor_loci$Q_chisq_pval <- rep(NA, nrow(factor_loci))
+
+
+
+for(i in 1:3){
+  tt <- c('f1', 'f2', 'f3')[i]
+  q_act <- q_ind[[tt]][[1]]
+  q_act_2 <- q_act[q_act$SNP %in% factor_loci[factor_loci$trait==tt,]$SNP,]
+  gwas <- fac[[1]][fac[[1]]$SNP %in% q_act_2$SNP, ]
+
+  #put all of them in the same order
+  gwas_2 <- gwas[match(q_act_2$SNP, gwas$SNP),]
+
+  #substract the Chisquare
+  Q <- gwas_2$chisq - q_act_2$chisq
+  df <- gwas_2$chisq_df - q_act_2$chisq_df
+  #put all of them in the same order
+  factor_loci[factor_loci$trait==tt,][match(q_act_2$SNP, factor_loci[factor_loci$trait==tt,]$SNP, nomatch = NA),]$Q_chisq_pval<- pchisq(Q,df,lower.tail=FALSE)
+  print(table(pchisq(Q,df,lower.tail=FALSE)<5e-8))
+
+}
+
+
+factor_loci$het<- ifelse(factor_loci$Q_chisq_pval<5e-8, TRUE, FALSE)
+
+fwrite(factor_loci, 'outputs/3_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_NO_MAF_INFO/07_qsnp_leadSNP/genomic_regions_table_heterogeneity_column.txt', sep = '\t', col.names = T)
+
+
+pdf('outputs/3_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_NO_MAF_INFO/07_qsnp_leadSNP/heterogeneity_index_genomic_regions.pdf', width = 10, height = 10)
+ggplot(data=factor_loci, aes(x=trait, fill=het) ) +
+  geom_bar(stat='count',position = position_stack(reverse=T),  color='black')+
+  scale_fill_manual(values = c("grey80", "white")) +
+  geom_text(aes(label = paste0("n=", ..count..)),position= position_stack(vjust = 0.5, reverse=T),stat='count')+
+  labs(y = 'Number of genomic regions', x = '')+
+  theme_classic() +
+  theme(legend.position="bottom") + ggtitle('Q heterogeneoity index lead SNPs genomic regions')
+dev.off()
+
+
+
+
+
+
+
+
+
+
+
+
