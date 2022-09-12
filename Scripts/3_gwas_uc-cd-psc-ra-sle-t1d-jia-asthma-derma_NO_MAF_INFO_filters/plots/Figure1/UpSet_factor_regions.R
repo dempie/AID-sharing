@@ -17,8 +17,8 @@ f_ranges[[i]] <- GRanges(seqnames = regions.factors[regions.factors$trait==i,]$c
 ovl_f <- findOverlapsOfPeaks(f_ranges , connectedPeaks = 'keepAll')
 
 #a loop to create as many list as the number of traits that have at least one unique locus
-#it takes the output from findoverlapps function and the names of the traits as in findoverlapps!!
-#function for obtaining a combination matrix for plotting and UpSet plot from Granges names
+#function for obtaining a combination matrix for plotting and UpSet plot from Granges names, only works in this specific case. 
+
 lists_forupset <- function(peaks, traits){ 
   #allocate lists
   require(ComplexHeatmap)
