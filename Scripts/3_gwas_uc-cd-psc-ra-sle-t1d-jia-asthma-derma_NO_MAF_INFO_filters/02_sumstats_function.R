@@ -200,7 +200,7 @@ corrplot(ldsc_ok$S_Stand, order = 'hclust',addCoef.col = 'black', method = 'squa
 dev.off()
 
 
-#---- Two factor model ---------------------------------------------------------
+#---- Three factor model ---------------------------------------------------------
 aid_model <-'F1 =~ NA*crohn + uc  + psc  
 F2 =~ NA*jia + sle + ra + t1d 
 F3 =~ NA*asthma + derma 
