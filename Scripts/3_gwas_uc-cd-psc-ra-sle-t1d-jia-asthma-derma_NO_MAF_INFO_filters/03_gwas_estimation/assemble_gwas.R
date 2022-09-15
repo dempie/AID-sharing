@@ -156,21 +156,19 @@ append_chunk <- function(list_complete, n_factors ){
 #there are 335 chunks in the folder, I decided this number in the job array
 chunks_1_335<- assemble_f(1:335, 'outputs/3_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_NO_MAF_INFO/03_estimation/chunks/', '_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_3.RDS' , 3)
 
-# 330 chunks were found!
-#   5 chunks were NOT found!
-#   The missing chunks are the 12 - 131 -196 - 203 - 250
+# 332 chunks were found!
+#   3 chunks were NOT found!
+#   The missing chunks are the 12 - 131 - 300
 
 #--------missing chunks---------------------------------------------------------
 
 chunk_12 <- assemble_f(1:10,  'outputs/3_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_NO_MAF_INFO/03_estimation/missing_chunks/chunk_12/12_', '_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_3.RDS', 3 )
 chunk_131 <- assemble_f(1:10,  'outputs/3_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_NO_MAF_INFO/03_estimation/missing_chunks/chunk_131/131_', '_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_3.RDS', 3 )
-chunk_196 <- assemble_f(1:10,  'outputs/3_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_NO_MAF_INFO/03_estimation/missing_chunks/chunk_196/196_', '_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_3.RDS', 3 )
-chunk_203 <- assemble_f(1:10,  'outputs/3_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_NO_MAF_INFO/03_estimation/missing_chunks/chunk_203/203_', '_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_3.RDS', 3 )
-chunk_250 <- assemble_f(1:10,  'outputs/3_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_NO_MAF_INFO/03_estimation/missing_chunks/chunk_250/250_', '_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_3.RDS', 3 )
+chunk_300 <- assemble_f(1:10,  'outputs/3_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_NO_MAF_INFO/03_estimation/missing_chunks/chunk_300/300_', '_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_3.RDS', 3 )
 
 
 #put all the chunks together and save the output 
-all_chunks <- append_chunk(list(chunks_1_335, chunk_12, chunk_131, chunk_196, chunk_203, chunk_250), 3) #The number of unique SNPs in F123 is 3343158
+all_chunks <- append_chunk(list(chunks_1_335, chunk_12, chunk_131, chunk_300), 3) #The number of unique SNPs in F123 is 3341158
 
 saveRDS(all_chunks, 'outputs/3_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_NO_MAF_INFO/03_estimation/factors_summary_stats.RDS')
 
@@ -184,13 +182,13 @@ F2 <- all_chunks$factor2
 F3 <- all_chunks$factor3
 
 F1_noNA <- F1[(which(!is.na(F1$Pval_Estimate))),]
-dim(F1_noNA)
+dim(F1_noNA) #3314998 
 
 F2_noNA <- F2[(which(!is.na(F2$Pval_Estimate))),]
-dim(F2_noNA)
+dim(F2_noNA) #3314998 
 
 F3_noNA <- F3[(which(!is.na(F3$Pval_Estimate))),]
-dim(F2_noNA)
+dim(F2_noNA) #3314998 
 
 
 #save the factor gwas individually (clean format)
