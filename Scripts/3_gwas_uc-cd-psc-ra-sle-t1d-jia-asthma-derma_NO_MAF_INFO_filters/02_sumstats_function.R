@@ -169,7 +169,7 @@ names = c('t1d','crohn', 'uc', 'psc', 'jia', 'sle', 'ra',  'asthma', 'derma')
 
 ldsc_output <- ldsc(traits = munged_files, 
                       sample.prev = c(.5, .5, .5, 0.1928, 0.2643, .5, .5, ((64538)/(64538 + 329321)), .5),  
-                     population.prev = c(0.095, 0.001, 0.0003, 0.000050, 0.000447, 0.000500,  0.0046, 0.035700, 0.03 ), 
+                     population.prev = c(0.03, 0.001, 0.001, 0.00005, 0.000447, 0.0005,  0.0046, 0.0357, 0.03 ), 
                      trait.names = names,
                      ld = "ldscores/eur_w_ld_chr",
                      wld= "ldscores/eur_w_ld_chr", stand = T)
