@@ -165,10 +165,10 @@ chunk_12 <- assemble_f(1:10,  'outputs/3_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-de
 chunk_131 <- assemble_f(1:10,  'outputs/3_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_NO_MAF_INFO/03_estimation/missing_chunks/chunk_131/131_', '_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_3.RDS', 3 )
 chunk_203 <- assemble_f(1:10,  'outputs/3_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_NO_MAF_INFO/03_estimation/missing_chunks/chunk_203/203_', '_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_3.RDS', 3 )
 chunk_250 <- assemble_f(1:10,  'outputs/3_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_NO_MAF_INFO/03_estimation/missing_chunks/chunk_250/250_', '_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_3.RDS', 3 )
-
+chunk_196 <- assemble_f(1:10,  'outputs/3_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_NO_MAF_INFO/03_estimation/missing_chunks/chunk_196/196_', '_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_3.RDS', 3 )
 
 #put all the chunks together and save the output 
-all_chunks <- append_chunk(list(chunks_1_335, chunk_12, chunk_131,chunk_203, chunk_250), 3) #The number of unique SNPs in F123 is 3342158
+all_chunks <- append_chunk(list(chunks_1_335, chunk_12, chunk_131,chunk_203, chunk_250, chunk_196), 3) #The number of unique SNPs in F123 is 3342158
 
 saveRDS(all_chunks, 'outputs/3_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_NO_MAF_INFO/03_estimation/factors_summary_stats.RDS')
 
@@ -182,13 +182,13 @@ F2 <- all_chunks$factor2
 F3 <- all_chunks$factor3
 
 F1_noNA <- F1[(which(!is.na(F1$Pval_Estimate))),]
-dim(F1_noNA) #3316233
+dim(F1_noNA) # 3287470
 
 F2_noNA <- F2[(which(!is.na(F2$Pval_Estimate))),]
-dim(F2_noNA) # 3316233
+dim(F2_noNA) #  3287470
 
 F3_noNA <- F3[(which(!is.na(F3$Pval_Estimate))),]
-dim(F2_noNA) # 3316233
+dim(F2_noNA) #  3287470
 
 
 #save the factor gwas individually (clean format)
