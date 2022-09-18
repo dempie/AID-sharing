@@ -86,6 +86,7 @@ f1 <- prepare_munge(f1,
                     pvalue = 'P',
                     the_Beta = 'Beta',
                     the_SE = 'SE',
+                    the_chr = 'CHR',
                     path = 'outputs/3_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_NO_MAF_INFO/05_munge_for_nicola/ready_for_munge/f1_ready_for_munge.txt'
 )
 
