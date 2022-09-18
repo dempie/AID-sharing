@@ -69,7 +69,7 @@ for(i in c(1:12)){
     remove_multi_rs_snp = T,     
     frq_is_maf = TRUE,
     sort_coordinates = TRUE,
-    nThread = 9,
+    nThread = 2,
     save_path = paste0('outputs/3_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_NO_MAF_INFO/05_munge_for_nicola/munged/', gwas_names[[i]], '_munged_build37.txt' ),
     write_vcf = FALSE,
     tabix_index = FALSE,
