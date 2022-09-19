@@ -409,6 +409,19 @@ okada_euro<- rename(okada_euro,
                     P_of_allele_1 ='V13'
 )
 
+
+
+#----
+#calculate effect allele frequency 
+allcas <- okada_euro$No.RAcases * okada_euro$A1_freq_cases
+allcont <- okada_euro$No.controls *okada_euro$A1_freq_controls
+
+fin<- (allcas+allcont)/(okada_euro$No.RAcases + okada_euro$No.controls)
+
+okada_euro$EAF <- (allcas+allcont)/(okada_euro$No.RAcases + okada_euro$No.controls) 
+
+
+
 #add CHR column, the format of the Base pair column makes things difficult. Just merge the Bp and CHR position from okada published
 okada_normal <- select(okada_normal, c('Chr', 'Position(hg19)', 'SNPID')) 
 okada_chr <- merge.data.table(okada_euro, okada_normal, 
@@ -419,15 +432,8 @@ head(okada_chr)
 dim(okada_chr) #8514610 
 okada_chr <- select(okada_chr, -c(BP))
 
+head(okada_chr)
 
-
-#calculate effect allele frequency 
-allcas <- okada_euro$No.RAcases * okada_euro$A1_freq_cases
-allcont <- okada_euro$No.controls *okada_euro$A1_freq_controls
-
-fin<- (allcas+allcont)/(okada_euro$No.RAcases + okada_euro$No.controls)
-
-okada_euro$a1_freq <- (allcas+allcont)/(okada_euro$No.RAcases + okada_euro$No.controls) 
 
 #---------save it
 
