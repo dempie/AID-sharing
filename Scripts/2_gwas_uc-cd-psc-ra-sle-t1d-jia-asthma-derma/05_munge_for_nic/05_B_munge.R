@@ -69,14 +69,14 @@ for(i in c(1:12)){
     frq_is_maf = TRUE,
     sort_coordinates = TRUE,
     nThread = 2,
-    save_path = paste0('outputs/3_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_NO_MAF_INFO/05_munge_for_nicola/munged/', gwas_names[[i]], '_munged_build37.txt' ),
+    save_path = paste0('outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_munge_for_nicola/munged/', gwas_names[[i]], '_munged_build37.txt' ),
     write_vcf = FALSE,
     tabix_index = FALSE,
     return_data = FALSE,
     return_format = "data.table",
     ldsc_format = FALSE,
     log_folder_ind = FALSE,
-    log_folder = 'outputs/3_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_NO_MAF_INFO/05_munge_for_nicola/munged/log/',
+    log_folder = 'outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_munge_for_nicola/log/',
     log_mungesumstats_msgs = TRUE,
     imputation_ind = FALSE,
     force_new = FALSE,
@@ -86,4 +86,4 @@ for(i in c(1:12)){
 }
 
 
-saveRDS(output, 'outputs/3_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_NO_MAF_INFO/05_munge_for_nicola/munged/removed_snps/removed_SNP.RDS')
+saveRDS(output, 'outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_munge_for_nicola/removed_SNP/')
