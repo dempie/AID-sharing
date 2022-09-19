@@ -258,7 +258,7 @@ aid_sumstats <-sumstats(files = file_names_ok, ref = 'SNP/reference.1000G.maf.0.
                                 OLS = c(F,F,F,F,F,F,F,F,F), 
                                 linprob = c(F,F,F,F,F,F,F,F,F), 
                                 N = c(t1d_p, crohn_p, uc_p, psc_p, jia_p, sle_p, ra_p, asthma_p, derma_p), 
-                                parallel = T,
+                                parallel = T, cores = 9,
                                 keep.indel= F 
 )
 
