@@ -15,7 +15,7 @@ library(dplyr)
 ##the function changes the name of the columns as required by the genomicSEM package
 #and saves the files in the provided path (if the path is provided)
 
-prepare_munge <- function(sum_stats, rsID, the_effect_allele, the_non_effect_allele, pvalue, the_OR=NA, the_Beta=NA, the_SE=NA, the_chr=NA, the_bp=NA, to_remove=NA, path = NA){
+prepare_munge <- function(sum_stats, rsID, the_effect_allele, the_non_effect_allele, pvalue, the_OR=NA, the_Beta=NA, the_SE=NA, the_chr=NA, the_bp=NA, to_remove=NA, path = NA, the_MAF=NA){
   #an error if arguments are not provided 
   if (missing(sum_stats) | missing(rsID) | missing(the_effect_allele) | missing(the_non_effect_allele) |missing(pvalue) ) {
    
@@ -50,6 +50,11 @@ prepare_munge <- function(sum_stats, rsID, the_effect_allele, the_non_effect_all
                       sum_stats <- rename(sum_stats, Beta=all_of(the_Beta))
                       sum_stats$Beta <- as.numeric(sum_stats$Beta)
                 } 
+          
+                  if (!is.na(the_MAF)){
+                    sum_stats <- rename(sum_stats, MAF=all_of(the_MAF))
+                    sum_stats$MAF <- as.numeric(sum_stats$MAF)
+                  } 
                 
                 if(is.na(the_OR) & is.na(the_Beta) ) {stop('Effect column not specified ')}
                 
@@ -235,6 +240,7 @@ asthma_han <- prepare_munge(asthma_han,
                             the_chr = 'CHR',
                             the_SE = 'SE',
                             the_bp = 'BP',
+                            to_remove = c('N'),
                             path =  'outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_summary_stats/asthma_han-2020.txt'
                             )
 head(asthma_han)
@@ -285,6 +291,7 @@ psc_ok <- data.frame( 'SNP' = psc$SNP ,
                       'OR' = psc$or , 
                       'SE' = psc$se ,
                       'P' = psc$p , 
+                      'EAF'= psc$freq_1,
                       'CHR'= psc$`#chr`, 
                         'BP'=psc$pos)
 
@@ -315,8 +322,9 @@ jia <- prepare_munge(jia,
                     the_Beta = 'frequentist_add_beta_1' ,
                     the_SE = 'frequentist_add_se_1', 
                     the_chr = 'chromosome', 
-                    the_bp = 'position', 
-                    to_remove = c('all_maf'  , 'all_OR', 'all_OR_lower', 'all_OR_upper', 'alternate_ids'),
+                    the_bp = 'position',
+                    the_MAF = 'all_maf',
+                    to_remove = c( 'all_OR', 'all_OR_lower', 'all_OR_upper', 'alternate_ids'),
                     path=  'outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_summary_stats/jia_beta_lopezisac-2020.txt')
 
 
@@ -342,7 +350,7 @@ t1d_ok <-  data.frame(rsID = t1d$variant_id,
                       p = as.double(t1d$p_value),
                       CHR = t1d$chromosome,
                       BP = t1d$base_pair_location, 
-                      effect_allele_frequency= t1d$effect_allele_frequency,
+                      EAF= t1d$effect_allele_frequency,
                       SE = t1d$standard_error, 
                       sample_size = t1d$sample_size, 
                       effect = as.double(t1d$beta)
@@ -359,8 +367,9 @@ fwrite(t1_ok_no_X, 'outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_s
 
 #----derma GWAS-----------------------------------------------------------------
 derma <- fread('Summary_Stats/sliz-2021_atopic-dermatitis_build38_GCST90027161_buildGRCh38.tsv.gz', data.table = F)
-head(derma) 
 
+head(derma)
+derma <- derma %>% rename(EAF='effect_allele_frequency')
 derma <- prepare_munge(derma, rsID = 'variant_id',
               the_Beta = 'beta',
               the_effect_allele = 'effect_allele', 
@@ -368,7 +377,7 @@ derma <- prepare_munge(derma, rsID = 'variant_id',
               the_SE = 'standard_error', 
               the_chr = 'chromosome', 
               the_bp = 'base_pair_location', 
-              pvalue = 'p_value', 
+              pvalue = 'p_value',
               path =  'outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_summary_stats/derma_sliz-2021.txt')
 
 
@@ -378,6 +387,8 @@ derma <- prepare_munge(derma, rsID = 'variant_id',
 
 okada_normal <- fread('Summary_Stats/okada-2014_RA_build37_RA_GWASmeta_TransEthnic_v2.txt.gz.gz', data.table = F)
 okada_euro <- fread('Summary_Stats/okada-2014_ra-european_build37_MegaGWAS_summary_European.txt.gz', data.table = F)
+
+
 
 head(okada_euro)
 dim(okada_euro) #8514610      13
@@ -392,7 +403,7 @@ okada_euro<- rename(okada_euro,
                     No.RAcases ='V7',
                     No.controls ='V8',
                     A1_freq_cases ='V9',
-                    A2_freq_controls ='V10',
+                    A1_freq_controls ='V10',
                     Beta_allele_1 ='V11',
                     SE = 'V12',
                     P_of_allele_1 ='V13'
@@ -407,6 +418,19 @@ okada_chr <- merge.data.table(okada_euro, okada_normal,
 head(okada_chr)
 dim(okada_chr) #8514610 
 okada_chr <- select(okada_chr, -c(BP))
+
+
+
+#calculate effect allele frequency 
+allcas <- okada_euro$No.RAcases * okada_euro$A1_freq_cases
+allcont <- okada_euro$No.controls *okada_euro$A1_freq_controls
+
+fin<- (allcas+allcont)/(okada_euro$No.RAcases + okada_euro$No.controls)
+
+okada_euro$a1_freq <- (allcas+allcont)/(okada_euro$No.RAcases + okada_euro$No.controls) 
+
+#---------save it
+
 prepare_munge(okada_chr, 
               rsID = 'SNPID',
               the_effect_allele = 'A1',
@@ -417,7 +441,6 @@ prepare_munge(okada_chr,
               the_SE = 'SE', 
               pvalue = 'P_of_allele_1',
               path =  'outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/01_qc_summary_stats/ra_eu_okada-2014_chr_bp.txt')
-
 
 
 
