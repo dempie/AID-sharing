@@ -86,7 +86,7 @@ sstats <- list()
 regions <- list()
 for(i in c('f1', 'f2', 'f3')){
   
-  sstats[[i]]<- fread(paste0('outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/03_estimation/summarystats_',i,'_.txt'), data.table = F)
+  sstats[[i]]<- fread(paste0('outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/03_gwas_estimation/summarystats_',i,'_.txt'), data.table = F)
   #run locus breaker on each of the factors summary stats
   regions[[i]] <- locus.breaker(res=sstats[[i]], p.label = 'P', chr.label = 'CHR', pos.label = 'BP')
   regions[[i]][, 'trait'] <- i 
