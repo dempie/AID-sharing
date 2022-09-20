@@ -155,11 +155,11 @@ append_chunk <- function(list_complete, n_factors ){
 #------ Assemble, what chunks are missing ---------------------------------------
 
 #there are 335 chunks in the folder, I decided this number in the job array
-chunks_1_335<- assemble_f(1:335, 'outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/03_gwas_estimation/P_value_gwas_estimation/chunks/', '_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_2.RDS' , 3)
+chunks_1_335<- assemble_f(1:335, 'outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/03_gwas_estimation/chunks/', '_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_2.RDS' , 3)
 
-# 331 chunks were found!
-#   4 chunks were NOT found!
-#   The missing chunks are the 12 - 131 - 203 - 250
+# 330 chunks were found!
+#   5 chunks were NOT found!
+#   The missing chunks are the  12 - 77 - 131 - 203 - 300
 
 
 
@@ -168,15 +168,16 @@ chunks_1_335<- assemble_f(1:335, 'outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma
 
 
 
-chunk_12 <- assemble_f(1:10, 'outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/03_gwas_estimation/P_value_gwas_estimation/missing_chunks/chunk_12/12_','_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_2.RDS', 3 )
-chunk_131 <- assemble_f(1:10, 'outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/03_gwas_estimation/P_value_gwas_estimation/missing_chunks/chunk_131/131_', '_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_2.RDS', 3 )
-chunk_203 <- assemble_f(1:10, 'outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/03_gwas_estimation/P_value_gwas_estimation/missing_chunks/chunk_203/203_', '_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_2.RDS', 3 )
-chunk_250 <- assemble_f(1:10, 'outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/03_gwas_estimation/P_value_gwas_estimation/missing_chunks/chunk_250/250_', '_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_2.RDS', 3 )
+chunk_12 <- assemble_f(1:10, 'outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/03_gwas_estimation/missing_chunks/chunk_12/12_','_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_2.RDS', 3 )
+chunk_77 <- assemble_f(1:10, 'outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/03_gwas_estimation/missing_chunks/chunk_77/77_','_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_2.RDS', 3 )
+chunk_131 <- assemble_f(1:10, 'outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/03_gwas_estimation/missing_chunks/chunk_131/131_', '_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_2.RDS', 3 )
+chunk_203 <- assemble_f(1:10, 'outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/03_gwas_estimation/missing_chunks/chunk_203/203_', '_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_2.RDS', 3 )
+chunk_300 <- assemble_f(1:10, 'outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/03_gwas_estimation/missing_chunks/chunk_300/300_', '_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_2.RDS', 3 )
 
 
 
 #put all the chunks together and save the output 
-all_chunks <- append_chunk(list(chunks_1_335, chunk_12, chunk_131, chunk_203, chunk_250), 3) #The number of unique SNPs in F123 is 3343158
+all_chunks <- append_chunk(list(chunks_1_335, chunk_12, chunk_131, chunk_203, chunk_300, chunk_77), 3) #The number of unique SNPs in F123 is 3343158
 
 saveRDS(all_chunks, 'outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/03_gwas_estimation/factors_summary_stats.RDS')
 
@@ -199,7 +200,7 @@ F2_plot <- F2_noNA[F2_noNA$Pval_Estimate<0.005,]
 
 #prepare F3 for plotting
 F3_noNA <- F3[(which(!is.na(F3$Pval_Estimate))),]
-dim(F2_noNA)
+dim(F3_noNA)
 F3_plot <- F3_noNA[F3_noNA$Pval_Estimate<0.005,]
 
 
