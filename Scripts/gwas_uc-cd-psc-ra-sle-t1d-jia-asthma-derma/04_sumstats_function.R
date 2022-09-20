@@ -305,7 +305,7 @@ calculate_prevalence <- function(path_of_csv){
   
   
   
-  return(sum(preva_csv_noNA$cases)/sum(preva_csv_noNA$controls))
+  return(sum(preva_csv_noNA$cases)/sum(preva_csv_noNA$controls+ preva_csv_noNA$cases))
 }
 
 
@@ -316,20 +316,20 @@ traits <- c('t1d','crohn', 'uc', 'psc', 'jia', 'sle', 'ra',  'asthma', 'derma')
 t1d_p <- calculate_prevalence('Prevalences/CSV_prevalences/t1d_chiou-2021.csv')
 crohn_p <- calculate_prevalence('Prevalences/CSV_prevalences/crohn_delange-2017.csv')
 uc_p <- calculate_prevalence('Prevalences/CSV_prevalences/uc_delange-2017.csv')
-psc_p <- 2871/12019
-jia_p <- 3305/9196
+psc_p <- 2871/(2871+12019)
+jia_p <- 3305/(3305+9196)
 sle_p <- calculate_prevalence('Prevalences/CSV_prevalences/sle_benthman-2015.csv')
 ra_p <- calculate_prevalence('Prevalences/CSV_prevalences/ra_okada-2014_only-eu.csv')
-asthma_p <- 64538/ 239321
+asthma_p <- 64538/ (329321+64538)
 derma_p <- calculate_prevalence('Prevalences/CSV_prevalences/derma_sliz-2021.csv')
 
 
 
 
-list(t1d_p=t1d_p, crohn_p=crohn_p, uc_p=uc_p, psc_p=psc_p, jia_p=jia_p, sle_p=sle_p, ra_p=ra_p, asthma_p=asthma_p, derma_p=derma_p)
+aaa<- list(t1d_p=t1d_p, crohn_p=crohn_p, uc_p=uc_p, psc_p=psc_p, jia_p=jia_p, sle_p=sle_p, ra_p=ra_p, asthma_p=asthma_p, derma_p=derma_p)
+saveRDS(aaa,'/project/aid_sharing/AID_sharing/outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/04_sumstat_outputs/case_controls_fraction_nic.RDS')
 
-
-
+aaa
 
 
 
