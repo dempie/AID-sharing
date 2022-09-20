@@ -20,7 +20,7 @@ The code (GitLab) for this GWAS is in brach uc-cd-psc-ra-sle-t1d-jia-asthm-derma
 All info about the summary statistics is in the excell.file in our Teams channel (AID_sharing) and soon uploaded here. 
           
           
-e) 2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/ is the SAME AS gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/, but we change the sample size of asthma as it was a mistake in GWAS catalog.
+e) 2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/ is the SAME AS gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/, but we change the sample size of asthma as it was a mistake in GWAS catalog. Moreover, the MAF from the GWAS was used when available. 
 it was a 3 factor GWAS with the following diseases: 
               ulcerative colitis, (de Lange et al. 2017)
               crohn's disease, (de Lange et al. 2017)
