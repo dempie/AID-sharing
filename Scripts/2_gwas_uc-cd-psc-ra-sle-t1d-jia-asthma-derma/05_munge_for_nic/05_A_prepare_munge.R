@@ -244,7 +244,7 @@ prepare_munge(ra,
               the_non_effect_allele = 'A2',
               pvalue = 'p',
               the_Beta = 'Beta',
-              the_SE = 'SEå',
+              the_SE = 'SE',
               path = 'outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_munge_for_nicola/ready_for_munge/ra_ready_for_munge_build37.txt'
 )
 
