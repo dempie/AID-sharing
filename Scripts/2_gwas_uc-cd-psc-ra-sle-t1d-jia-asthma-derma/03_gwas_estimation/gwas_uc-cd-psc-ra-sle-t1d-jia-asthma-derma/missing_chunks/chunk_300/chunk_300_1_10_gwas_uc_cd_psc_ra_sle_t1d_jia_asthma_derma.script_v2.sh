@@ -1,11 +1,11 @@
 #!/bin/bash
 
-#SBATCH --job-name=gwas_12
+#SBATCH --job-name=gwas_300
 #SBATCH --partition=cpuq
 #SBATCH --array=1-10
 #SBATCH --cpus-per-task=1
 #SBATCH --time=24:00:00
-#SBATCH --output=gwas_chunk_12_1-10-%A-%a.log
+#SBATCH --output=gwas_chunk_300_1-10-%A-%a.log
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=pietro.demela@fht.org
 #SBATCH --mem=32000
@@ -25,5 +25,5 @@ echo '----------------------------'
 
 module load R/4.1.0
 echo "My SLURM_ARRAY_TASK_ID: " $SLURM_ARRAY_TASK_ID 
-Rscript chunk_12_1_10_gwas_uc_cd_psc_ra_sle_t1d_jia_asthma_derma.script_v2.R $SLURM_ARRAY_TASK_ID
+Rscript chunk_300_1_10_gwas_uc_cd_psc_ra_sle_t1d_jia_asthma_derma.script_v2.R $SLURM_ARRAY_TASK_ID
 

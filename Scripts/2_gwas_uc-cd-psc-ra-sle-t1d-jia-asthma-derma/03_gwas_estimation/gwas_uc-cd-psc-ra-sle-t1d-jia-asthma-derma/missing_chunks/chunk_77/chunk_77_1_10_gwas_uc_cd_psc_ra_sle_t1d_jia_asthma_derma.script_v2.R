@@ -58,7 +58,7 @@ a>0.001'
 #dim(aid_sumstats) 3344158      24
 #how_many_chunks(aid_sumstats, 10000) #335
 
-chunk_to_use <- split_sum_stats(aid_sumstats, 10000, 250 )
+chunk_to_use <- split_sum_stats(aid_sumstats, 10000, 77 )
 chunk_to_use <- split_sum_stats(chunk_to_use, 1000, counter)
 
 output <- userGWAS(covstruc = ldsc_model, 
@@ -69,7 +69,7 @@ output <- userGWAS(covstruc = ldsc_model,
                    cores = 1)
 
 
-saveRDS(output, file.path('/project/aid_sharing/AID_sharing/outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/03_gwas_estimation/P_value_gwas_estimation/missing_chunks/chunk_250/', paste0('250_',counter, '_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_2.RDS')))
+saveRDS(output, file.path('/project/aid_sharing/AID_sharing/outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/03_gwas_estimation/missing_chunks/chunk_77/', paste0('77_',counter, '_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_2.RDS')))
 
 
 

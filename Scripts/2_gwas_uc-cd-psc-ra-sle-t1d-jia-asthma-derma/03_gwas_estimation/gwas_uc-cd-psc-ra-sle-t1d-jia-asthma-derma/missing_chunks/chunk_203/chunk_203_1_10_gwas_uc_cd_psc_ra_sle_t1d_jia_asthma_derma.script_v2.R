@@ -69,7 +69,7 @@ output <- userGWAS(covstruc = ldsc_model,
                    cores = 1)
 
 
-saveRDS(output, file.path('/project/aid_sharing/AID_sharing/outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/03_gwas_estimation/P_value_gwas_estimation/missing_chunks/chunk_203/', paste0('203_',counter, '_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_2.RDS')))
+saveRDS(output, file.path('/project/aid_sharing/AID_sharing/outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/03_gwas_estimation/missing_chunks/chunk_203/', paste0('203_',counter, '_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_2.RDS')))
 
 
 
