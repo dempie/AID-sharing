@@ -1,0 +1,32 @@
+
+
+
+
+
+python ldsc/mtag_munge.py \
+--sumstats /project/aid_sharing/AID_sharing/outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/03_gwas_estimation/summarystats_f1_.txt \
+--merge-alleles data/ldsc/w_hm3.snplist \
+--n-value 2714  \
+--keep-pval \
+--p P \
+--out /project/aid_sharing/AID_sharing/outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/munge_cellect/f1_munged.txt
+
+
+
+python ldsc/mtag_munge.py \
+--sumstats /project/aid_sharing/AID_sharing/outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/03_gwas_estimation/summarystats_f2_.txt \
+--merge-alleles data/ldsc/w_hm3.snplist \
+--n-value 3488  \
+--keep-pval \
+--p P \
+--out /project/aid_sharing/AID_sharing/outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/munge_cellect/f2_munged.txt
+
+
+
+python ldsc/mtag_munge.py \
+--sumstats /project/aid_sharing/AID_sharing/outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/03_gwas_estimation/summarystats_f3_.txt \
+--merge-alleles data/ldsc/w_hm3.snplist \
+--n-value 13004 \
+--keep-pval \
+--p P \
+--out /project/aid_sharing/AID_sharing/outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/munge_cellect/f3_munged.txt
