@@ -87,3 +87,64 @@ for(i in c(1:12)){
 
 
 saveRDS(output, 'outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_munge_for_nicola/removed_SNP/')
+
+
+
+
+
+### munge olny factors
+
+
+paths_f <- list('outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_munge_for_nicola/ready_for_munge/f1_ready_for_munge.txt',
+                'outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_munge_for_nicola/ready_for_munge/f2_ready_for_munge.txt',
+                'outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_munge_for_nicola/ready_for_munge/f3_ready_for_munge.txt'
+  
+)
+
+for(i in c(1:12)){
+  
+  output[[i]] <-  format_sumstats(
+    path= paths_f[[i]],
+    convert_ref_genome = 'GRCH37',
+    ref_genome ='GRCH37',
+    convert_small_p = F,
+    compute_z = FALSE,
+    force_new_z = FALSE,
+    compute_n = 0L,
+    convert_n_int = F,
+    analysis_trait = NULL,
+    INFO_filter = 0,
+    FRQ_filter = 0,
+    pos_se = T,   #importan for coloc
+    effect_columns_nonzero = T, #important for coloc 
+    N_std = 5,
+    N_dropNA = F,
+    rmv_chr = c("X", "Y", "MT"),
+    rmv_chrPrefix = TRUE,
+    on_ref_genome = TRUE,
+    strand_ambig_filter = FALSE,
+    allele_flip_check = TRUE,
+    allele_flip_drop = TRUE,
+    allele_flip_z = TRUE,
+    allele_flip_frq = TRUE,
+    bi_allelic_filter = TRUE,
+    snp_ids_are_rs_ids = TRUE,
+    remove_multi_rs_snp = T,     
+    frq_is_maf = TRUE,
+    sort_coordinates = TRUE,
+    nThread = 2,
+    save_path = paste0('outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_munge_for_nicola/munged/', c('f1', 'f2', 'f3')[i], '_munged_build37.txt' ),
+    write_vcf = FALSE,
+    tabix_index = FALSE,
+    return_data = FALSE,
+    return_format = "data.table",
+    ldsc_format = FALSE,
+    log_folder_ind = FALSE,
+    log_folder = 'outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_munge_for_nicola/log/',
+    log_mungesumstats_msgs = TRUE,
+    imputation_ind = FALSE,
+    force_new = FALSE,
+    mapping_file = sumstatsColHeaders
+  )
+  
+}
