@@ -292,7 +292,7 @@ lympho <- ggplot(a1, aes(x=V4, y=lympho ,fill=V4))+ geom_bar(stat='identity', wi
 mono <- ggplot(a1, aes(x=V4, y=monocyte, fill=V4))+ geom_bar(stat='identity', width=0.5) +ylim(-0.1,+0.4)+geom_hline(yintercept=0, color = "grey")+scale_fill_manual(values=brewer.pal(6,'Paired')[c(2,4,6)])+theme_classic()
 eos <- ggplot(a1, aes(x=V4, y=eosinophil, fill=V4))+ geom_bar(stat='identity', width=0.5)  +ylim(-0.1,+0.4)+geom_hline(yintercept=0, color = "grey")+theme_classic()+ scale_fill_manual(values=brewer.pal(6,'Paired')[c(2,4,6)])+theme_classic()
 
-pdf('outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_ldsc_factors/barplot_cell_counts.pdf', height = 10, width = 15)
+pdf('outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_ldsc_factors/barplot_cell_counts.pdf', height = 6, width = 15)
 ggarrange(lympho, mono, eos, ncol = 3, nrow = 1, labels = c('lymphocyte counts', 'monocyte counts', 'eosinohil counts'))
 dev.off()
 
