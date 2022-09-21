@@ -1,7 +1,7 @@
 library(data.table)
 library(dplyr)
 
-#----Supplementary table 1, table of genomic regions----------------------------
+#----Supplementary table 1, table of genomic regions all traits----------------------------
 loci_factors <- fread('outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/06_genomic_regions_all_traits_munged/loci_all_traits.txt', data.table = F) 
 head(loci_factors)
 
@@ -15,7 +15,24 @@ gen_reg <- loci_factors %>% rename('p-value'=P , Factor ='trait',  'genomic_regi
 colnames(gen_reg) <- toupper(colnames(gen_reg))
 
 #save
-fwrite(gen_reg, 'outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/tables/Supplementary_table_genomic_regions.csv', sep = ',', col.names = T, quote = F)
+fwrite(gen_reg, 'outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/tables/Supplementary_table_genomic_regions_all_traits.csv', sep = ',', col.names = T, quote = F)
+
+
+#----Supplementary table 1, table of genomic regions FACTORS -------------------
+loci_factors <- fread('outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/06_genomic_regions_all_traits_munged/factor.regions.txt', data.table = F) 
+head(loci_factors)
+
+#change name to the factor name
+loci_factors$trait[loci_factors$trait=='f1'] <- 'Fgut'
+loci_factors$trait[loci_factors$trait=='f2'] <- 'Faid'
+loci_factors$trait[loci_factors$trait=='f3'] <- 'Falrg'
+
+#rename the columns
+gen_reg <- loci_factors %>% rename('p-value'=P , Factor ='trait',  'genomic_region(chr_start_end)'= pan_locus_name, 'lead_SNP'=SNP, 'OTHA'=A2, 'REFA'=A1) %>% select(-c( pan_locus)) 
+colnames(gen_reg) <- toupper(colnames(gen_reg))
+
+#save
+fwrite(gen_reg, 'outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/tables/Supplementary_table_genomic_regions_factors.csv', sep = ',', col.names = T, quote = F)
 
 
 
