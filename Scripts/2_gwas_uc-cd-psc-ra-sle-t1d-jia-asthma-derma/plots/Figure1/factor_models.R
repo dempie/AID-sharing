@@ -162,7 +162,7 @@ semPaths(semPlotModel_GSEM(two_factor), what = 'path' ,
 dev.off()
 
 pdf('outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/figure1/two_factor_model_fit.pdf', height = 16, width = 16)
-grid.table(signif(two_factor$modelfit),2)
+grid.table(signif(two_factor$modelfit,2))
 dev.off()
 
 #------ one factro model -------------------------------------------------------
@@ -204,7 +204,7 @@ semPaths(semPlotModel_GSEM(one_factor), what = 'path' ,
 dev.off()
 
 pdf('outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/figure1/one_factor_model_fit.pdf', height = 16, width = 16)
-grid.table(signif(one_factor$modelfit),2)
+grid.table(signif(one_factor$modelfit,2))
 dev.off()
 
 
