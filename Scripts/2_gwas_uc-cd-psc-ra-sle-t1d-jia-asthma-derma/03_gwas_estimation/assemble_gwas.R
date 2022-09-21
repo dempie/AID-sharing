@@ -5,7 +5,6 @@
 #https://github.com/GenomicSEM/GenomicSEM/wiki/5.-User-Specified-Models-with-SNP-Effects
 
 library(data.table)
-library(qqman)
 library(dplyr)
 
 #----- fucntion for loading chunks and assembly---------------------------------
@@ -159,7 +158,7 @@ chunks_1_335<- assemble_f(1:335, 'outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma
 
 # 330 chunks were found!
 #   5 chunks were NOT found!
-#   The missing chunks are the  12 - 77 - 131 - 203 - 300
+#   The missing chunks are the 12 - 131 - 196 - 203 - 300
 
 
 
@@ -169,7 +168,7 @@ chunks_1_335<- assemble_f(1:335, 'outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma
 
 
 chunk_12 <- assemble_f(1:10, 'outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/03_gwas_estimation/missing_chunks/chunk_12/12_','_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_2.RDS', 3 )
-chunk_77 <- assemble_f(1:10, 'outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/03_gwas_estimation/missing_chunks/chunk_77/77_','_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_2.RDS', 3 )
+chunk_196 <- assemble_f(1:10, 'outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/03_gwas_estimation/missing_chunks/chunk_196/196_','_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_2.RDS', 3 )
 chunk_131 <- assemble_f(1:10, 'outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/03_gwas_estimation/missing_chunks/chunk_131/131_', '_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_2.RDS', 3 )
 chunk_203 <- assemble_f(1:10, 'outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/03_gwas_estimation/missing_chunks/chunk_203/203_', '_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_2.RDS', 3 )
 chunk_300 <- assemble_f(1:10, 'outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/03_gwas_estimation/missing_chunks/chunk_300/300_', '_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma_2.RDS', 3 )
@@ -177,7 +176,7 @@ chunk_300 <- assemble_f(1:10, 'outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-de
 
 
 #put all the chunks together and save the output 
-all_chunks <- append_chunk(list(chunks_1_335, chunk_12, chunk_131, chunk_203, chunk_300, chunk_77), 3) #The number of unique SNPs in F123 is 3343158
+all_chunks <- append_chunk(list(chunks_1_335, chunk_12, chunk_131, chunk_203, chunk_300, chunk_196), 3) #The number of unique SNPs in F123 is 3343158
 
 saveRDS(all_chunks, 'outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/03_gwas_estimation/factors_summary_stats.RDS')
 
@@ -191,17 +190,17 @@ F3 <- all_chunks$factor3
 
 F1_noNA <- F1[(which(!is.na(F1$Pval_Estimate))),]
 dim(F1_noNA)
-F1_plot <- F1_noNA[F1_noNA$Pval_Estimate<0.005,]
+
 
 #prepare F2 for plotting
 F2_noNA <- F2[(which(!is.na(F2$Pval_Estimate))),]
 dim(F2_noNA)
-F2_plot <- F2_noNA[F2_noNA$Pval_Estimate<0.005,]
+
 
 #prepare F3 for plotting
 F3_noNA <- F3[(which(!is.na(F3$Pval_Estimate))),]
 dim(F3_noNA)
-F3_plot <- F3_noNA[F3_noNA$Pval_Estimate<0.005,]
+
 
 
 #save the factor gwas individually for fuma 
