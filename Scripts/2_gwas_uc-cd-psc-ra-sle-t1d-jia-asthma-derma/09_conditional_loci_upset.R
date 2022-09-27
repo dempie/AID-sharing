@@ -7,25 +7,10 @@ library(qgraph)
 loci.table <- fread('outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/09_loci_definitions_Nicola/loci_definitions/final_locus_table.tsv', data.table = F) #take the original factor loci list
 loci.table$final.locus=paste0(loci.table$Chr,":",loci.table$start,"-",loci.table$end,"_",loci.table$sub_locus)
 
-
-
-# for(i in 1:3){
-#       tt <- c('f1', 'f2', 'f3')[i]
-#       actf <- loci_table[loci_table$trait==tt,]
-# 
-#      actf[actf$final.locus %in% unique(actf$final.locus[ duplicated(actf$final.locus)]), ]
-# }
-
-
-
-
-
-
-
 #----- make an upset plot-------------------------------------------------------
 q <- make_comb_mat(list(f1=loci.table[loci.table$trait=='f1',]$final.locus, f2=loci.table[loci.table$trait=='f2',]$final.locus, f3=loci.table[loci.table$trait=='f3',]$final.locus), mode = 'distinct')
 
-pdf(width = 10, height = 4, file = 'outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/09_loci_definitions_Nicola/upset_plot_final_loci_nicola.pdf')
+pdf(width = 9, height = 5, file = 'outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/09_loci_definitions_Nicola/upset_plot_final_loci_nicola.pdf')
 UpSet(q, set_order = c("f1", "f2", "f3"), 
       comb_order = c(5,6,7,2,3,4,1),
       comb_col = c(brewer.pal(8, 'Set2')[c(7,6,6,6)],brewer.pal(12, 'Paired')[c(2,4,6)]),
@@ -41,7 +26,6 @@ coloc_tab <-  fread('outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/09_loc
 coloc_tab$final.locus=paste0(coloc_tab$Chr,":",coloc_tab$start,"-",coloc_tab$end,"_",coloc_tab$sub_locus)
 
 topl_205 <- coloc_tab[coloc_tab$pan.locus==205, c('trait', 'sub_locus', 'SNP', 'final.locus')]
-
 
 
 pdf('outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/09_loci_definitions_Nicola/qgraph_locus_205_factors.pdf', width = 16, height = 16)
