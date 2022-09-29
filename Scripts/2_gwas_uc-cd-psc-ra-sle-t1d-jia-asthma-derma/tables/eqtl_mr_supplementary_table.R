@@ -23,7 +23,7 @@ for(i in mr_list){
 
 
 mr_res <- Reduce(rbind, mr_ok)
-
+mr_res <- mr_res[mr_res$trait %in% c('f1', 'f2', 'f3'),]
 
 #add the locus name to the table
 loci <- fread('/project/aid_sharing/AID_sharing/outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/09_loci_definitions_Nicola/loci_definitions/final_locus_table.tsv', data.table = F)
@@ -87,52 +87,41 @@ head(qtl_final)
 fwrite(qtl_final,'/project/aid_sharing/AID_sharing/outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/tables/Supplementary_table_eQTL_results.csv', sep = ',', col.names = T, quote = F)
 
 
-# 
-# final_table<- do.call(rbind, chunk_ok)
-# only_f <- final_table[final_table$V9 %in% c('f1', 'f2', 'f3'),]
-# 
-# only_f_H4 <- only_f[as.numeric(only_f$V6)>0.90, ]
-# 
-# unique(only_f_H4[only_f_H4$V9=='f1',]$V10)
-# 
-# f1_h4<- only_f_H4[only_f_H4$V9=='f1',]
-# 
-# f1_h4[duplicated(f1_h4$V10), ]
-# 
-# length(unique(f1_h4$V10))
-# 
-# 
-# rownames(f1_h4) <- NULL
-# dim(f1_h4[, c(9,10,11)][!duplicated(f1_h4[, c(9,10,11)]),])
-# 
-# f1_h4
-# 
-# 
-# f2_h4<- only_f_H4[only_f_H4$V9=='f2',]
-# 
-# dim(f2_h4)
-# 
-# dim(f1_h4[!duplicated(f1_h4[, c(9,10,11)]),])
-# 
-# 
-# f3_h4<- only_f_H4[only_f_H4$V9=='f3',]
-# 
-# 
-# 
-# dim(f2_h4[!duplicated(f2_h4[, c(9,10,11)]),])
-# dim(f3_h4[!duplicated(f3_h4[, c(9,10,11)]),])
-# 
-# 
-# dim(final_table[round(as.numeric(final_table$V6) ,2)>0.9 & final_table$V9%in%c("f1","f2","f3"),])
-# 
-# 
-# factors <- final_table[round(as.numeric(final_table$V6) ,2)>0.9 & final_table$V9%in%c("f1","f2","f3"),]
-# 
-# dim(factors[factors$V9=='f1',][!duplicated(factors[factors$V9=='f1', c(9,10,11)]),])
-# dim(factors[factors$V9=='f2',][!duplicated(factors[factors$V9=='f2', c(9,10,11)]),])
-# dim(factors[factors$V9=='f3',][!duplicated(factors[factors$V9=='f3', c(9,10,11)]),])
-# 
-# 
+#---- colocalization table -----------------------------------------------------
+
+posterior <- fread('/project/aid_sharing/AID_sharing/outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/09_loci_definitions_Nicola/loci_definitions/colocalization.table.all.tsv', data.table = F)
+regions <- fread('/project/aid_sharing/AID_sharing/outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/06_genomic_regions_all_traits_munged/loci_all_traits.txt')
+
+posterior$genomic_region <- rep('-', nrow(posterior))
+
+for(i in 1:nrow(posterior)){
+  
+  posterior[i,]$genomic_region <- unique(regions[regions$pan_locus== posterior[i,]$locus, ]$pan_locus_name)
+
+  }
+
+
+final_post <- posterior %>% select(-c('locus')) %>% rename('genomic_region(CHR_START_END)'=genomic_region, 'trait_1'=t1, 'trait_2'=t2, 'leadSNP_locus_trait_1'=hit1, 'leadSNP_locus_trait_2'=hit2)
+
+final_post$trait_1[final_post$trait_1=='f1'] <- 'Fgut'
+final_post$trait_2[final_post$trait_2=='f1'] <- 'Fgut'
+
+final_post$trait_1[final_post$trait_1=='f2'] <- 'Faid'
+final_post$trait_2[final_post$trait_2=='f2'] <- 'Faid'
+
+final_post$trait_1[final_post$trait_1=='f3'] <- 'Falrg'
+final_post$trait_2[final_post$trait_2=='f3'] <- 'Falrg'
+
+final_post$trait_1[final_post$trait_1=='derma'] <- 'eczema'
+final_post$trait_2[final_post$trait_2=='derma'] <- 'eczema'
+
+
+fwrite(final_post,'/project/aid_sharing/AID_sharing/outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/tables/Supplementary_table_coloc_all_loci_results.csv', sep = ',', col.names = T, quote = F)
+
+
+
+
+
 
 
 
