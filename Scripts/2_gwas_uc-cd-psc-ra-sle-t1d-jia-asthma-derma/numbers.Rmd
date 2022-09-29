@@ -20,10 +20,8 @@ table(gen_reg$trait)
 ```{r Numbers of factor specific loci conditional}
 library(data.table)
 
-loci.table <- fread('/project/aid_sharing/AID_sharing/outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways_conditional/loci_table_names_nicola_genes.csv', data.table = F) 
-no_hla <- fread( '/project/aid_sharing/AID_sharing/outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/08_genes_and_pathways_conditional/loci_table_names_nicola_genes_no_HLA.csv', data.table=F)
-
-
+loci.table <- fread('/project/aid_sharing/AID_sharing/outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/10_genes_and_pathways/loci_table_names_nicola_genes.csv', data.table = F) 
+loci.table$final.locus=paste0(loci.table$Chr,":",loci.table$start,"-",loci.table$end,"_",loci.table$sub_locus)
 
 cat(paste0('Total number of loci identified: ', nrow(loci.table), '\n',
        'Fgut unique loci: ', length(unique(loci.table[loci.table$trait=='f1',]$final.locus)), '\n',
@@ -39,18 +37,18 @@ cat(paste0('Total number of loci identified: ', nrow(loci.table), '\n',
                                                         
       'Number of loci showing multiple independent signals for fgut: ', #f1
        length(unique(loci.table[loci.table$trait=='f1',][duplicated(loci.table[loci.table$trait=='f1',]$final.locus),]$final.locus)), '\n',
-      'Number of loci showing multiple independent signals for fgut NOT in HLA: ', 
-       length(unique(no_hla[no_hla$trait=='f1',][duplicated(no_hla[no_hla$trait=='f1',]$final.locus),]$final.locus)), '\n', '\n',
+      #'Number of loci showing multiple independent signals for fgut NOT in HLA: ', 
+       #length(unique(no_hla[no_hla$trait=='f1',][duplicated(no_hla[no_hla$trait=='f1',]$final.locus),]$final.locus)), '\n', '\n',
       
       'Number of loci showing multiple independent signals for faid: ', #f1
        length(unique(loci.table[loci.table$trait=='f2',][duplicated(loci.table[loci.table$trait=='f2',]$final.locus),]$final.locus)) ,'\n',
-      'Number of loci showing multiple independent signals for faid NOT in HLA: ', 
-       length(unique(no_hla[no_hla$trait=='f2',][duplicated(no_hla[no_hla$trait=='f2',]$final.locus),]$final.locus)), '\n', '\n',
+      #'Number of loci showing multiple independent signals for faid NOT in HLA: ', 
+      # length(unique(no_hla[no_hla$trait=='f2',][duplicated(no_hla[no_hla$trait=='f2',]$final.locus),]$final.locus)), '\n', '\n',
       
         'Number of loci showing multiple independent signals for falrg: ', #f1
-       length(unique(loci.table[loci.table$trait=='f3',][duplicated(loci.table[loci.table$trait=='f3',]$final.locus),]$final.locus)) ,'\n',
-      'Number of loci showing multiple independent signals for falrg NOT in HLA: ', 
-       length(unique(no_hla[no_hla$trait=='f3',][duplicated(no_hla[no_hla$trait=='f3',]$final.locus),]$final.locus)), '\n'
+       length(unique(loci.table[loci.table$trait=='f3',][duplicated(loci.table[loci.table$trait=='f3',]$final.locus),]$final.locus)) ,'\n'
+      #'Number of loci showing multiple independent signals for falrg NOT in HLA: ', 
+      # length(unique(no_hla[no_hla$trait=='f3',][duplicated(no_hla[no_hla$trait=='f3',]$final.locus),]$final.locus)), '\n'
 
     
 
@@ -58,25 +56,67 @@ cat(paste0('Total number of loci identified: ', nrow(loci.table), '\n',
 
 ```
 
-```{r eqtl numbers}
-eQTL <-fread('/project/aid_sharing/AID_sharing/outputs/gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/supplementary/supplementary_tables/Supplementary_table_4_eQTL_results.csv')
 
-cat(paste0( 'Number of total eQTLs PP4>0.90:  ', nrow(unique(eQTL[round(eQTL$PP.H4.ABF,2)>0.90,])), '\n', 
-            'Number of total eQTLs PP4>0.90 for Fgut:  ', nrow(unique(eQTL[round(eQTL$PP.H4.ABF,2)>0.90 & eQTL$TRAIT_1=='Fgut',])), '\n',
-            'Number of total eQTLs PP4>0.90 for Faid:  ', nrow(unique(eQTL[round(eQTL$PP.H4.ABF,2)>0.90 & eQTL$TRAIT_1=='Faid',])), '\n',
-            'Number of total eQTLs PP4>0.90 for Falrg:  ', nrow(unique(eQTL[round(eQTL$PP.H4.ABF,2)>0.90 & eQTL$TRAIT_1=='Falrg',])), '\n', '\n',
+
+
+
+```{r eqtl numbers}
+
+library(data.table)
+eQTL <-fread('/project/aid_sharing/AID_sharing/outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/tables/Supplementary_table_eQTL_results.csv')
+
+cat(paste0( 'Number of total eQTLs PP4>0.90:  ', nrow((eQTL[round(eQTL$PP.H4.ABF,2)>0.90,])), '\n', 
+            'Number of total eQTLs PP4>0.90 (UNIQUE COMBINATION):  ', nrow((unique(na.omit(eQTL[round(eQTL$PP.H4.ABF,2)>0.90, c('TRAIT_1', 'TRAIT_2', 'CELL_TYPE')])))), '\n', 
+            
             
             'Number of genes with eQTL: ' ,length(unique(eQTL[eQTL$PP.H4.ABF>0.90 ,]$TRAIT_2)), '\n', 
-            'Number of genes with eQTL for Fgut: ' ,length(unique(eQTL[round(eQTL$PP.H4.ABF,2)>0.90 & eQTL$TRAIT_1=='Fgut' ,]$TRAIT_2)), '\n',
-            'Number of genes with eQTL for Faid: ' ,length(unique(eQTL[round(eQTL$PP.H4.ABF,2)>0.90 & eQTL$TRAIT_1=='Faid' ,]$TRAIT_2)), '\n',
-            'Number of genes with eQTL for Falrg: ' ,length(unique(eQTL[round(eQTL$PP.H4.ABF,2)>0.90 & eQTL$TRAIT_1=='Falrg' ,]$TRAIT_2))
+       
+            
+            'Number of loci from factors colocalizing:  ', length(unique(eQTL[round(eQTL$PP.H4.ABF,2)>0.90,]$HIT_TRAIT_1))
                                                                 
 ))
 
 
 
+
 ```
 
+
+
+
+```{r}
+library(data.table)
+mr <- fread('/project/aid_sharing/AID_sharing/outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/tables/Supplementary_table_MR_results.csv', data.table = F)
+mr_f <- mr[mr$TRAIT %in% c('Fgut', 'Falrg', 'Faid'),]
+
+mr_f <- mr_f[mr_f$PVAL<0.05,]
+count <- unique(mr_f[, c('TRAIT', 'CELL_TYPE', 'GENE')])
+
+
+cat(paste0(    'Number of unique significant MR results :', nrow(unique(na.omit(mr_f[, c('TRAIT', 'CELL_TYPE', 'GENE')]))), '\n',
+               
+               
+               'Number of rows in MR results:', nrow(unique(mr_f_all)), '\n',
+               'Number of significant MR results:', nrow(mr_f), '\n',
+                
+               'Number of genes with significant MR pvalue: ', length(unique(mr_f$GENE)), '\n', 
+               'Number of MR results for Fgut: ', nrow(unique(na.omit(mr_f[mr_f$TRAIT=='Fgut',]))), '\n',
+               'Number of MR results for Faid: ', nrow(unique(na.omit(mr_f[mr_f$TRAIT=='Faid',]))), '\n',
+              'Number of MR results for Falrg: ', nrow(unique(na.omit(mr_f[mr_f$TRAIT=='Falrg',]))), '\n',
+              
+              
+              'Number of loci from factors that produced a significant MR association:  ', length(na.omit(unique(mr_f$`LOCUS_NAME_(CHR:START_END)`))), '\n', '\n',
+              
+              'Important Note: the number of combinations of cell_type-gene-factor are 117 in MR and 118 in eQTL because IL6ST was not significant for MR and only one colocalization                for IL6ST existed (Faid   IL6ST     CD4NC).' 
+              
+              
+                                                                
+))
+
+
+
+
+```
 
 
 
