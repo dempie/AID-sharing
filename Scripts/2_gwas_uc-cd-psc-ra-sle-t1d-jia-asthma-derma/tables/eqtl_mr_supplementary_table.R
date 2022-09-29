@@ -46,6 +46,9 @@ mr_final$trait[mr_final$trait=='asthma'] <- 'eczema'
 
 names(mr_final) <- toupper(names(mr_final))
 
+#remove duplicated rows for multiple locus associated with the same eQTL
+mr_final <- mr_final[!is.na(mr_final$B),]
+
 #save
 fwrite(mr_final,'/project/aid_sharing/AID_sharing/outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/tables/Supplementary_table_MR_results.csv', sep = ',', col.names = T, quote = F)
 
