@@ -42,6 +42,9 @@ for(i in 1:nrow(mat)){
   rownames(mat)[i] <- strsplit(rownames(mat)[i],' ')[[1]][1]
 }
 
+colnames(mat)
+mat<- mat[, c('CD4NC', 'CD4ET', 'CD4SOX4', 'CD8NC', 'CD8ET', 'CD8S100B','BIN', 'BMem', 'Plasma', 'MonoC', 'MonoNC', 'DC' ,'NK', 'NKR')]
+
 pdf('outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/plots/figure5/mr_heatmap.pdf', height = 30, width=8)
 Heatmap(mat, 
         #column_title = "Genes and pathways KEGG",
