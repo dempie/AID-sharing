@@ -32,3 +32,109 @@ colnames(loci) <- toupper(colnames(loci))
 #save
 fwrite(loci,'outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/tables/Supplementary_table_conditional_loci.csv', sep = ',', col.names = T, quote = F)
 
+#------- all conditional loci --------------------------------------------------
+
+all_loci <-  fread('outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/09_loci_definitions_Nicola/loci_definitions/final_locus_table.tsv', data.table = F) 
+
+all_loci$final.locus=paste0(all_loci$Chr,":",all_loci$start,"-",all_loci$end,"_",all_loci$sub_locus)
+
+all_loci <- select(all_loci, -c('pan.locus', 'sub_locus')) %>% rename('LOCUS_NAME(CHR_START_END)'= final.locus)
+
+# head(all_loci)
+# temp <- all_loci[, c('Chr',  'start', 'end', 'SNP', 'bp' ,'refA', 'othA', 'trait', 'p', 'pJ', 'b', 'LD_r', 'final.locus', 'pan.locus')]
+# temp[is.na(temp$othA),]
+# all_loci[all_loci$pan.locus==238,]
+
+colnames(all_loci) <- toupper(colnames(all_loci))
+
+
+all_loci$TRAIT[all_loci$TRAIT=='f1'] <- 'Fgut'
+all_loci$TRAIT[all_loci$TRAIT=='f2'] <- 'Faid'
+all_loci$TRAIT[all_loci$TRAIT=='f3'] <- 'Falrg'
+
+
+head(all_loci)
+table(all_loci$TRAIT)
+
+
+
+
+
+#use all_genomic regions table to add the alternate allele
+
+
+asthma <- fread('outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_munge_for_nicola/munged/asthma_munged_build37.txt')
+sle <- fread('outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_munge_for_nicola/munged/sle_munged_build37.txt')
+uc <- fread('outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_munge_for_nicola/munged/uc_munged_build37.txt')
+cd <- fread('outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_munge_for_nicola/munged/cd_munged_build37.txt')
+t1d <- fread('outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_munge_for_nicola/munged/t1d_munged_build37.txt')
+
+
+
+
+
+nam <- c('asthma', 'sle', 'uc', 'cd', 't1d')
+files <- list(asthma, sle, uc, cd, t1d)
+final <- list()
+
+#cycle through the gwas 
+for(i in 1:5){
+ #select the active gwas select the nas
+       
+       act <- files[[i]] 
+       qq <- act[act$SNP %in% temp[is.na(temp$othA) & temp$trait==nam[i],]$SNP,]
+       ttmpo <- temp[is.na(temp$othA) & temp$trait==nam[i],]
+      
+              jj<- inner_join(qq, ttmpo, 'SNP')
+      
+              for( k in 1:nrow(jj)){
+                
+                if(jj$refA[k]==jj$A1[k]){ 
+                  jj$othA[k] = jj$A2[k] 
+                    
+                    } else if( jj$refA[k]==jj$A2[k] ) {
+                      jj$othA[k] = jj$A1[k] 
+                    }
+                
+              }
+              
+        final[[nam[i]]] <- jj[, c('SNP', 'CHR', 'trait', 'refA', 'othA')]     
+      
+
+}
+
+
+ref<-do.call(rbind, final)
+
+
+for(k in 1:nrow(all_loci[is.na(all_loci$OTHA), ])){
+  trait <-  all_loci[is.na(all_loci$OTHA), ][i,]$TRAIT
+  snp <- all_loci[is.na(all_loci$OTHA), ][i,]$SNP
+   all_loci[is.na(all_loci$OTHA), ][i,]$OTHA <- ref[ref$trait==trait & ref$SNP==snp, ]$othA
+   
+}
+
+
+
+all_loci_ok <- all_loci
+fwrite(all_loci_ok , 'outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/tables/Supplementary_all_conditional_loci.csv', sep = ',', col.names = T, quote = F)
+
+
+
+# head(all_loci_ok)
+# 
+# 
+# table(all_loci$othA == all_loci_ok$OTHA)
+# 
+# 
+# 
+# all_loci
+# table(is.na(all_loci$othA == all_loci_ok$OTHA))
+
+
+
+
+
+
+
+
