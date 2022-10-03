@@ -96,7 +96,7 @@ count <- unique(mr_f[, c('TRAIT', 'CELL_TYPE', 'GENE')])
 cat(paste0(    'Number of unique significant MR results :', nrow(unique(na.omit(mr_f[, c('TRAIT', 'CELL_TYPE', 'GENE')]))), '\n',
                
                
-               'Number of rows in MR results:', nrow(unique(mr_f_all)), '\n',
+               #'Number of rows in MR results:', nrow(unique(mr_f_all)), '\n',
                'Number of significant MR results:', nrow(mr_f), '\n',
                 
                'Number of genes with significant MR pvalue: ', length(unique(mr_f$GENE)), '\n', 
