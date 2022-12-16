@@ -1,0 +1,225 @@
+---
+title: "01a_prepare_summary_stats"
+output: html_document
+author: 'Pietro Demela'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir =  "/project/aid_sharing/AID_sharing") #set up the project directory
+```
+
+
+```{r libraries}
+library(data.table)
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+```
+
+
+## Write a function for preparing the summary stats
+
+Function to prepare the GWAS for the munging depends on dplyr, tidyr, ggplot and data.table
+The function changes the name of the columns as required by the genomicSEM package and saves the files in the provided path (if the path is provided)
+
+```{r prepare_munge}
+
+prepare_munge <- function(sum_stats, rsID=NA, the_effect_allele, the_non_effect_allele, pvalue, the_OR=NA, the_Beta=NA, the_SE=NA, the_chr=NA, the_bp=NA, to_remove=NA, path = NA, the_MAF=NA, qc=T, plots=T){
+  
+  #an error if arguments are not provided 
+  if (missing(sum_stats) | missing(the_effect_allele) | missing(the_non_effect_allele) | missing(pvalue) ) {
+    
+      stop( 'At least one argument is missing')
+    
+  } else {
+    
+        require(dplyr)
+        require(data.table)
+        sum_stats <- sum_stats  %>% rename(c(effect_allele = all_of(the_effect_allele), other_allele = all_of(the_non_effect_allele), p = all_of(pvalue) ))
+        
+        sum_stats$p <- as.numeric(sum_stats$p)
+        
+        
+        #conditional options 
+        #remove columns
+        if(!is.na(to_remove[1])){sum_stats <- select(sum_stats,-(all_of(to_remove)))} 
+        
+        #rename the SNP column 
+         if(!is.na(rsID)){ 
+              sum_stats <- rename(sum_stats, SNP=all_of(rsID))
+              sum_stats$SNP <- tolower(sum_stats$SNP)
+         }
+        
+        #rename SE column
+        if(!is.na(the_SE)){ 
+              sum_stats <- rename(sum_stats, SE=all_of(the_SE))
+              sum_stats$SE <- as.numeric(sum_stats$SE)
+        }
+        
+        #rename the effect column
+        if(!is.na(the_OR)){
+              sum_stats <- rename(sum_stats, OR=all_of(the_OR))
+              sum_stats$OR <- as.numeric(sum_stats$OR)
+        }
+        
+        if (!is.na(the_Beta)){
+              sum_stats <- rename(sum_stats, Beta=all_of(the_Beta))
+              sum_stats$Beta <- as.numeric(sum_stats$Beta)
+        } 
+        
+        if (!is.na(the_MAF)){
+              sum_stats <- rename(sum_stats, MAF=all_of(the_MAF))
+              sum_stats$MAF <- as.numeric(sum_stats$MAF)
+        } 
+        
+        if(is.na(the_OR) & is.na(the_Beta) ) {stop('Effect column not specified ')}
+        
+        
+        #rename the CHR column
+        if(!is.na(the_chr)){ sum_stats <-  rename(sum_stats, CHR=all_of(the_chr))}
+        
+        #rename the BP column
+        if(!is.na(the_bp)){ sum_stats <- rename(sum_stats, BP=all_of(the_bp))}
+        
+        
+  
+  #qc if specified
+  if(qc==T){
+        
+        require(stringr)
+        
+        #compute number of SNPs
+        n_SNPs <- nrow(sum_stats)
+        
+        #compute the number of unique rsIDs 
+        sum_stats_rsIDs<- sum_stats[grep('rs',sum_stats$SNP),]
+        n_rsIDs <- length(unique(sum_stats_rsIDs$SNP))
+        
+        SNP_per_chr <- vector(mode='integer', length = 22)
+        rsID_per_chr <-  vector(mode='integer', length = 22)
+        dupl_per_chr <- vector(mode='integer', length = 22)
+        
+        #compute the number of unique rsIDs and SNPs per chromosome 
+        for(i in c(1:22)){
+          
+              SNP_per_chr[i] <- nrow(sum_stats[sum_stats$CHR== i ,]) 
+              rsID_per_chr[i] <- sum(str_starts(sum_stats[sum_stats$CHR== i,]$SNP, 'rs'))
+              
+              #compute the duplicated rows and SNP
+              dupl_per_chr[i] <- length(unique(sum_stats[sum_stats$CHR== i ,]$SNP[duplicated(sum_stats[sum_stats$CHR== i ,]$SNP)]))
+              
+          
+        }
+        
+        qc_metrics_SNPs <- cbind(Chromosome = c(1:22) ,n_SNPs = SNP_per_chr, no_rsID= c(SNP_per_chr - rsID_per_chr))
+        dupl_per_chr <- cbind(Chromosome = c(1:22) ,n_SNPs =  dupl_per_chr )
+        
+        
+        #print info
+        cat(paste0( 'Total number of SNP  ' , n_SNPs , '\n', 
+                    'Total number of SNP with rsID  ', n_rsIDs, '\n',
+                    'There are ',sum(dupl_per_chr), ' duplicated SNPs', '\n' )
+        )
+        
+        
+        #issue warning for rsIDs
+        if(sum(qc_metrics_SNPs[,3])!=0){ warning('There are SNPs without rsIDs in chr1:22')}
+        
+        #warninng for chr Y and X
+        if(length(unique(sum_stats$CHR))>=22){warning('There are more than 22 Chromosomes')}
+        
+        #check if all chromosomes are there
+        if(mean(1:22 %in% unique(sum_stats$CHR))!=1) {
+          
+            warning ('Some chromosomes are missing')
+          
+           } else {
+          
+            cat(paste0( 'All 22 chromosomes are present', '\n'))
+          
+        }
+        
+        #plot number of SNP per chr
+        if(plots==T){
+          
+              require(tidyr)
+              require(ggplot2)
+              
+              plot <- ggplot(pivot_longer(as.data.frame(qc_metrics_SNPs),cols = c(n_SNPs, no_rsID)), aes(x=Chromosome, y=value, fill=name)) + 
+                geom_bar(position="stack", stat="identity" )+scale_fill_manual(values = c("grey80", "red")) +
+                geom_text(aes(label=value),position= position_stack(vjust = 0.5, reverse=F))+
+                labs(y = 'Number of SNP', x = 'Chromosome')+
+                theme(legend.position = "top", panel.background = element_blank(), axis.line = element_line(colour = "black")) +
+               ggtitle('Number of rsID and SNP without rsID for chr1:22')
+          
+              print(plot)
+        }
+        
+        
+      }
+  
+        
+          #save the file if a path is provided
+          if(is.na(path)){
+                invisible(sum_stats)
+            
+          } else {
+            
+                fwrite(sum_stats, path, sep = '\t', col.names = T, row.names = F, quote = F)
+                invisible(sum_stats)
+                
+          }
+  }
+  
+}
+
+```
+
+
+## Read and prepare the summary stats
+
+### SLE GWAS
+```{r SLE GWAS}
+sle <- fread('Summary_Stats/bentham-2015_sle_build37_26502338_sle_efo0002690_1_gwas.sumstats.tsv.gz', data.table=F)
+
+
+# the same sumstats but with betas and SE
+head(sle)
+sle <- prepare_munge(sle,
+              rsID = 'rsid', 
+              the_effect_allele = 'effect_allele', #manually confirmed on the paper 
+              the_non_effect_allele = 'other_allele', 
+              pvalue = 'p',
+              the_Beta= 'beta', 
+              the_SE = 'se',
+              the_chr = 'chrom', 
+              the_bp = 'pos',
+              to_remove = c('OR', 'OR_lower', 'OR_upper'),
+              path =  'outputs/rev_1/01_prepare/ready_format/sle_beta_bentham-2015.txt') 
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
