@@ -4,15 +4,21 @@ output:
   html_document: 
     toc: yes
 author: 'Pietro Demela'
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = TRUE,
+	warning = TRUE
+)
 knitr::opts_knit$set(root.dir =  "/project/aid_sharing/AID_sharing") #set up the project directory
 ```
 
 
-```{r libraries}
+```{r libraries, message=TRUE, warning=TRUE, paged.print=TRUE}
 library(data.table)
 library(tidyr)
 library(dplyr)
@@ -27,9 +33,9 @@ library(stringr)
 Function to prepare the GWAS for the munging depends on dplyr, tidyr, ggplot and data.table
 The function changes the name of the columns as required by the genomicSEM package and saves the files in the provided path (if the path is provided)
 
-```{r prepare_munge}
+```{r prepare_munge, message=TRUE, warning=TRUE, paged.print=TRUE}
 
-prepare_munge <- function(sum_stats, rsID=NA, the_effect_allele, the_non_effect_allele, pvalue, the_OR=NA, the_Beta=NA, the_SE=NA, the_chr=NA, the_bp=NA, to_remove=NA, path = NA, the_MAF=NA, qc=T, plots=T){
+prepare_munge <- function(sum_stats, rsID=NA, the_effect_allele, the_non_effect_allele, pvalue, the_OR=NA, the_Beta=NA, the_SE=NA, the_chr=NA, the_bp=NA, to_remove=NA, path = NA, the_MAF=NA, qc=T, plots=T, remove_X_Y_MT=T){
   
   #an error if arguments are not provided 
   if (missing(sum_stats) | missing(the_effect_allele) | missing(the_non_effect_allele) | missing(pvalue) ) {
@@ -161,8 +167,18 @@ prepare_munge <- function(sum_stats, rsID=NA, the_effect_allele, the_non_effect_
         }
         
         
-      }
-  
+      }#end of qc
+        
+        
+          #remove chr X Y and MT, keep only 1:22
+          if(remove_X_Y_MT==T){
+            
+                aa <- sum_stats
+                sum_stats <- sum_stats[sum_stats$CHR %in% c(1:22),]
+                
+                
+          }#end remove chr
+        
         
           #save the file if a path is provided
           if(is.na(path)){
@@ -171,12 +187,92 @@ prepare_munge <- function(sum_stats, rsID=NA, the_effect_allele, the_non_effect_
           } else {
             
                 fwrite(sum_stats, path, sep = '\t', col.names = T, row.names = F, quote = F)
+                if(remove_X_Y_MT==T){ cat(paste0('The number of SNP in the remove chr Y X and MT is ', nrow(aa)-nrow(sum_stats))) }
                 invisible(sum_stats)
                 
           }
+        
+         
   }
   
 }
+
+```
+
+### SNP add
+
+This function adds SNPs starting from genomic positions and alleles (GHR37, ref file from genomicSEM). the function does not check for opposite strand.
+It requires the ld referenceSNP and MAF reference files to check if ambiguous SNPs are in those files.
+
+```{r snp_check function, message=TRUE, warning=TRUE, paged.print=TRUE}
+
+snp_check <- function(sum_stats, chr, bp, marker , effect_allele, other_allele, build, ref_snp, ld){
+  
+    
+        #format the sumstats with the required column names
+        require(dplyr)
+        require(data.table)
+    
+        cat(paste0('The number of rows of the summary stats is ',nrow(sum_stats),' .', '\n'))
+        sum_stats <- sum_stats  %>% rename(c(effect_allele = all_of(effect_allele), other_allele = all_of(other_allele), CHR= all_of(chr), BP=all_of(bp), SNP=all_of(marker)))
+        
+        
+        #create the column for merging
+        sum_stats <- sum_stats  %>% unite(CHR, BP, sep= ':', na.rm = F, remove = F, col = 'chrPosition' )
+        
+        #build37
+        join <- dplyr::inner_join(sum_stats, ref_snp, by='chrPosition')
+        
+        
+        #check number of rsID that is absent
+        position_not_present <- dim(sum_stats)[1] - dim(join)[1]
+        cat(paste0('The number of SNPs that were removed because of position not matched is ',position_not_present,' .', '\n'))
+        
+        
+        ### check that that SNP are identical between ref and joined
+        
+        #this function checks if the alleles are the same as in the reference
+        check_allele <- function(act){
+          
+          #check if trait and reference have the same alleles
+          res <- sum(c(act['effect_allele'], act['other_allele']) %in% c(act['ref_A1'], act['ref_A2']))
+          return(res)
+          
+          
+        }#end of check allele
+        
+        
+        join$check_allele <- apply(join, 1, check_allele)
+        
+        #keep only the SNPs for which both alleles match (A1 and A2)
+        join <-  join[join$check_allele==2,]
+        
+        #check the number of mismatched rsID
+        cat(paste0('Number of mismatched rsID ', nrow(join[join$SNP.x != join$SNP.y,]), ' out of ', nrow(join), '\n'))
+        
+        #check wheter the mismatched SNP are in ld ref file
+        cat(paste0('Number of mismatched rsID in ld ref ', sum(ld$SNP %in% join[join$SNP.x != join$SNP.y,]$SNP ),'\n' ))
+        
+        #format the sumstats and return them
+        join <-  join %>% select(- c(ref_A1, ref_A2, check_allele, SNP.x, chrPosition)) %>% rename(SNP=SNP.y) #keep ref rsID
+        
+        return(join)
+      
+}
+
+```
+
+### Prepare reference file columns
+
+```{r reference files, message=TRUE, warning=TRUE, paged.print=TRUE}
+#load the reference file
+reference37 <- fread('SNP/reference.1000G.maf.0.005.txt.gz')
+
+head(reference37)
+
+reference37 <- reference37 %>% unite(CHR, BP, sep= ':', na.rm = F, remove = T, col = 'chrPosition' ) %>% select(-c(MAF)) %>% rename(ref_A1=A1, ref_A2=A2)
+
+ld <- fread('SNP/w_hm3.snplist')
 
 ```
 
@@ -184,7 +280,7 @@ prepare_munge <- function(sum_stats, rsID=NA, the_effect_allele, the_non_effect_
 ## Read-in and prepare the summary stats
 
 ### SLE GWAS
-```{r SLE GWAS}
+```{r SLE GWAS, message=TRUE, warning=TRUE, paged.print=TRUE}
 sle <- fread('Summary_Stats/bentham-2015_sle_build37_26502338_sle_efo0002690_1_gwas.sumstats.tsv.gz', data.table=F)
 
 head(sle)
@@ -198,56 +294,89 @@ sle <- prepare_munge(sle,
               the_chr = 'chrom', 
               the_bp = 'pos',
               to_remove = c('OR', 'OR_lower', 'OR_upper'),
-              path =  'outputs/rev_1/01_prepare/ready_format/sle_beta_bentham-2015.txt') 
+              path =  'outputs/rev_1/01_prepare/ready_format/sle_beta_bentham-2015.txt',
+              remove_X_Y_MT = T) 
 head(sle)
 
 ```
 
 ### Crohn's disease GWAS
-The harmonized version is build38 (although the file name in GWAS catalog says is build37)
+This summary stats require to add rsIDs. snp_check function does that. 
 
-```{r crohn}
+```{r crohn, echo=TRUE, message=TRUE, warning=TRUE}
 
-crohn <- fread('Summary_Stats/harmonized/crohn_delange-2017_harmonized_28067908-GCST004132-EFO_0000384.h.tsv.gz', data.table = F)
+crohn <- fread('Summary_Stats/delange-2017_cd_build37_40266_20161107.txt', data.table = F)
 head(crohn)
-crohn_38 <- prepare_munge(crohn,
-              rsID = 'variant_id', 
-              the_effect_allele = 'effect_allele', #manually confirmed on the paper 
+
+#separate the first column of crohn's as it is chr:bp:A1:A2
+crohn <- crohn %>% separate(col = 'MarkerName', sep = ':|_|_', remove = F, convert = F, extra = 'warn', into = c('CHR', 'BP',  'Extra1', 'Extra2') )
+head(crohn)
+
+#make A1 and A2 upper case
+crohn$Allele1 <- toupper(crohn$Allele1)
+crohn$Allele2 <- toupper(crohn$Allele2) # effect allele is A2
+
+#add the SNPs (effect allele is A2)
+crohn_rsid <- snp_check(crohn, chr = 'CHR', bp = 'BP',  marker = 'MarkerName', effect_allele = 'Allele2', other_allele =  'Allele1', ref_snp = reference37, ld = ld)
+head(crohn_rsid)
+
+#save
+crohn_saved <- prepare_munge(crohn_rsid,
+              rsID = 'SNP', 
+              the_effect_allele = 'effect_allele',  
               the_non_effect_allele = 'other_allele', 
-              pvalue = 'p_value',
-              the_Beta= 'beta', 
-              the_SE = 'standard_error',
-              the_chr = 'chromosome', 
-              the_bp = 'base_pair_location',
-              to_remove = c('hm_variant_id', 'hm_rsid', 'hm_chrom', 'hm_pos', 'hm_other_allele', 'hm_effect_allele', 'hm_beta', 'hm_odds_ratio', 'hm_ci_lower', 'hm_ci_upper', 'hm_effect_allele_frequency', 
-                            'hm_code', 'odds_ratio', 'ci_lower', 'ci_upper', 'effect_allele_frequency') ,
-              path =  'outputs/rev_1/01_prepare/ready_format/cd_build38_delange-2017.txt') 
-head(crohn_38)
+              pvalue = 'P.value',
+              the_Beta= 'Effect', 
+              the_SE = 'StdErr',
+              the_chr = 'CHR', 
+              the_bp = 'BP',
+              to_remove = c('Min_single_cohort_pval', 'Pval_GWAS3', 'Pval_IIBDGC', 
+                            'Pval_IBDseq', 'HetPVal', 'HetDf', 'HetChiSq', 'HetISq', 
+                            'Extra1', 'Extra2') ,
+              path =  'outputs/rev_1/01_prepare/ready_format/cd_build37_delange-2017.txt') 
+
+head(crohn_saved)
 
 ```
 
 ### Ulcerative colitis GWAS
 
-The harmonized version is build38 (although the file name in GWAS catalog says is build37)
+This summary statistic require to add rsID
 
-```{r uc}
+```{r uc, message=TRUE, warning=TRUE, paged.print=TRUE}
 
-uc <- fread('Summary_Stats/harmonized/uc_delange-2017_harmonized_28067908-GCST004133-EFO_0000729.h.tsv.gz', data.table = F)
 
+uc <- fread('Summary_Stats/delange-2017_uc_build37_45975_20161107.txt', data.table = F)
 head(uc)
-uc_38 <- prepare_munge(uc,
-              rsID = 'variant_id', 
-              the_effect_allele = 'effect_allele', #manually confirmed on the paper 
+
+#separate the first column of uc's as it is chr:bp:A1:A2
+uc <- uc %>% separate(col = 'MarkerName', sep = ':|_|_', remove = F, convert = F, extra = 'warn', into = c('CHR', 'BP',  'Extra1', 'Extra2') )
+head(uc)
+
+#make A1 and A2 upper case
+uc$Allele1 <- toupper(uc$Allele1)
+uc$Allele2 <- toupper(uc$Allele2) # effect allele is A2
+
+#add the SNPs (effect allele is A2)
+uc_rsid <- snp_check(uc, chr = 'CHR', bp = 'BP',  marker = 'MarkerName', effect_allele = 'Allele2', other_allele =  'Allele1', ref_snp = reference37, ld = ld)
+head(uc_rsid)
+
+#save
+uc_saved <- prepare_munge(uc_rsid,
+              rsID = 'SNP', 
+              the_effect_allele = 'effect_allele',  
               the_non_effect_allele = 'other_allele', 
-              pvalue = 'p_value',
-              the_Beta= 'beta', 
-              the_SE = 'standard_error',
-              the_chr = 'chromosome', 
-              the_bp = 'base_pair_location',
-              to_remove = c('hm_variant_id', 'hm_rsid', 'hm_chrom', 'hm_pos', 'hm_other_allele', 'hm_effect_allele', 'hm_beta', 'hm_odds_ratio', 'hm_ci_lower', 'hm_ci_upper', 'hm_effect_allele_frequency', 
-                            'hm_code', 'odds_ratio', 'ci_lower', 'ci_upper', 'effect_allele_frequency') ,
-              path =  'outputs/rev_1/01_prepare/ready_format/uc_build38_delange-2017.txt') 
-head(uc_38)
+              pvalue = 'P.value',
+              the_Beta= 'Effect', 
+              the_SE = 'StdErr',
+              the_chr = 'CHR', 
+              the_bp = 'BP',
+              to_remove = c('Min_single_cohort_pval', 'Pval_GWAS3', 'Pval_IIBDGC', 
+                            'Pval_IBDseq', 'HetPVal', 'HetDf', 'HetChiSq', 'HetISq', 
+                            'Extra1', 'Extra2') ,
+              path =  'outputs/rev_1/01_prepare/ready_format/uc_build37_delange-2017.txt') 
+
+head(uc_saved)
 
 
 ```
@@ -257,18 +386,30 @@ head(uc_38)
 
 Asthma GWAS requires the calculaiton of SE as it will be needed for genomic sem factor gwas. 
 
-```{r asthma}
+```{r asthma, message=TRUE, warning=TRUE, paged.print=TRUE}
 
 asthma_han <- fread('Summary_Stats/han-2020_asthma_build7_HanY_prePMID_asthma_UKBB.txt.gz', data.table = F)
 
 head(asthma_han)
 
+#the RSID that are missings are indels and will be excluced as they are not in the reference file 
+sum(str_starts(asthma_han$SNP, 'rs', negate = T)) #467604
+
+aa <- asthma_han[str_starts(asthma_han$SNP, 'rs', negate = T),]
+aa$len_EA <- str_length(aa$EA)
+aa$len_NEA <- str_length(aa$NEA)
+
+table(aa$len_EA >1 | aa$len_NEA>1 ) #most of them are indels
+# FALSE   TRUE 
+#  4107 463497 
+
+
 #add SE of logistic beta to Han-2020 for GWAS estimation
 asthma_han$SE <- (log(asthma_han$OR_95U) - log(asthma_han$OR) )/qnorm(0.975)
 
-asthma_han <- prepare_munge(asthma_han, 
+asthma_SE <- prepare_munge(asthma_han, 
                             rsID = 'SNP',
-                            the_effect_allele = 'EA', #manually checked from the paper 
+                            the_effect_allele = 'EA', #effect allele EA manually checked on the paper
                             the_non_effect_allele = 'NEA',
                             pvalue = 'P',
                             the_OR =  'OR',
@@ -278,15 +419,15 @@ asthma_han <- prepare_munge(asthma_han,
                             to_remove = c('N'),
                             path =  'outputs/rev_1/01_prepare/ready_format/asthma_han-2020.txt'
                             )
-head(asthma_han)
+head(asthma_SE)
 
 
 
 
-sum(is.na(asthma_han$SE))
-sum(asthma_han$SE==0) #0
-summary(asthma_han$SE) #the calculated standard errors stay in the range between 0.005788 and 0.050769 , and no there are no NA or 0 values
-summary(log(asthma_han$OR)/asthma_han$SE) #also the ranges of the z scores are acceptable 
+sum(is.na(asthma_SE$SE))
+sum(asthma_SE$SE==0) #0
+summary(asthma_SE$SE) #the calculated standard errors stay in the range between 0.005788 and 0.049349 , and no there are no NA or 0 values
+summary(log(asthma_SE$OR)/asthma_SE$SE) #also the ranges of the z scores are acceptable (betwenn -24 and 24, with a median around 0 as expected)
 
 
 
@@ -303,25 +444,29 @@ is_se_logB <- function(BETA,SE, PVALUE) {
 }
 
 
-is_se_logB(log(asthma_han$OR), asthma_han$SE, asthma_han$p) 
+is_se_logB(log(asthma_SE$OR), asthma_SE$SE, asthma_SE$p) 
 
 
 ```
 
 ### PSC GWAS
 
-```{r psc}
+```{r psc, message=TRUE, warning=TRUE, paged.print=TRUE}
 psc <- fread('Summary_Stats/ji-2016_psc_build37_ipscsg2016.result.combined.full.with_header.txt', data.table = F)
-
 
 head(psc)
 
-psc_ok <- prepare_munge(psc,
+#add snp
+psc_snp <- snp_check(psc, chr = '#chr', bp = 'pos',  marker = 'SNP', effect_allele = 'allele_1', other_allele =  'allele_0', ref_snp = reference37, ld = ld)
+
+head(psc)
+
+psc_ok <- prepare_munge(psc_snp,
                         rsID = 'SNP', 
-                        the_effect_allele = 'allele_1', #manually checked on the paper
-                        the_non_effect_allele = 'allele_0',
-                        the_bp = 'pos',
-                        the_chr = '#chr',
+                        the_effect_allele = 'effect_allele', #manually checked on the paper
+                        the_non_effect_allele = 'other_allele',
+                        the_bp = 'BP',
+                        the_chr = 'CHR',
                         pvalue = 'p',
                         the_SE = 'se',
                         the_OR = 'or',
@@ -335,8 +480,9 @@ head(psc_ok)
 ```
 
 ### JIA GWAS
+Jia does not require to add rsIDs
 
-```{r jia}
+```{r jia, message=TRUE, warning=TRUE, paged.print=TRUE}
 jia <- fread('Summary_Stats/lopezisac-2020_jia_build37_GCST90010715_buildGRCh37.tsv', data.table = F)
 
 head(jia)
@@ -361,9 +507,15 @@ head(jia_ok)
 
 
 ### T1D GWAS
+T1D does not require to add rsIDs. 
 
-```{r}
+```{r t1d, message=TRUE, warning=TRUE, paged.print=TRUE}
 t1d <- fread('Summary_Stats/chiou-2021_t1d_build38_GCST90014023_buildGRCh38.tsv', data.table = F, nThread = 2 )
+
+#how many reference SNP are in T1D 
+table(reference37$SNP %in% t1d$variant_id) #9542722, almost all of them
+  #FALSE    TRUE 
+ #124502 9542722 
 
 head(t1d)
 
@@ -391,14 +543,28 @@ head(t1d_ok)
 
 
 ```
+
+
 ### Derma GWAS
 
-```{r}
+```{r derma, message=TRUE, warning=TRUE, paged.print=TRUE}
+
 derma <- fread('Summary_Stats/sliz-2021_atopic-dermatitis_build38_GCST90027161_buildGRCh38.tsv.gz', data.table = F)
 
 head(derma)
 
-derma_ok <- prepare_munge(derma, rsID = 'variant_id',
+#half of the RSID that are missings are indels and will be excluced as they are not in the reference file 
+sum(str_starts(derma$variant_id, 'rs', negate = T)) #107854
+dd <- derma[str_starts(derma$variant_id , 'rs', negate = T),]
+dd$len_EA <- str_length(dd$effect_allele)
+dd$len_NEA <- str_length(dd$other_allele)
+table(dd$len_EA >1 | dd$len_NEA>1 ) 
+#FALSE  TRUE 
+#46210 61644 
+
+
+derma_ok <- prepare_munge(sum_stats = derma, 
+              rsID = 'variant_id',
               the_Beta = 'beta',
               the_effect_allele = 'effect_allele', 
               the_non_effect_allele = 'other_allele',
@@ -409,7 +575,10 @@ derma_ok <- prepare_munge(derma, rsID = 'variant_id',
               path =  'outputs/rev_1/01_prepare/ready_format/derma_sliz-2021.txt',
               the_MAF = 'effect_allele_frequency')
 
+
+
 head(derma_ok)
+
 
 ```
 
@@ -418,7 +587,7 @@ head(derma_ok)
 Ra gwas was obtained from the authors. The names of the column come from the readme file. 
 MAF was calculated from the allele frequencies provided. 
 
-```{r}
+```{r ra, message=TRUE, warning=TRUE, paged.print=TRUE}
 
 okada_euro <- fread('Summary_Stats/okada-2014_ra-european_build37_MegaGWAS_summary_European.txt.gz', data.table = F)
 
@@ -450,17 +619,34 @@ fin<- (allcas+allcont)/(okada_euro$No.RAcases + okada_euro$No.controls)
 
 okada_euro$EAF <- (allcas+allcont)/(okada_euro$No.RAcases + okada_euro$No.controls) 
 
+#use okada_trans_etchnic to add the chr_positions
+okada_tra <- fread('Summary_Stats/okada-2014_RA_build37_RA_GWASmeta_TransEthnic_v2.txt.gz.gz', data.table = F)
+okada_tra <- select(okada_tra, c('Chr', 'Position(hg19)', 'SNPID')) 
+
+okada_chr <- inner_join(okada_euro, okada_tra, 'SNPID')
+dim(okada_chr) #8514610  15, all rows of okada_euro have CHR and BP
+
+#remove BP column
+okada_chr <- okada_chr %>% select(-c('BP'))
+
+#add the missing SNPs
+okada_snp <- snp_check(okada_chr, bp = 'Position(hg19)', chr = 'Chr', marker = 'SNPID', 
+                       effect_allele = 'A1', other_allele = 'A2', ref_snp = reference37, ld = ld)
+
+head(okada_snp)
 #rename and save
-ra_ok <- prepare_munge(okada_euro, 
-              rsID = 'SNPID',
-              the_effect_allele = 'A1',
-              the_non_effect_allele = 'A2', 
+ra_ok <- prepare_munge(okada_snp, 
+              rsID = 'SNP',
+              the_effect_allele = 'effect_allele',
+              the_non_effect_allele = 'other_allele', 
               the_Beta = 'Beta_allele_1',
               the_SE = 'SE', 
               pvalue = 'P_of_allele_1',
-              to_remove = c('Neighboring_gene', 'No.studies', 'No.RAcases','No.controls','A1_freq_cases', 'A1_freq_controls', 'BP'),
+              the_bp = 'BP',
+              the_chr = 'CHR' ,
+              to_remove = c('Neighboring_gene', 'No.studies', 'No.RAcases','No.controls','A1_freq_cases', 'A1_freq_controls'),
               path =  'outputs/rev_1/01_prepare/ready_format/ra_eu_okada-2014.txt',
-              qc=F)
+              qc=T)
 head(ra_ok)
 
 ```

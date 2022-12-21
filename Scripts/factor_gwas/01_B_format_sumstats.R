@@ -21,25 +21,40 @@ library("BSgenome.Hsapiens.1000genomes.hs37d5")
 
 #very important: the output sumstats will have the effect allele coded as A2 (a-two). . 
 
-a1 <- list.files('outputs/rev_1/01_prepare/ready_format/') #get the file names
-my_paths <- as.list(paste0('outputs/rev_1/01_prepare/ready_format/', a1)) #create paths
+setwd('/project/aid_sharing/AID_sharing')
 
+my_paths <- c("outputs/rev_1/01_prepare/ready_format/asthma_han-2020.txt",
+              "outputs/rev_1/01_prepare/ready_format/cd_build38_delange-2017.txt",
+              "outputs/rev_1/01_prepare/ready_format/derma_sliz-2021.txt",
+              ###
+              "outputs/rev_1/01_prepare/ready_format/jia_beta_lopezisac-2020.txt",
+              "outputs/rev_1/01_prepare/ready_format/psc_ji-2016.txt",
+              "outputs/rev_1/01_prepare/ready_format/ra_eu_okada-2014.txt",
+              ###
+              "outputs/rev_1/01_prepare/ready_format/sle_beta_bentham-2015.txt",
+              "outputs/rev_1/01_prepare/ready_format/t1d_chiou-2021.txt",
+              "outputs/rev_1/01_prepare/ready_format/uc_build38_delange-2017.txt"
+              ) 
 
-#[1] "asthma_han-2020.txt"         "cd_build38_delange-2017.txt" "derma_sliz-2021.txt"         
-#"jia_beta_lopezisac-2020.txt" "psc_ji-2016.txt"             "ra_eu_okada-2014.txt"        "sle_beta_bentham-2015.txt"  
-#[8] "t1d_chiou-2021.txt"          "uc_build38_delange-2017.txt
-builds <- c("GRCH37" ,"GRCH38", "GRCH38", 
-            "GRCH37","GRCH37","GRCH37","GRCH37", 
-            "GRCH38", "GRCH38" )
+#genome builds 
+builds <- c("GRCH37" ,"GRCH38", "GRCH38",
+            ###
+            "GRCH37","GRCH37","GRCH37",
+            ###
+            "GRCH37", "GRCH38", "GRCH38" )
 
-#get the names of the gwas
-gwas_names <- list()
-for( i in c(1:length(a1))){
-  gwas_names[i] <- strsplit(a1, '_')[[i]][[1]]
-  
-}
-
-names(my_paths) <- gwas_names #give names just for checking
+#gwas names
+gwas_names <- c("asthma",
+                "cd",
+                "derma",
+                ###
+                "jia",
+                "psc",
+                "ra",
+                ###
+                "sle",
+                "t1d",
+                'uc')
 
 data('sumstatsColHeaders') #load reference file coming from the package  MungeSumstats
 
