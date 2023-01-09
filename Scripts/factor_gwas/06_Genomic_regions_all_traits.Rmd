@@ -103,18 +103,18 @@ locus.breaker <- function (res, p.sig = 5e-08, p.limit = 1e-05, hole.size = 2500
 
 ```
 
-### add log(OR), beta, to asthma and psc
+### add log(OR) to asthma and psc
 
 ```{r}
 asthma <- fread('outputs/rev_1/05_munge/munged/asthma_munged_build37.txt')
-asthma$beta <- log(asthma$OR)
+asthma$BETA <- log(asthma$OR)
 head(asthma)
 fwrite(asthma, 'outputs/rev_1/05_munge/munged/asthma_munged_build37.txt', sep = '\t', col.names = T, row.names = F, quote = F)
 
 psc <- fread('outputs/rev_1/05_munge/munged/psc_munged_build37.txt')
-psc$beta <- log(psc$OR)
+psc$BETA <- log(psc$OR)
 head(psc)
-fwrite(asthma, 'outputs/rev_1/05_munge/munged/psc_munged_build37.txt', sep = '\t', col.names = T, row.names = F, quote = F)
+fwrite(psc, 'outputs/rev_1/05_munge/munged/psc_munged_build37.txt', sep = '\t', col.names = T, row.names = F, quote = F)
 ```
 
 ## locus_lister function
