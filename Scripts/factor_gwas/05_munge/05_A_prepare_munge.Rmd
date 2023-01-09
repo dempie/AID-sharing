@@ -35,11 +35,11 @@ prepare_munge <- function(sum_stats, rsID, the_effect_allele, the_non_effect_all
     
     require(dplyr)
     require(data.table)
-    sum_stats <- sum_stats  %>% rename(c(SNP = all_of(rsID), EFFECT_ALLELE  = all_of(the_effect_allele), NON_EFFECT_ALLELE = all_of(the_non_effect_allele), p = all_of(pvalue) ))
+    sum_stats <- sum_stats  %>% rename(c(SNP = all_of(rsID), EFFECT_ALLELE  = all_of(the_effect_allele), OTHER_ALLELE = all_of(the_non_effect_allele), p = all_of(pvalue) ))
     sum_stats$SNP <- tolower(sum_stats$SNP)
     sum_stats$p <- as.numeric(sum_stats$p)
     sum_stats$EFFECT_ALLELE <- toupper(as.character( sum_stats$EFFECT_ALLELE))
-    sum_stats$NON_EFFECT_ALLELE <- toupper(as.character( sum_stats$NON_EFFECT_ALLELE))
+    sum_stats$OTHER_ALLELE <- toupper(as.character( sum_stats$OTHER_ALLELE))
     
     #conditional options
     #remove columns
