@@ -76,49 +76,49 @@ prepare_munge <- function(sum_stats, rsID, the_effect_allele, the_non_effect_all
 }
 
 #-------f1 prepare GWAS -------------------------------------------------------
-f1 <- fread('outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/03_gwas_estimation/summarystats_f1_.txt', data.table = F)
-head(f1)
-
-f1 <- prepare_munge(f1,
-                    rsID = 'SNP',
-                    the_effect_allele = 'A1',
-                    the_non_effect_allele = 'A2',
-                    pvalue = 'P',
-                    the_Beta = 'Beta',
-                    the_SE = 'SE',
-                    the_chr = 'CHR',
-                    path = 'outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_munge_for_nicola/ready_for_munge/f1_ready_for_munge.txt'
-)
-
-head(f1)
-#-------f2 prepare GWAS -------------------------------------------------------
-f2 <- fread('outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/03_gwas_estimation/summarystats_f2_.txt', data.table = F)
-head(f2)
-
-f2 <- prepare_munge(f2,
-                    rsID = 'SNP',
-                    the_effect_allele = 'A1',
-                    the_non_effect_allele = 'A2',
-                    pvalue = 'P',
-                    the_Beta = 'Beta',
-                    the_SE = 'SE',
-                    path = 'outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_munge_for_nicola/ready_for_munge/f2_ready_for_munge.txt'
-)
-head(f2)
-
-#-------f3 prepare GWAS -------------------------------------------------------
-f3 <- fread('outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/03_gwas_estimation/summarystats_f3_.txt', data.table = F)
-head(f3)
-
-f3 <- prepare_munge(f3,
-                    rsID = 'SNP',
-                    the_effect_allele = 'A1',
-                    the_non_effect_allele = 'A2',
-                    pvalue = 'P',
-                    the_Beta = 'Beta',
-                    the_SE = 'SE',
-                    path = 'outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_munge_for_nicola/ready_for_munge/f3_ready_for_munge.txt'
-)
+# f1 <- fread('outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/03_gwas_estimation/summarystats_f1_.txt', data.table = F)
+# head(f1)
+# 
+# f1 <- prepare_munge(f1,
+#                     rsID = 'SNP',
+#                     the_effect_allele = 'A1',
+#                     the_non_effect_allele = 'A2',
+#                     pvalue = 'P',
+#                     the_Beta = 'Beta',
+#                     the_SE = 'SE',
+#                     the_chr = 'CHR',
+#                     path = 'outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_munge_for_nicola/ready_for_munge/f1_ready_for_munge.txt'
+# )
+# 
+# head(f1)
+# #-------f2 prepare GWAS -------------------------------------------------------
+# f2 <- fread('outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/03_gwas_estimation/summarystats_f2_.txt', data.table = F)
+# head(f2)
+# 
+# f2 <- prepare_munge(f2,
+#                     rsID = 'SNP',
+#                     the_effect_allele = 'A1',
+#                     the_non_effect_allele = 'A2',
+#                     pvalue = 'P',
+#                     the_Beta = 'Beta',
+#                     the_SE = 'SE',
+#                     path = 'outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_munge_for_nicola/ready_for_munge/f2_ready_for_munge.txt'
+# )
+# head(f2)
+# 
+# #-------f3 prepare GWAS -------------------------------------------------------
+# f3 <- fread('outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/03_gwas_estimation/summarystats_f3_.txt', data.table = F)
+# head(f3)
+# 
+# f3 <- prepare_munge(f3,
+#                     rsID = 'SNP',
+#                     the_effect_allele = 'A1',
+#                     the_non_effect_allele = 'A2',
+#                     pvalue = 'P',
+#                     the_Beta = 'Beta',
+#                     the_SE = 'SE',
+#                     path = 'outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_munge_for_nicola/ready_for_munge/f3_ready_for_munge.txt'
+# )
 
 #----------uc prepare GWAS -----------------------------------------------------
 uc <- fread('Summary_Stats/delange-2017_uc_build37_45975_20161107.txt', data.table = F)
