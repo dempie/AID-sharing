@@ -1,5 +1,5 @@
 ---
-title: "06_Genomic_regions_all_traits"
+title: "06 Genomic regions all traits"
 author: "Pietro Demela"
 date: "09/01/2023"
 output: html_document
@@ -109,12 +109,12 @@ locus.breaker <- function (res, p.sig = 5e-08, p.limit = 1e-05, hole.size = 2500
 asthma <- fread('outputs/rev_1/05_munge/munged/asthma_munged_build37.txt')
 asthma$beta <- log(asthma$OR)
 head(asthma)
-fwrite(asthma, 'outputs/rev_1/05_munge/munged/asthma_beta_munged_build37.txt', sep = '\t', col.names = T, row.names = F, quote = F)
+fwrite(asthma, 'outputs/rev_1/05_munge/munged/asthma_munged_build37.txt', sep = '\t', col.names = T, row.names = F, quote = F)
 
 psc <- fread('outputs/rev_1/05_munge/munged/psc_munged_build37.txt')
 psc$beta <- log(psc$OR)
 head(psc)
-fwrite(asthma, 'outputs/rev_1/05_munge/munged/psc_beta_munged_build37.txt', sep = '\t', col.names = T, row.names = F, quote = F)
+fwrite(asthma, 'outputs/rev_1/05_munge/munged/psc_munged_build37.txt', sep = '\t', col.names = T, row.names = F, quote = F)
 ```
 
 ## locus_lister function
@@ -185,7 +185,7 @@ locus_lister <- function(my_paths, gwas_names) {
 ```{r message=TRUE, warning=TRUE, paged.print=TRUE}
 #regions all gwas
 
-my_paths <- list("outputs/rev_1/05_munge/munged/asthma_beta_munged_build37.txt",
+my_paths <- list("outputs/rev_1/05_munge/munged/asthma_munged_build37.txt",
                 "outputs/rev_1/05_munge/munged/cd_munged_build37.txt",
                 "outputs/rev_1/05_munge/munged/derma_munged_build37.txt",
               ###
@@ -194,7 +194,7 @@ my_paths <- list("outputs/rev_1/05_munge/munged/asthma_beta_munged_build37.txt",
                 "outputs/rev_1/05_munge/munged/f3_munged_build37.txt",
               ###
                 "outputs/rev_1/05_munge/munged/jia_munged_build37.txt",
-                "outputs/rev_1/05_munge/munged/psc_beta_munged_build37.txt",
+                "outputs/rev_1/05_munge/munged/psc_munged_build37.txt",
                 "outputs/rev_1/05_munge/munged/ra_munged_build37.txt",
               ###
                 "outputs/rev_1/05_munge/munged/sle_munged_build37.txt",
@@ -230,7 +230,7 @@ for(i in c('f1', 'f2', 'f3')){
 }
 
 #plot venndiagram
-pdf(width = 14, height = 14, file = 'outputs/rev_1/06_genomic_regions_all_traits_munged/venn_f1_f2_f3_loci.pdf')
+
 venn_f1_f2_f3_loci<- makeVennDiagram(Peaks=f_ranges,connectedPeaks = 'keepAll',
                                      NameOfPeaks=c("F1", "F2", "F3"),
                                      imagetype="png" ,
@@ -248,7 +248,7 @@ venn_f1_f2_f3_loci<- makeVennDiagram(Peaks=f_ranges,connectedPeaks = 'keepAll',
                                      rotation = 1
 )
 
-dev.off()
+
 
 #----- plot UpSet plot ---------------------------------------------------------
 
@@ -297,7 +297,7 @@ lists_forupset <- function(peaks, traits){
 
 cm <- lists_forupset(f_ranges, traits = c('f1', 'f2', 'f3')) 
 
-pdf(width = 14, height = 14, file = 'outputs/rev_1/06_genomic_regions_all_traits_munged/upset_f1_f2_f3_loci.pdf')
+
 UpSet(cm, set_order = c("f1", "f2", "f3"), comb_order = order(comb_size(cm), decreasing = F),
       comb_col = c(brewer.pal(8, 'Set2')[c(7,6,6,6)],brewer.pal(12, 'Paired')[c(2,4,6)]),
       top_annotation = upset_top_annotation(cm, add_numbers = TRUE, height = unit(6, "cm")),
@@ -305,7 +305,6 @@ UpSet(cm, set_order = c("f1", "f2", "f3"), comb_order = order(comb_size(cm), dec
       row_title = "Factor", 
       column_title = " Physical intersection of factor loci"
 )
-dev.off()
 
 ```
 
