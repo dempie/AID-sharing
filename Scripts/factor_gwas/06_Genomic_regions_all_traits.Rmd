@@ -6,49 +6,125 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = TRUE,
+	warning = TRUE
+)
+knitr::opts_knit$set(root.dir =  "/project/aid_sharing/AID_sharing") #set up the project directory
 ```
 
-## R Markdown
+## Libraries
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
-```
-
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
-
-
-```{r}
-
+```{r, libraries}
 library(data.table)
 library(GenomicRanges)
 library(dplyr)
-library(qqman)
 library(ChIPpeakAnno)
 library(RColorBrewer)
 library(ComplexHeatmap)
 library(stringr)
+```
 
-#----locus.breaker function by Nicola, it identifies loci-----------------------
 
+## locus.breaker function
 
-#this function identifies significant genomic regions with the locus.breaker fuction
-#then creates a table of all the loci for all traits and puts them togehter.
-#then looks at the overlapps between the loci and creates a macro loci that do not overlapp among them and assigns them a unique number (column pan_loci)
-#the function requires the sumstatsto have the columns: SNP, CHR,BP, A2 (EFFECT_ALLELE), A1 (NON_EFFECT_ALLELE), BETA,SE, P
-#restar R to clear memory before and after running locus_lister, as it sometimes too large objects are generated
+This function identifies genome wide significant genomic regions. 
+```{r}
+locus.breaker <- function (res, p.sig = 5e-08, p.limit = 1e-05, hole.size = 250000, 
+  p.label = "P", chr.label = "CHR", pos.label = "BP") 
+{
+  res = res[order(as.numeric(res[, chr.label]), as.numeric(res[, 
+    pos.label])), ]
+  res = res[which(res[, p.label] < p.limit), ]
+  trait.res = c()
+  for (j in 1:22) {
+    res.chr = res[which(res[, chr.label] == j), ]
+    if (nrow(res.chr) > 1) {
+      holes = res.chr[, pos.label][-1] - res.chr[, pos.label][-length(res.chr[, 
+        pos.label])]
+      gaps = which(holes > hole.size)
+      if (length(gaps) > 0) {
+        for (k in 1:(length(gaps) + 1)) {
+          if (k == 1) {
+            res.loc = res.chr[1:(gaps[k]), ]
+          }
+          else if (k == (length(gaps) + 1)) {
+            res.loc = res.chr[(gaps[k - 1] + 1):nrow(res.chr), 
+              ]
+          }
+          else {
+            res.loc = res.chr[(gaps[k - 1] + 1):(gaps[k]), 
+              ]
+          }
+          if (min(res.loc[, p.label]) < p.sig) {
+            start.pos = min(res.loc[, pos.label], na.rm = T)
+            end.pos = max(res.loc[, pos.label], na.rm = T)
+            chr = j
+            best.snp = res.loc[which.min(res.loc[, p.label]), 
+              ]
+            line.res = c(chr, start.pos, end.pos, unlist(best.snp))
+            trait.res = rbind(trait.res, line.res)
+          }
+        }
+      }
+      else {
+        res.loc = res.chr
+        if (min(res.loc[, p.label]) < p.sig) {
+          start.pos = min(res.loc[, pos.label], na.rm = T)
+          end.pos = max(res.loc[, pos.label], na.rm = T)
+          chr = j
+          best.snp = res.loc[which.min(res.loc[, p.label]), 
+            ]
+          line.res = c(chr, start.pos, end.pos, unlist(best.snp))
+          trait.res = rbind(trait.res, line.res)
+        }
+      }
+    }
+    else if (nrow(res.chr) == 1) {
+      res.loc = res.chr
+      if (min(res.loc[, p.label]) < p.sig) {
+        start.pos = min(res.loc[, pos.label], na.rm = T)
+        end.pos = max(res.loc[, pos.label], na.rm = T)
+        chr = j
+        best.snp = res.loc[which.min(res.loc[, p.label]), 
+          ]
+        line.res = c(chr, start.pos, end.pos, unlist(best.snp))
+        trait.res = rbind(trait.res, line.res)
+      }
+    }
+  }
+  print(trait.res)
+  trait.res = as.data.frame(trait.res, stringsAsFactors = FALSE)
+  trait.res = trait.res[, -(which(names(trait.res) == chr.label))]
+  names(trait.res)[1:3] = c("chr", "start", "end")
+  trait.res
+}
+
+```
+
+### add log(OR), beta, to asthma and psc
+
+```{r}
+asthma <- fread('outputs/rev_1/05_munge/munged/asthma_munged_build37.txt')
+asthma$beta <- log(asthma$OR)
+head(asthma)
+fwrite(asthma, 'outputs/rev_1/05_munge/munged/asthma_beta_munged_build37.txt', sep = '\t', col.names = T, row.names = F, quote = F)
+
+psc <- fread('outputs/rev_1/05_munge/munged/psc_munged_build37.txt')
+psc$beta <- log(psc$OR)
+head(psc)
+fwrite(asthma, 'outputs/rev_1/05_munge/munged/psc_beta_munged_build37.txt', sep = '\t', col.names = T, row.names = F, quote = F)
+```
+
+## locus_lister function
+
+This function identifies significant genomic regions with the locus.breaker fuction. Then creates a table of all the loci for all traits and puts them together.
+Then looks at the overlapps between the loci and creates a macro loci that do not overlapp among them and assigns them a unique number (column pan_loci).
+The function requires the sumstatst  have the columns: SNP, CHR,BP, A2 (EFFECT_ALLELE), A1 (NON_EFFECT_ALLELE), BETA,SE, P.
+
+```{r}
+
 
 locus_lister <- function(my_paths, gwas_names) {
   
@@ -100,54 +176,61 @@ locus_lister <- function(my_paths, gwas_names) {
   
 }
 
-
-factors <- list('outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_munge_for_nicola/munged/f1_munged_build37.txt',
-                'outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_munge_for_nicola/munged/f2_munged_build37.txt',
-                'outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_munge_for_nicola/munged/f3_munged_build37.txt'
-)
+```
 
 
 
-factor_regions <- locus_lister(factors, list('f1', 'f2', 'f3')) 
-fwrite(factor_regions, 'outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/06_genomic_regions_all_traits_munged/factor.regions.txt', sep='\t', col.names = T, row.names = F)
+### run locus_lister on all the gwas (traits and factors)
 
-
+```{r message=TRUE, warning=TRUE, paged.print=TRUE}
 #regions all gwas
 
-files <- list.files('outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_munge_for_nicola/munged/') #get the file names
-my_paths <- as.list(paste0('outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/05_munge_for_nicola/munged/', files)) #create paths
-my_paths <- my_paths[str_ends(my_paths, 'txt')]
+my_paths <- list("outputs/rev_1/05_munge/munged/asthma_beta_munged_build37.txt",
+                "outputs/rev_1/05_munge/munged/cd_munged_build37.txt",
+                "outputs/rev_1/05_munge/munged/derma_munged_build37.txt",
+              ###
+                "outputs/rev_1/05_munge/munged/f1_munged_build37.txt",
+                "outputs/rev_1/05_munge/munged/f2_munged_build37.txt",
+                "outputs/rev_1/05_munge/munged/f3_munged_build37.txt",
+              ###
+                "outputs/rev_1/05_munge/munged/jia_munged_build37.txt",
+                "outputs/rev_1/05_munge/munged/psc_beta_munged_build37.txt",
+                "outputs/rev_1/05_munge/munged/ra_munged_build37.txt",
+              ###
+                "outputs/rev_1/05_munge/munged/sle_munged_build37.txt",
+                "outputs/rev_1/05_munge/munged/t1d_munged_build37.txt",
+                "outputs/rev_1/05_munge/munged/uc_munged_build37.txt"
+              )
 
 
 
-gwas_names <- list()
-for( i in c(1:length(files))){
-  gwas_names[i] <- strsplit(files, '_')[[i]][[1]]
-  
-}
+gwas_names <- list('asthma','cd','derma',
+                   'f1','f2','f3',
+                   'jia','psc', 'ra',
+                   'sle', 't1d', 'uc')
 
-
-names(my_paths) <- gwas_names
 
 all_regions <- locus_lister(my_paths, gwas_names)
-fwrite(all_regions, 'outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/06_genomic_regions_all_traits_munged/loci_all_traits.txt', sep='\t', col.names = T, row.names = F)
+fwrite(all_regions, 'outputs/rev_1/06_genomic_regions_all_traits_munged/loci_all_traits.txt', sep='\t', col.names = T, row.names = F)
+
+```
+
+## Search for ovelapping genomic regions between factors after munge and locus_lister
+
+```{r}
 
 
-
-
-#------- search for ovelapping genomic regions between factors and their respective traits ---------
-regions_factors <- fread('outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/06_genomic_regions_all_traits_munged/factor.regions.txt', data.table = F)
-all_regions <- fread('outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/06_genomic_regions_all_traits_munged/all_regions.txt', data.table=F)
+all_regions <- fread('outputs/rev_1/06_genomic_regions_all_traits_munged/loci_all_traits.txt', data.table=F)
 
 f_ranges <- list()
 for(i in c('f1', 'f2', 'f3')){
   
-  f_ranges[[i]] <- GRanges(seqnames = regions_factors[regions_factors$trait==i,]$chr, IRanges(as.numeric(regions_factors[regions_factors$trait==i,]$start),as.numeric(regions_factors[regions_factors$trait==i,]$end)))
+  f_ranges[[i]] <- GRanges(seqnames = all_regions[all_regions$trait==i,]$chr, IRanges(as.numeric(all_regions[all_regions$trait==i,]$start),as.numeric(all_regions[all_regions$trait==i,]$end)))
   
 }
 
 #plot venndiagram
-pdf(width = 14, height = 14, file = 'outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/06_genomic_regions_all_traits_munged/venn_f1_f2_f3_loci.pdf')
+pdf(width = 14, height = 14, file = 'outputs/rev_1/06_genomic_regions_all_traits_munged/venn_f1_f2_f3_loci.pdf')
 venn_f1_f2_f3_loci<- makeVennDiagram(Peaks=f_ranges,connectedPeaks = 'keepAll',
                                      NameOfPeaks=c("F1", "F2", "F3"),
                                      imagetype="png" ,
@@ -214,7 +297,7 @@ lists_forupset <- function(peaks, traits){
 
 cm <- lists_forupset(f_ranges, traits = c('f1', 'f2', 'f3')) 
 
-pdf(width = 14, height = 14, file = 'outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/06_genomic_regions_all_traits_munged/upset_f1_f2_f3_loci.pdf')
+pdf(width = 14, height = 14, file = 'outputs/rev_1/06_genomic_regions_all_traits_munged/upset_f1_f2_f3_loci.pdf')
 UpSet(cm, set_order = c("f1", "f2", "f3"), comb_order = order(comb_size(cm), decreasing = F),
       comb_col = c(brewer.pal(8, 'Set2')[c(7,6,6,6)],brewer.pal(12, 'Paired')[c(2,4,6)]),
       top_annotation = upset_top_annotation(cm, add_numbers = TRUE, height = unit(6, "cm")),
