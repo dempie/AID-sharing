@@ -271,5 +271,155 @@ UpSet(cm, set_order = c("f1", "f2", "f3"), comb_order = order(comb_size(cm), dec
 
 ```
 
+### locus_lister and locus breaker functions
+
+Locus lister identifies significant genomic regions with the locus.breaker function. Then creates a table of all the loci for all traits and puts them together.
+Then looks at the overlapps between the loci and creates a macro loci that do not overlapp among them and assigns them a unique number (column pan_loci).
+The function requires the sumstatst  have the columns: SNP, CHR,BP, A2 (EFFECT_ALLELE), A1 (NON_EFFECT_ALLELE), BETA,SE, P.
+The relevant point is that it assigns a index to the genomic regions that are overlapping that it will be usefull to retrieve the overlapping genomic regions.
+
+```{r}
+
+locus.breaker <- function (res, p.sig = 5e-08, p.limit = 1e-05, hole.size = 250000, 
+  p.label = "P", chr.label = "CHR", pos.label = "BP") 
+{
+  res = res[order(as.numeric(res[, chr.label]), as.numeric(res[, 
+    pos.label])), ]
+  res = res[which(res[, p.label] < p.limit), ]
+  trait.res = c()
+  for (j in 1:22) {
+    res.chr = res[which(res[, chr.label] == j), ]
+    if (nrow(res.chr) > 1) {
+      holes = res.chr[, pos.label][-1] - res.chr[, pos.label][-length(res.chr[, 
+        pos.label])]
+      gaps = which(holes > hole.size)
+      if (length(gaps) > 0) {
+        for (k in 1:(length(gaps) + 1)) {
+          if (k == 1) {
+            res.loc = res.chr[1:(gaps[k]), ]
+          }
+          else if (k == (length(gaps) + 1)) {
+            res.loc = res.chr[(gaps[k - 1] + 1):nrow(res.chr), 
+              ]
+          }
+          else {
+            res.loc = res.chr[(gaps[k - 1] + 1):(gaps[k]), 
+              ]
+          }
+          if (min(res.loc[, p.label]) < p.sig) {
+            start.pos = min(res.loc[, pos.label], na.rm = T)
+            end.pos = max(res.loc[, pos.label], na.rm = T)
+            chr = j
+            best.snp = res.loc[which.min(res.loc[, p.label]), 
+              ]
+            line.res = c(chr, start.pos, end.pos, unlist(best.snp))
+            trait.res = rbind(trait.res, line.res)
+          }
+        }
+      }
+      else {
+        res.loc = res.chr
+        if (min(res.loc[, p.label]) < p.sig) {
+          start.pos = min(res.loc[, pos.label], na.rm = T)
+          end.pos = max(res.loc[, pos.label], na.rm = T)
+          chr = j
+          best.snp = res.loc[which.min(res.loc[, p.label]), 
+            ]
+          line.res = c(chr, start.pos, end.pos, unlist(best.snp))
+          trait.res = rbind(trait.res, line.res)
+        }
+      }
+    }
+    else if (nrow(res.chr) == 1) {
+      res.loc = res.chr
+      if (min(res.loc[, p.label]) < p.sig) {
+        start.pos = min(res.loc[, pos.label], na.rm = T)
+        end.pos = max(res.loc[, pos.label], na.rm = T)
+        chr = j
+        best.snp = res.loc[which.min(res.loc[, p.label]), 
+          ]
+        line.res = c(chr, start.pos, end.pos, unlist(best.snp))
+        trait.res = rbind(trait.res, line.res)
+      }
+    }
+  }
+  print(trait.res)
+  trait.res = as.data.frame(trait.res, stringsAsFactors = FALSE)
+  trait.res = trait.res[, -(which(names(trait.res) == chr.label))]
+  names(trait.res)[1:3] = c("chr", "start", "end")
+  trait.res
+}
+
+#### locus breaker
+
+
+locus_lister <- function(my_paths, gwas_names) {
+  
+  require(data.table)
+  require(dplyr)
+  require(GenomicRanges)
+  
+  SNPs <- list()
+  list_of_files <- list()
+  
+  for( i in c(1:length(my_paths))){
+    #load the sumstats and put them into a list
+    list_of_files[[i]] <- fread(my_paths[[i]], data.table = F)
+    SNPs[[i]]<- list_of_files[[i]]$SNP
+  }
+  
+  shared_SNPs <- Reduce(intersect, SNPs) #compute the SNPs that are present in all the summary stats
+  names(list_of_files) <- unlist(gwas_names)
+  loci <- list()
+  
+  for(i in c(1:length(my_paths))){
+    to_take <- gwas_names[[i]]
+    sstats <- list_of_files[[to_take]]
+    colnames(sstats) <- toupper(colnames(sstats))
+    
+    sstats <- select(sstats, c(SNP, CHR,BP, A2, A1, BETA,SE, P))
+    sstats <- sstats[sstats$SNP %in% shared_SNPs,] #select only the SNPs that are shared among all the traits
+    loci[[i]] <-  locus.breaker(sstats)  #locus breaker function is in my R profile
+    loci[[i]]$trait <- rep(to_take, nrow(loci[[i]]))
+  }
+  
+  all_loci <- do.call(rbind, loci) #create the listof all the loci
+  
+  pan_loci <- reduce(GRanges(seqnames = all_loci$chr, IRanges(as.numeric(all_loci$start), as.numeric(all_loci$end)))) 
+  pan_loci_non_reduced <- GRanges(seqnames = all_loci$chr, IRanges(as.numeric(all_loci$start), as.numeric(all_loci$end)))
+  
+  overlapping <- findOverlaps(pan_loci_non_reduced, pan_loci) #find overlaps between all the loci and use it as an index of the unique non overlapping loci
+  all_loci$pan_locus <- rep(0, nrow(all_loci)) #allocate the column 
+  all_loci[overlapping@from,]$pan_locus <- overlapping@to  #assinging the number as index of which macro loci is overlapping 
+  all_loci$pan_locus_name <- rep(0, nrow(all_loci))
+  
+  #assign a name refereed to the position of each pan_locus
+  for(k in 1:length(unique(all_loci$pan_locus))){
+    all_loci[all_loci$pan_locus==k, ]$pan_locus_name <- paste0(all_loci[all_loci$pan_locus==k, ]$chr,'_',  min(all_loci[all_loci$pan_locus==k, ]$start), '_',  max(all_loci[all_loci$pan_locus==k, ]$end))
+  }
+  
+  rownames(all_loci) <- NULL
+  return(all_loci)
+  
+}
+
+
+```
+
+
+
+### Run locus lister of the factors 
+
+```{r paged.print=TRUE}
+
+paths <- c('outputs/rev_1/03_gwas_estimation/summarystats_f1_.txt',
+           'outputs/rev_1/03_gwas_estimation/summarystats_f2_.txt',
+           'outputs/rev_1/03_gwas_estimation/summarystats_f3_.txt')
+regions_factors_index <- locus_lister(paths, list('f1','f2','f3'))
+
+fwrite(regions_factors_index, 'outputs/rev_1/04_genomic_regions_factors/regions_factors_with_index.txt', row.names = F, col.names = T, sep = '\t')
+
+```
+
 
 
