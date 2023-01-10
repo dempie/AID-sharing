@@ -188,11 +188,11 @@ saveRDS(output, 'outputs/rev_1/07_Qheterogeneity/output_model_estimation.RDS')
 ```{r message=TRUE, warning=TRUE, paged.print=TRUE}
 #load q het
 q_ind <- readRDS('outputs/rev_1/07_Qheterogeneity/output_model_estimation.RDS')
-head(q_ind)
+
 
 #load factor summary stats
 fac <- readRDS('outputs/rev_1/03_gwas_estimation/all_chunks_rev1.RDS')
-head(fac)
+
 
 #allocate the column of Q pvalue
 factor_loci$Q_chisq_pval <- rep(NA, nrow(factor_loci))
