@@ -5,6 +5,9 @@ date: "09/01/2023"
 output: html_document
 ---
 
+We define the boundaries of each significant genomic region by identifying all the SNPs with a p-value lower than 1×10-6. We calculated the distance among each consecutive SNPs below
+this threshold in the same chromosome; if two SNPs were further than 250 kb apart, then they were defined as belonging to two different genomic regions. We then considered as ‘significant’ all the genomic regions where at least one SNP had a p-value < 5×10-8 (locus.breaker function). This procedure was repeated for all GWAS. Finally, we compared genomic regions between different GWAS and merged those which overlapped, redefining the boundaries as the minimum and maximum genomic position across all overlapping genomic regions (locus_lister function finds the regions that overlap).
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
 	echo = TRUE,
@@ -119,8 +122,8 @@ fwrite(psc, 'outputs/rev_1/05_munge/munged/psc_munged_build37.txt', sep = '\t', 
 
 ## locus_lister function
 
-This function identifies significant genomic regions with the locus.breaker fuction. Then creates a table of all the loci for all traits and puts them together.
-Then looks at the overlapps between the loci and creates a macro loci that do not overlapp among them and assigns them a unique number (column pan_loci).
+This function identifies significant genomic regions with the locus.breaker function. Then creates a table of all the loci for all traits and puts them together.
+Then looks at the overlapps between the loci and creates a macro loci that do not overlap among them and assigns them a unique number (column pan_loci).
 The function requires the sumstatst  have the columns: SNP, CHR,BP, A2 (EFFECT_ALLELE), A1 (NON_EFFECT_ALLELE), BETA,SE, P.
 
 ```{r}
@@ -128,51 +131,55 @@ The function requires the sumstatst  have the columns: SNP, CHR,BP, A2 (EFFECT_A
 
 locus_lister <- function(my_paths, gwas_names) {
   
-  require(data.table)
-  require(dplyr)
-  require(GenomicRanges)
-  
-  SNPs <- list()
-  list_of_files <- list()
-  
-  for( i in c(1:length(my_paths))){
-    #load the sumstats and put them into a list
-    list_of_files[[i]] <- fread(my_paths[[i]], data.table = F)
-    SNPs[[i]]<- list_of_files[[i]]$SNP
-  }
-  
-  shared_SNPs <- Reduce(intersect, SNPs) #compute the SNPs that are present in all the summary stats
-  names(list_of_files) <- unlist(gwas_names)
-  loci <- list()
-  
-  for(i in c(1:length(my_paths))){
-    to_take <- gwas_names[[i]]
-    sstats <- list_of_files[[to_take]]
-    colnames(sstats) <- toupper(colnames(sstats))
-    
-    sstats <- select(sstats, c(SNP, CHR,BP, A2, A1, BETA,SE, P))
-    sstats <- sstats[sstats$SNP %in% shared_SNPs,] #select only the SNPs that are shared among all the traits
-    loci[[i]] <-  locus.breaker(sstats)  #locus breaker function is in my R profile
-    loci[[i]]$trait <- rep(to_take, nrow(loci[[i]]))
-  }
-  
-  all_loci <- do.call(rbind, loci) #create the listof all the loci
-  
-  pan_loci <- reduce(GRanges(seqnames = all_loci$chr, IRanges(as.numeric(all_loci$start), as.numeric(all_loci$end)))) 
-  pan_loci_non_reduced <- GRanges(seqnames = all_loci$chr, IRanges(as.numeric(all_loci$start), as.numeric(all_loci$end)))
-  
-  overlapping <- findOverlaps(pan_loci_non_reduced, pan_loci) #find overlaps between all the loci and use it as an index of the unique non overlapping loci
-  all_loci$pan_locus <- rep(0, nrow(all_loci)) #allocate the column 
-  all_loci[overlapping@from,]$pan_locus <- overlapping@to  #assinging the number as index of which macro loci is overlapping 
-  all_loci$pan_locus_name <- rep(0, nrow(all_loci))
-  
-  #assign a name refereed to the position of each pan_locus
-  for(k in 1:length(unique(all_loci$pan_locus))){
-    all_loci[all_loci$pan_locus==k, ]$pan_locus_name <- paste0(all_loci[all_loci$pan_locus==k, ]$chr,'_',  min(all_loci[all_loci$pan_locus==k, ]$start), '_',  max(all_loci[all_loci$pan_locus==k, ]$end))
-  }
-  
-  rownames(all_loci) <- NULL
-  return(all_loci)
+      require(data.table)
+      require(dplyr)
+      require(GenomicRanges)
+      
+      SNPs <- list()
+      list_of_files <- list()
+      
+      for( i in c(1:length(my_paths))){
+        
+            #load the sumstats and put them into a list
+            list_of_files[[i]] <- fread(my_paths[[i]], data.table = F)
+            SNPs[[i]]<- list_of_files[[i]]$SNP
+            
+      }
+      
+      shared_SNPs <- Reduce(intersect, SNPs) #compute the SNPs that are present in all the summary stats
+      names(list_of_files) <- unlist(gwas_names)
+      loci <- list()
+      
+      for(i in c(1:length(my_paths))){
+        
+            to_take <- gwas_names[[i]]
+            sstats <- list_of_files[[to_take]]
+            colnames(sstats) <- toupper(colnames(sstats))
+            
+            sstats <- select(sstats, c(SNP, CHR,BP, A2, A1, BETA,SE, P))
+            sstats <- sstats[sstats$SNP %in% shared_SNPs,] #select only the SNPs that are shared among all the traits
+            loci[[i]] <-  locus.breaker(sstats)  #run locus breaker
+            loci[[i]]$trait <- rep(to_take, nrow(loci[[i]])) #name the loci
+            
+      }
+      
+      all_loci <- do.call(rbind, loci) #create the list of all the loci
+      
+      pan_loci <- reduce(GRanges(seqnames = all_loci$chr, IRanges(as.numeric(all_loci$start), as.numeric(all_loci$end)))) 
+      pan_loci_non_reduced <- GRanges(seqnames = all_loci$chr, IRanges(as.numeric(all_loci$start), as.numeric(all_loci$end)))
+      
+      overlapping <- findOverlaps(pan_loci_non_reduced, pan_loci) #find overlaps between all the loci and use it as an index of the unique non overlapping loci
+      all_loci$pan_locus <- rep(0, nrow(all_loci)) #allocate the column 
+      all_loci[overlapping@from,]$pan_locus <- overlapping@to  #assigning the number as index of which macro loci is overlapping 
+      all_loci$pan_locus_name <- rep(0, nrow(all_loci))
+      
+      #assign a name refereed to the position of each pan_locus
+      for(k in 1:length(unique(all_loci$pan_locus))){
+        all_loci[all_loci$pan_locus==k, ]$pan_locus_name <- paste0(all_loci[all_loci$pan_locus==k, ]$chr,'_',  min(all_loci[all_loci$pan_locus==k, ]$start), '_',  max(all_loci[all_loci$pan_locus==k, ]$end))
+      }
+      
+      rownames(all_loci) <- NULL
+      return(all_loci)
   
 }
 
@@ -254,41 +261,47 @@ venn_f1_f2_f3_loci<- makeVennDiagram(Peaks=f_ranges,connectedPeaks = 'keepAll',
 
 #function for obtaining a combination matrix for plotting and UpSet plot from Granges names
 lists_forupset <- function(peaks, traits){ 
-  #allocate lists
-  require(ComplexHeatmap)
-  require(ChIPpeakAnno)
-  require(stringr)
-  
-  ovl_f <- findOverlapsOfPeaks(peaks)
-  
-  un <- list()
-  final <- list(list())
-  sh <- list()
-  #create the lists and put it the elements that are unique for each trait
-  for( i in 1:length(traits)){
-    tt<-traits[i]
-    filt <- str_starts(names(ovl_f$uniquePeaks@ranges),tt, negate = FALSE)
-    un[[tt]] <- names(ovl_f$uniquePeaks@ranges)[filt]
-  }
-  
-  #put into the lists the element that are shared among the lists
-  for(k in 1:length(ovl_f$mergedPeaks$peakNames)){
-    
-    chek_in <- traits %in% substring(ovl_f$mergedPeaks$peakNames[[k]], first = 1, last = 2) #check if there is f1, f2 or f3
-    
-    for(u in 1:length(chek_in)){
-      tt<-traits[u]
-      if(chek_in[u]==T){
-        un[[tt]][[length(un[[tt]])+1]] <- paste0(ovl_f$mergedPeaks$peakNames[[k]], collapse = '-')
+      #allocate lists
+      require(ComplexHeatmap)
+      require(ChIPpeakAnno)
+      require(stringr)
+      
+      ovl_f <- findOverlapsOfPeaks(peaks)
+      
+      un <- list()
+      final <- list(list())
+      sh <- list()
+      #create the lists and put it the elements that are unique for each trait
+      for( i in 1:length(traits)){
+        
+            tt<-traits[i]
+            filt <- str_starts(names(ovl_f$uniquePeaks@ranges),tt, negate = FALSE)
+            un[[tt]] <- names(ovl_f$uniquePeaks@ranges)[filt]
+            
       }
       
-    }
-  }
-  
-  #generate the output
-  
-  cm <- make_comb_mat(un, mode = 'distinct')
-  return(cm)
+      #put into the lists the element that are shared among the lists
+      for(k in 1:length(ovl_f$mergedPeaks$peakNames)){
+        
+            chek_in <- traits %in% substring(ovl_f$mergedPeaks$peakNames[[k]], first = 1, last = 2) #check if there is f1, f2 or f3
+            
+            for(u in 1:length(chek_in)){
+                  
+                  tt<-traits[u]
+                  
+                  if(chek_in[u]==T){
+                    
+                      un[[tt]][[length(un[[tt]])+1]] <- paste0(ovl_f$mergedPeaks$peakNames[[k]], collapse = '-')
+                    
+                  }
+              
+            }
+      }
+      
+      #generate the output
+      
+      cm <- make_comb_mat(un, mode = 'distinct')
+      return(cm)
   
 }
 
@@ -307,4 +320,37 @@ UpSet(cm, set_order = c("f1", "f2", "f3"), comb_order = order(comb_size(cm), dec
 )
 
 ```
+
+## Exclude HLA region
+
+We did not colocalize genomic regions that were overlapping the region 25,000,000 35,000,000 on chromosome 6. 
+
+```{r paged.print=FALSE}
+regions <- fread('outputs/rev_1/06_genomic_regions_all_traits_munged/loci_all_traits.txt', data.table = F)
+
+#separate the pan_locus start and end column  
+regions <- regions %>% tidyr::separate(col= pan_locus_name, sep = '_|_', into = c('CHR', 'START', 'END'))
+
+#create a Granges object of the pan loci and 
+new_rang <- GRanges(seqnames = regions$chr, IRanges(start = as.numeric(regions$START), as.numeric(regions$END)))
+new_rang@elementMetadata$locus_name <- regions$pan_locus
+
+#find the overlaps with chr 6, 25,000,000 - 35,000,000
+aa <- IRanges::findOverlaps(new_rang, GRanges(seqnames = 6, IRanges(25000000, 35000000)) )
+
+#return the hla loci
+hla <- sort(unique(new_rang[aa@from,]@elementMetadata$locus_name))
+regions[regions$pan_locus %in% hla,]
+```
+
+
+
+
+
+
+
+
+
+
+
 
