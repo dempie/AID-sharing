@@ -1,0 +1,56 @@
+---
+title: "Supplementary Figure 3 Qsnp statistic"
+author: "Pietro Demela"
+date: "12/01/2023"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = TRUE,
+	warning = TRUE
+)
+knitr::opts_knit$set(root.dir =  "/project/aid_sharing/AID_sharing") #set up the project directory
+```
+
+## Libraries
+
+```{r}
+library(data.table)
+library(ggplot2)
+```
+
+
+## Dataset
+
+```{r}
+factor_loci <- fread('outputs/rev_1/07_Qheterogeneity/genomic_regions_table_heterogeneity_column.txt', data.table = F)
+```
+
+
+## Plot barplot
+
+```{r}
+#save
+pdf('outputs/rev_1/Figures/Supplementary_Qsnp/heterogeneity_index_genomic_regions.pdf', width = 10, height = 10)
+ggplot(data=factor_loci, aes(x=trait, fill=het) ) +
+  geom_bar(stat='count',position = position_stack(reverse=T),  color='black')+
+  scale_fill_manual(values = c("grey80", "white")) +
+  geom_text(aes(label = paste0("n=", ..count..)),position= position_stack(vjust = 0.5, reverse=T),stat='count')+
+  labs(y = 'Number of genomic regions', x = '')+
+  theme_classic() +
+  theme(legend.position="bottom") + ggtitle('Q heterogeneoity index lead SNPs genomic regions')
+dev.off()
+
+#plot
+ggplot(data=factor_loci, aes(x=trait, fill=het) ) +
+  geom_bar(stat='count',position = position_stack(reverse=T),  color='black')+
+  scale_fill_manual(values = c("grey80", "white")) +
+  geom_text(aes(label = paste0("n=", ..count..)),position= position_stack(vjust = 0.5, reverse=T),stat='count')+
+  labs(y = 'Number of genomic regions', x = '')+
+  theme_classic() +
+  theme(legend.position="bottom") + ggtitle('Q heterogeneoity index lead SNPs genomic regions')
+
+```
+
