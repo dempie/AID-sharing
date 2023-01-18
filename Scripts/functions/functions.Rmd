@@ -1177,3 +1177,71 @@ plot_locus_genes <- function(start, end, chr){
 }
 ```
 
+# Plot locus
+
+plots locus zoom plot of as many traits as provided. (it's fast)
+
+```{r}
+
+library(data.table)
+library(GenomicRanges)
+library(biomaRt)
+library(stringr)
+library(qqman)
+library(RColorBrewer)
+library(Gviz)
+library(EnsDb.Hsapiens.v75)
+library(ggpubr)
+library(stringr)
+plot_locus <- function(list_of_files, trait_names, start, end, chr, y_a=0, y_b=20, locus_name='-'){
+  #packages 
+  # require(data.table)
+  #require(qqman)
+  names(list_of_files) <- unlist(trait_names)
+  #select the active locus, the beginning and the end of the locus
+  start_loc <- start
+  end_loc <- end
+  chr_loc <- chr
+  #allocate the space
+  to_plot <- list()
+  #for each GWAS take out the BETAs and the SE
+  for(k in 1:length(list_of_files)){
+    
+    tt<- trait_names[[k]]   
+    tr_SNP_active <- list_of_files[[tt]]
+    tr_SNP_active <- tr_SNP_active[c(tr_SNP_active$CHR==chr & data.table::between(tr_SNP_active$BP, lower = start, upper = end)),]
+    tr_SNP_active <- tr_SNP_active[!duplicated(tr_SNP_active ), ] #remove duplicated SNPs 
+    #exctract pvalue
+    to_plot[[tt]] <- data.frame('SNP'=tr_SNP_active$SNP, 'P'=as.numeric(tr_SNP_active$P), 'CHR'=as.numeric(tr_SNP_active$CHR), 'BP'=as.numeric(tr_SNP_active$BP) )
+  }
+  #check the shared SNPs among the files
+  tr_SNP <- list()
+  for(k in 1:length(list_of_files)){
+    tt<- trait_names[[k]]  
+    tr_SNP[[tt]] <- to_plot[[tt]]$SNP
+  }
+  shared_snp <- Reduce(intersect, tr_SNP)
+  
+  #take only the shared snp to plot
+  to_p <- list()
+  for(k in 1:length(list_of_files)){
+    tt<- trait_names[[k]] 
+    to_p[[tt]]<-to_plot[[tt]][to_plot[[tt]]$SNP %in% shared_snp,]   
+  }
+  
+  par(mfrow=c(length(list_of_files),1))
+  par(mar=c(5,5,3,3))
+  for(n in 1:length(to_plot)){
+    tp <-trait_names[[n]]
+    manhattan(to_p[[tp]], chr="CHR", bp="BP", snp="SNP", p="P" ,xlim=c(start, end), main=paste0(tp,'  chr', chr,'_', start,'_', end, '  locus name ', locus_name ), suggestiveline =F , 
+              col = c("brown2"), highlight = c(to_p[[tp]][which.min(to_p[[tp]]$P), ]$SNP) )  
+    grid(nx = NULL, ny = NULL,
+         lty = 2,      # Grid line type
+         col = "gray", # Grid line color
+         lwd = 1)
+    
+  }
+  
+}
+```
+
