@@ -1,0 +1,271 @@
+---
+title: "Figure 3"
+author: "Pietro Demela"
+date: "25/01/2023"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = TRUE,
+	warning = TRUE
+)
+knitr::opts_knit$set(root.dir =  "/project/aid_sharing/AID_sharing") #set up the project directory
+```
+
+## Libraries
+
+```{r message=FALSE, warning=FALSE, paged.print=TRUE}
+library(data.table)
+library(stringr)
+library(biomaRt)
+library(ComplexHeatmap)
+library(RColorBrewer)
+library(dplyr)
+```
+
+## Figure 3A
+
+### Load dataset and mart
+
+Mart for gene name conversion
+```{r}
+
+kegg <- readRDS('outputs/rev_1/10_pathways/kegg.RDS')
+mart <- useMart("ensembl")
+mart <- useDataset("hsapiens_gene_ensembl", mart)
+
+```
+
+### Get gene names from ensemble gene ID
+
+```{r paged.print=FALSE}
+#extract the genes that were into a kegg pathway
+res <- kegg$result
+genes <- unique(strsplit(paste0(res$intersection, collapse = ','), split = ',')[[1]])
+head(genes)
+#get the gene names from ensmebl gene id 
+genes_symbol <- getBM(filters= "ensembl_gene_id", attributes= c('ensembl_gene_id', 'hgnc_symbol'),values=  genes,mart=mart )
+
+head(genes_symbol)
+
+#check for duplicated entries
+table(duplicated(genes_symbol$ensembl_gene_id))
+table(duplicated(genes_symbol$hgnc_symbol))
+
+#create a table with both the pathways and the genes for each factor
+t_t <- data.frame(genes) 
+
+for(i in 1:length(res$term_name)){
+ 
+    t_t[, paste0(paste(strsplit(res$term_name[i], split=' ')[[1]], collapse = '_'),'_' , res$query[i])] <- as.numeric(genes %in%      strsplit(res[res$term_name==res$term_name[i] & res$query==res$query[i], 'intersection'], split=',' )[[1]])
+
+      
+}
+
+head(t_t)
+
+#add gene symbol as row name and remove ENSEMBLE
+colnames(genes_symbol)[1] <- 'genes'
+dim(t_t)
+t_t <- inner_join(t_t, genes_symbol, 'genes')
+rownames(t_t) <- t_t$hgnc_symbol
+t_t <- select(t_t, -c('hgnc_symbol', 'genes'))
+
+
+head(t_t)
+
+
+
+```
+
+Create a matrix containing the unique pathway name and the columns for each factor that will serve to plot the -log10pvalues
+
+```{r}
+
+kg <- kegg$result[,c('query', 'p_value', 'term_name')]
+
+#create mtp, a matrix containing the unique pathway name and the columns containing the factors
+mtp <- matrix(nrow = length(unique(kg$term_name)), ncol = 3)
+colnames(mtp) <- c('f1', 'f2', 'f3')
+rownames(mtp) <- unique(kg$term_name)
+
+#show mtp
+mtp
+
+#populate mtp with the z scores
+for(i in c('f1', 'f2', 'f3')){
+      kg[ kg$query==i,]$term_name
+      mtp[, i][base::match(  kg[ kg$query==i, ]$term_name, names(mtp[, i]))] <- -log10(kg[ kg$query==i, ]$p_value) #important to set the radius of the circle
+}
+
+#show populated mtp
+mtp
+
+# add zeros to the empty rows
+for(i in c('f1', 'f2', 'f3')){
+  mtp[,i][is.na(mtp[,i])] <- 0
+}
+
+#show mtp
+mtp
+
+#toupper case
+colnames(mtp) <- toupper(colnames(mtp))
+
+#order mtp with the shared pathways on top and the genes to be clustereb by factors
+otp <- mtp[c(1,6,2,4,7,8,3,5,9,10,11,12),]
+
+otp
+```
+
+
+Create a table and add the information about the genes, shared or not.
+gpt table stores the information about a certain gene belonging to a certain pathway
+
+```{r}
+#gtp matrix will store the information about a certain gene belonging to a certain pathway
+gtp <- matrix(nrow = length(unique(kg$term_name)), ncol = nrow(genes_symbol))
+rownames(gtp) <- unique(kg$term_name)
+colnames(gtp) <- genes_symbol$hgnc_symbol
+
+#it looks like that
+gtp
+
+#allocate vectors and lists
+
+
+
+#populate the matrix
+for(k in 1:length(unique(res$term_name)) ){
+  
+        tt <- unique(res$term_name)[k]
+        g_s <- list()
+        u <- vector()
+        rm(cmb)
+        #if the intersection is between three pathways
+        if( table(res$term_name)[tt] == 3 ){
+          
+          
+                  for(j in 1:3){
+                           
+                     
+                          u <-  res[res$term_name==tt,][j,]$query
+                          g_s[[u]] <-  genes_symbol[genes_symbol$genes %in% str_split( res[res$term_name==tt,][j,]$intersection, pattern = ','  )[[1]] ,]$hgnc_symbol
+                         
+                          
+                  }        
+                
+                    #make a combination matrix and search for all the combinations
+                    cmb <- make_comb_mat(g_s, mode = 'distinct')
+                    
+                    if('110' %in% comb_name(cmb)){
+                      gtp[tt,extract_comb(cmb, '110')] <- paste0(names(g_s)[1:2], collapse = '-') 
+                    }
+                    
+                    if('011' %in% comb_name(cmb)){
+                    gtp[tt,extract_comb(cmb, '011')] <- paste0(names(g_s)[2:3], collapse = '-') 
+                    }
+                    
+                     if('101' %in% comb_name(cmb)){
+                      gtp[tt,extract_comb(cmb, '101')] <- paste0(names(g_s)[1:3], collapse = '-') 
+                    }
+                    
+                    if('100' %in% comb_name(cmb)){
+                    gtp[tt,extract_comb(cmb, '100')] <- paste0(names(g_s)[1], collapse = '-')
+                    }
+                    
+                    if('010' %in% comb_name(cmb)){
+                    gtp[tt,extract_comb(cmb, '010')] <- paste0(names(g_s)[2], collapse = '-')
+                    }
+                    
+                    if('001' %in% comb_name(cmb)){
+                    gtp[tt,extract_comb(cmb, '001')] <- paste0(names(g_s)[3], collapse = '-')
+                    
+                    }
+                    
+                    if('111 '%in% comb_name(cmb)){
+                    gtp[tt,extract_comb(cmb, '111')] <- paste0(names(g_s)[1:3], collapse = '-')
+                    
+                    }
+                
+          
+          
+            #if the intersection is between two elements do this
+        } else if( table(res$term_name)[tt] == 2 ){
+           
+              for(i in 1:nrow(res[res$term_name==tt,])){
+                           
+                     
+                          u <-  res[res$term_name==tt,][i,]$query
+                          g_s[[u]] <-  genes_symbol[genes_symbol$genes %in% str_split( res[res$term_name==tt,][i,]$intersection, pattern = ','  )[[1]] ,]$hgnc_symbol
+                         
+                          
+                  }        
+                
+                    #make a combination matrix and search for all the combinations
+                    cmb <- make_comb_mat(g_s)
+                    
+                    if('11' %in% comb_name(cmb)){
+                      gtp[tt,extract_comb(cmb, '11')] <- paste0(names(g_s)[1:2], collapse = '-') 
+                    }
+                    
+                    if('01' %in% comb_name(cmb)){
+                    gtp[tt,extract_comb(cmb, '01')] <- paste0(names(g_s)[2], collapse = '-') 
+                    }
+                    
+                    if('10' %in% comb_name(cmb)){
+                    gtp[tt,extract_comb(cmb, '10')] <- paste0(names(g_s)[1], collapse = '-')
+                    }
+                    
+          
+          
+         }
+           
+           
+          #if there is no intersection proceed as follows
+          else if( table(res$term_name)[tt] == 1 ){
+          
+            for(i in 1:nrow(res[res$term_name==tt,])){
+                      ges <-  genes_symbol[genes_symbol$genes %in% str_split( res[res$term_name==tt,][i,]$intersection, pattern = ','  )[[1]] ,]$hgnc_symbol
+                      gtp[tt ,ges] <- res[res$term_name==tt,][i,]$query
+          }
+        }
+        
+}
+
+
+
+ggtp <-  gtp[rownames(otp),rownames(t_t)]
+#look at the combinations
+names(table(ggtp))
+```
+
+
+```{r}
+library(ComplexHeatmap)
+
+make_comb_mat(g_s)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
