@@ -206,6 +206,18 @@ head(factor_loci)
 fwrite(factor_loci, 'outputs/rev_1/10_pathways/factor_loci_genes.txt', quote = F, sep='\t', col.names = T)
 ```
 
+## GO terms
+
+```{r}
+go <- gost(query = list(f1=unique(factor_loci[factor_loci$trait=='f1',]$v2g), 
+                          f2=unique(factor_loci[factor_loci$trait=='f2',]$v2g), 
+                          f3=unique(factor_loci[factor_loci$trait=='f3',]$v2g)),
+           sources = c('GO'), significant = T, evcodes = T)
+
+saveRDS(go, 'outputs/rev_1/10_pathways/go.RDS')
+```
+
+
 ```{r}
 sessionInfo()
 ```
