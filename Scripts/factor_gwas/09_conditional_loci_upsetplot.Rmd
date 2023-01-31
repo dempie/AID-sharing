@@ -28,14 +28,14 @@ library(qgraph)
 
 ## Load and prepare the dataset 
 
-```{r}
+```{r paged.print=FALSE}
 loci.table <- fread('outputs/rev_1/coloc_eqtl_mr/loci_definitions/final_locus_table.tsv', data.table = F) #take the original factor loci list
 loci.table$final.locus=paste0(loci.table$Chr,":",loci.table$start,"-",loci.table$end,"_",loci.table$sub_locus)
 ```
 
 ### Plot the Upset plot
 ```{r}
-q <- make_comb_mat(list(f1=loci.table[loci.table$trait=='f1',]$final.locus, f2=loci.table[loci.table$trait=='f2',]$final.locus, f3=loci.table[loci.table$trait=='f3',]$final.locus), mode = 'distinct')
+q <- make_comb_mat(list(f1=loci.table[which(loci.table$trait=='f1'),]$final.locus, f2=loci.table[which(loci.table$trait=='f2'),]$final.locus, f3=loci.table[which(loci.table$trait=='f3'),]$final.locus), mode = 'distinct')
 
 
 UpSet(q, set_order = c("f1", "f2", "f3"), 
@@ -46,5 +46,9 @@ UpSet(q, set_order = c("f1", "f2", "f3"),
       row_title = "Factor", 
       column_title = "Intersection of all loci, colocalization")
 
+```
+
+```{r}
+sessionInfo()
 ```
 
