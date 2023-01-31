@@ -147,7 +147,7 @@ f_ranges <- list()
 
 for(i in c('f1', 'f2', 'f3')){
 
-f_ranges[[i]] <- GRanges(seqnames = regions_factors[regions_factors$trait==i,]$chr, IRanges(as.numeric(regions_factors[regions_factors$trait==i,]$start),as.numeric(regions_factors[regions_factors$trait==i,]$end)))
+f_ranges[[i]] <- GRanges(seqnames = regions_factors[which(regions_factors$trait==i),]$chr, IRanges(as.numeric(regions_factors[which(regions_factors$trait==i),]$start),as.numeric(regions_factors[which(regions_factors$trait==i),]$end)))
 
 }
 
@@ -378,7 +378,7 @@ locus_lister <- function(my_paths, gwas_names) {
     colnames(sstats) <- toupper(colnames(sstats))
     
     sstats <- select(sstats, c(SNP, CHR,BP, A2, A1, BETA,SE, P))
-    sstats <- sstats[sstats$SNP %in% shared_SNPs,] #select only the SNPs that are shared among all the traits
+    sstats <- sstats[which(sstats$SNP %in% shared_SNPs),] #select only the SNPs that are shared among all the traits
     loci[[i]] <-  locus.breaker(sstats)  #locus breaker function is in my R profile
     loci[[i]]$trait <- rep(to_take, nrow(loci[[i]]))
   }
@@ -395,7 +395,7 @@ locus_lister <- function(my_paths, gwas_names) {
   
   #assign a name refereed to the position of each pan_locus
   for(k in 1:length(unique(all_loci$pan_locus))){
-    all_loci[all_loci$pan_locus==k, ]$pan_locus_name <- paste0(all_loci[all_loci$pan_locus==k, ]$chr,'_',  min(all_loci[all_loci$pan_locus==k, ]$start), '_',  max(all_loci[all_loci$pan_locus==k, ]$end))
+    all_loci[which(all_loci$pan_locus==k), ]$pan_locus_name <- paste0(all_loci[which(all_loci$pan_locus==k), ]$chr,'_',  min(all_loci[which(all_loci$pan_locus==k), ]$start), '_',  max(all_loci[which(all_loci$pan_locus==k), ]$end))
   }
   
   rownames(all_loci) <- NULL
