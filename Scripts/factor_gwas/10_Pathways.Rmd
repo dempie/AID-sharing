@@ -34,7 +34,7 @@ The script queries Opentargets platform to convert rsID into IDformat. ID format
 #load the table of loci with the lead SNPs
 loc <- fread('outputs/rev_1/coloc_eqtl_mr/loci_definitions/final_locus_table.tsv', data.table = F)
 #extract the SNPs
-snps <- unique(loc[loc$trait %in% c('f1', 'f2', 'f3'),]$SNP)
+snps <- unique(loc[which(loc$trait %in% c('f1', 'f2', 'f3')),]$SNP)
 
 #create a dataframe to map rsID to refID
 q <- list()
@@ -132,13 +132,13 @@ dim(mat)
 colnames(v2genes)[2] <- 'Markername'
 v2g_rsID <- inner_join(mat, v2genes, 'Markername')
 
-factor_loci <- loc[loc$trait %in% c('f1', 'f2', 'f3'),]
+factor_loci <- loc[which(loc$trait %in% c('f1', 'f2', 'f3')),]
 factor_loci$v2g <- rep('empty', nrow(factor_loci))
 
 #add the closest gene to the locus table
 for(i in 1:nrow(factor_loci)){
   
-  factor_loci[i,'v2g'] <- v2g_rsID[v2g_rsID$rsID== factor_loci[i,]$SNP,]$gene.id 
+  factor_loci[i,'v2g'] <- v2g_rsID[which(v2g_rsID$rsID== factor_loci[i,]$SNP),]$gene.id 
   
 }
 
@@ -155,9 +155,9 @@ Query with the ensemble gene ID
 ```{r paged.print=FALSE}
 #query a list with each element of the list containing the genes per factor.
 
-kegg <- gost(query = list(f1=unique(factor_loci[factor_loci$trait=='f1',]$v2g), 
-                          f2=unique(factor_loci[factor_loci$trait=='f2',]$v2g), 
-                          f3=unique(factor_loci[factor_loci$trait=='f3',]$v2g)),
+kegg <- gost(query = list(f1=unique(factor_loci[which(factor_loci$trait=='f1'),]$v2g), 
+                          f2=unique(factor_loci[which(factor_loci$trait=='f2'),]$v2g), 
+                          f3=unique(factor_loci[which(factor_loci$trait=='f3'),]$v2g)),
              sources = c('KEGG'), 
              significant = T, 
              evcodes = T)
@@ -171,7 +171,7 @@ saveRDS(kegg, 'outputs/rev_1/10_pathways/kegg.RDS')
 ### Add gene names
 Mart for gene name conversion
 ```{r}
-kegg <- readRDS('outputs/2_gwas_uc-cd-psc-ra-sle-t1d-jia-asthma-derma/10_genes_and_pathways/kegg_pathway_analysis.RDS')
+kegg <- readRDS('outputs/rev_1/10_pathways/kegg.RDS')
 mart <- useMart("ensembl")
 mart <- useDataset("hsapiens_gene_ensembl", mart)
 ```
@@ -197,7 +197,7 @@ table(duplicated(genes_symbol$hgnc_symbol))
 factor_loci$v2g_gene_name <- rep('-', nrow(factor_loci))
 for(k in 1:nrow(factor_loci)){
   
-  factor_loci[k, 'v2g_gene_name' ] <- genes_symbol[genes_symbol$ensembl_gene_id==factor_loci[k, 'v2g' ],'hgnc_symbol']
+  factor_loci[k, 'v2g_gene_name' ] <- genes_symbol[which(genes_symbol$ensembl_gene_id==factor_loci[k, 'v2g' ]),'hgnc_symbol']
   
 }
 
@@ -209,9 +209,9 @@ fwrite(factor_loci, 'outputs/rev_1/10_pathways/factor_loci_genes.txt', quote = F
 ## GO terms
 
 ```{r}
-go <- gost(query = list(f1=unique(factor_loci[factor_loci$trait=='f1',]$v2g), 
-                          f2=unique(factor_loci[factor_loci$trait=='f2',]$v2g), 
-                          f3=unique(factor_loci[factor_loci$trait=='f3',]$v2g)),
+go <- gost(query = list(f1=unique(factor_loci[which(factor_loci$trait=='f1'),]$v2g), 
+                          f2=unique(factor_loci[which(factor_loci$trait=='f2'),]$v2g), 
+                          f3=unique(factor_loci[which(factor_loci$trait=='f3'),]$v2g)),
            sources = c('GO'), significant = T, evcodes = T)
 
 saveRDS(go, 'outputs/rev_1/10_pathways/go.RDS')
