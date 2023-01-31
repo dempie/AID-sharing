@@ -1,8 +1,11 @@
 ---
 title: "10 Pathways"
-author: "Pietro Demela"
-date: "25/01/2023"
-output: html_document
+output: 
+  html_document: 
+    toc: yes
+author: 'Pietro Demela'
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r setup, include=FALSE}
@@ -208,7 +211,7 @@ fwrite(factor_loci, 'outputs/rev_1/10_pathways/factor_loci_genes.txt', quote = F
 
 ## GO terms
 
-```{r}
+```{r paged.print=TRUE}
 go <- gost(query = list(f1=unique(factor_loci[which(factor_loci$trait=='f1'),]$v2g), 
                           f2=unique(factor_loci[which(factor_loci$trait=='f2'),]$v2g), 
                           f3=unique(factor_loci[which(factor_loci$trait=='f3'),]$v2g)),
