@@ -71,6 +71,15 @@ ggplot(kg, aes(x = factor(pathway_f, levels = rev(pathway_f)), y = -log10(padj))
 
 dev.off()
 
+ggplot(kg, aes(x = factor(pathway_f, levels = rev(pathway_f)), y = -log10(padj))) +
+    coord_flip() +
+    geom_bar(stat = 'identity') +
+    theme(axis.line.x = element_line(),
+          axis.line.y = element_line(),
+          panel.grid = element_blank(),
+          panel.background = element_blank(),
+          legend.position = "off")
+
 
 ```
 
