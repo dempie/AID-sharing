@@ -106,5 +106,9 @@ dev.off()
 
 ```
 
+```{r}
+sessionInfo()
+```
+
 
 
