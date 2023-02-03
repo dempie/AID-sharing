@@ -349,6 +349,25 @@ for(k in 1:6) {
 dev.off()
 ```
 
+### Plot it here
+
+```{r fig.height=30, fig.width=30}
+
+b+a
+#for adding the legend on the pvalues scales, create the same heatmap with fixed values and copy paste them in illustrator 
+for(k in 1:6) {
+  i <- c(0.05,0.30,0.50, 0.70, 0.80,0.90)[k] #this are the positions 
+  
+  decorate_annotation('legend', {
+    
+    grid.circle(x=i, r= unit(-log10(c(10^-10,10^-8,10^-6,10^-4,10^-2,0.05)), 'mm')[k],gp = gpar(fill = brewer.pal(7,'BrBG')[3], col = 'black')) #this are the pvalues that are shown in the legend, the dimension of the -log10(p) is in mm
+    grid.text(x=i, round(-log10(c(10^-10,10^-8,10^-6,10^-4,10^-2,0.05)), 3)[k]) #show the p
+  })
+}
+
+```
+
+
 ```{r}
 sessionInfo()
 ```
