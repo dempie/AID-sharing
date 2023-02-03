@@ -1,11 +1,10 @@
 ---
 title: "Figure 5"
-author: "Pietro Demela"
 date: "30/01/2023"
 output: 
   html_document: 
     toc: yes
-author: 'Pietro Demela'
+author: 'Pietro Demela, Nicola Pirastu, Blagoje Soskic'
 editor_options: 
   chunk_output_type: console
 ---
@@ -38,8 +37,8 @@ head(mr_new)
 
 
 
-```{r}
-
+```{r fig.height=25, fig.width=8}
+#subset only the factors
 mr_f <- mr_new[which(mr_new$TRAIT %in% c('Falrg', 'Faid', 'Fgut') & mr_new$PVAL<0.05),]
 
 #add a column with the direction fo the effect
@@ -56,8 +55,6 @@ plot_f$name <-paste(plot_f$GENE, plot_f$`LOCUS_NAME_(CHR:START_END)`)
 
 
 head(plot_f)
-p
-
 
 mat <-matrix(nrow =length(unique(plot_f$name)), ncol = length(unique(plot_f$CELL_TYPE))) 
 
@@ -83,12 +80,15 @@ for(i in 1:nrow(mat)){
 }
 
 colnames(mat)
+dim(mat)
+
 mat<- mat[, c('CD4NC', 'CD4ET', 'CD4SOX4', 'CD8NC', 'CD8ET', 'CD8S100B','BIN', 'BMem', 'Plasma', 'MonoC', 'MonoNC', 'DC' ,'NK', 'NKR')]
+dim(mat)
 ```
 
 ### Plot 5A
-```{r}
-pdf('outputs/rev_1/Figures/Fig_5/5A_mr_heatmap.pdf', height = 30, width=8)
+```{r fig.height=20, fig.width=8}
+
 Heatmap(mat, 
         #column_title = "Genes and pathways KEGG",
         rect_gp = gpar(col = brewer.pal(5, 'Greys')[2], lwd = 0.25), 
@@ -143,9 +143,66 @@ Heatmap(mat,
         }
 )
 
-dev.off()
+
 ```
 
+```{r fig.height=30, fig.width=8}
+pdf('outputs/rev_1/Figures/Fig_5/5A_mr_heatmap.pdf', height = 30, width=8)
+Heatmap(mat, 
+        #column_title = "Genes and pathways KEGG",
+        rect_gp = gpar(col = brewer.pal(5, 'Greys')[2], lwd = 0.25), 
+        column_title_gp = gpar(fontsize = 10, fontface = "bold"),
+        col=colori, 
+        border=T,
+        row_names_gp = gpar( fontsize=8),
+        column_names_gp = gpar(fontsize=8),
+        column_names_side = 'bottom',
+        row_names_side = 'left',
+        show_heatmap_legend = F,
+        row_title = "Pathways",
+        na_col = 'white', 
+        height = unit(30, 'cm'), width = 8, 
+        
+        
+        
+        cell_fun = function(j, i, x, y, width, height, fill) {
+          if(!is.na(mat[i, j] )){
+            
+            if(mat[i, j]== '-1Faid' ){
+              grid.points(x = x, y = y, pch = 25, size = unit(5, "mm"), gp = gpar(col = brewer.pal(6, 'Paired')[4], fill=brewer.pal(5, 'Paired')[4] ))
+            }
+            
+            
+            if(mat[i, j]== '1Faid' ){
+              grid.points(x = x, y = y, pch = 24, size = unit(5, "mm"), gp = gpar(col = brewer.pal(5, 'Paired')[4], fill=brewer.pal(5, 'Paired')[4]))
+            }
+            
+            if(mat[i, j]== '-1Falrg' ){
+              grid.points(x = x, y = y, pch = 25, size = unit(5, "mm"), gp = gpar(col = brewer.pal(6, 'Paired')[6], fill=brewer.pal(6, 'Paired')[6]))
+            }
+            
+            if(mat[i, j]== '1Falrg' ){
+              grid.points(x = x, y = y, pch = 24, size = unit(5, "mm"), gp = gpar(col = brewer.pal(6, 'Paired')[6], fill=brewer.pal(6, 'Paired')[6]))
+            }
+            
+            if(mat[i, j]== '1Fgut' ){
+              grid.points(x = x, y = y, pch = 24, size = unit(5, "mm"), gp = gpar(col = brewer.pal(6, 'Paired')[2], fill=brewer.pal(6, 'Paired')[2]))
+            }
+            
+            if(mat[i, j]== '-1Fgut' ){
+              grid.points(x = x, y = y, pch = 25, size = unit(5, "mm"), gp = gpar(col = brewer.pal(6, 'Paired')[2], fill=brewer.pal(6, 'Paired')[2]))
+            }
+            
+            if(mat[i, j]== 'c(-1, -1)c(\"Fgut\", \"Faid\")' ){
+              grid.points(x = x, y = y, pch=25, size = unit(5, "mm"), gp = gpar(col = 'grey', fill='yellow'))
+            }
+            
+          }
+          
+        }
+)
+dev.off()
+```
 
 
 
