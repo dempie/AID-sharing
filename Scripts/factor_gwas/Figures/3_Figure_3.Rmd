@@ -123,8 +123,6 @@ colnames(gtp) <- genes_symbol$hgnc_symbol
 #it looks like that
 gtp
 
-#allocate vectors and lists
-
 
 
 #populate the matrix
