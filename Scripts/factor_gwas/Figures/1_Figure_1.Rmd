@@ -3,7 +3,7 @@ title: "Figure 1"
 output: 
   html_document: 
     toc: yes
-author: 'Pietro Demela'
+author: 'Pietro Demela, Nicola Pirastu, Blagoje Soskic'
 editor_options: 
   chunk_output_type: console
 ---
