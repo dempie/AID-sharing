@@ -1,0 +1,274 @@
+---
+title: "Supplementary tables"
+author: "Pietro Demela"
+date: "13/01/2023"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = TRUE,
+	warning = TRUE
+)
+knitr::opts_knit$set(root.dir =  "/project/aid_sharing/AID_sharing") #set up the project directory
+```
+
+```{r}
+library(data.table)
+library(stringr)
+library(dplyr)
+```
+
+## Supplementary table S1, EFA models
+
+```{r}
+
+```
+
+## Supplementary table S2, LDSC SE and pvalues
+
+```{r paged.print=FALSE}
+
+#load the output of ldsc 
+
+LDSCoutput <- readRDS('outputs/rev_1/02_munge_ldsc_sumstats/ldsc_output_rev1.RDS')
+
+	k<-nrow(LDSCoutput$S)
+	SE<-matrix(0, k, k)
+	SE[lower.tri(SE,diag=TRUE)] <-sqrt(diag(LDSCoutput$V))
+	
+	#add rownames
+	colnames(SE) <- colnames(LDSCoutput$S)
+  row.names(SE) <- 	colnames(SE) 
+	
+	#obtain the p-values
+	pvalues <- 2*pnorm(abs(LDSCoutput$S/SE),lower.tail=FALSE)
+	rownames(pvalues) <- colnames(pvalues)
+	
+	#print pvalues
+	signif(pvalues,3)
+	#print SE
+	signif(SE,3)
+	
+	write.csv(signif(pvalues,3),file = 'outputs/rev_1/Supplementary_tables/2_Supplementary_table_pvalues_ldsc.csv', row.names = T, col.names = T, quote = F)
+	write.csv(signif(SE,3),file = 'outputs/rev_1/Supplementary_tables/2_Supplementary_table_se_ldsc.csv', row.names = T, col.names = T, quote = F)
+
+```
+## Supplementary table S3, genomic regions Factors
+
+```{r paged.print=FALSE}
+
+#----Supplementary table 1, table of genomic regions FACTORS -------------------
+loci_factors <- fread('outputs/rev_1/04_genomic_regions_factors/regions_factors_with_index.txt', data.table = F) 
+head(loci_factors)
+
+#change name to the factor name
+loci_factors$trait[which(loci_factors$trait=='f1')] <- 'Fgut'
+loci_factors$trait[which(loci_factors$trait=='f2')] <- 'Faid'
+loci_factors$trait[which(loci_factors$trait=='f3')] <- 'Falrg'
+
+#rename the columns (here the effect Allele is A1)
+gen_reg <- loci_factors %>% rename('p-value'=P , Factor ='trait',  'genomic_region(chr_start_end)'= pan_locus_name, 'lead_SNP'=SNP, 'OTHA'=A1, 'REFA'=A2) %>% select(-c( pan_locus)) 
+colnames(gen_reg) <- toupper(colnames(gen_reg))
+
+#save
+fwrite(gen_reg, 'outputs/rev_1/Supplementary_tables/3_Supplementary_table_genomic_regions_factors.csv', sep = ',', col.names = T, quote = F)
+
+```
+
+
+## Supplementary table S4, conditional loci Factors and v2g genes
+
+```{r paged.print=FALSE}
+
+loci.table <-  fread('outputs/rev_1/10_pathways/factor_loci_genes.txt', data.table = F) 
+loci.table$final.locus=paste0(loci.table$Chr,":",loci.table$start,"-",loci.table$end,"_",loci.table$sub_locus)
+
+#Add the column for independent signals from the same trait ended up colocalising in the same locus
+loci.table$indip_coloc <- NA
+
+for(i in 1:3){
+  tt <- c('f1', 'f2', 'f3')[i]
+  dup <- loci.table[which(loci.table$trait== tt), ]$final.locus[duplicated(loci.table[which(loci.table$trait==tt), ]$final.locus)]
+  loci.table[which(loci.table$trait== tt & loci.table$final.locus %in% dup), ]$indip_coloc <- 'multiple singal colocalising in the same locus'
+  loci.table[which(loci.table$trait== tt & (!loci.table$final.locus %in% dup)), ]$indip_coloc <- '-'
+}
+
+
+#change the factor names
+loci.table$trait[which(loci.table$trait=='f1')] <- 'Fgut'
+loci.table$trait[which(loci.table$trait=='f2')] <- 'Faid'
+loci.table$trait[which(loci.table$trait=='f3')] <- 'Falrg'
+
+#renmae the columns
+loci <- loci.table %>% rename(Factor=trait, 'V2G_Opentrgets_EnsemblID'= v2g, 
+                              'V2G_Opentrgets_gene_name'=v2g_gene_name, 'LOCUS_NAME(CHR_START_END)'= final.locus, 'Beta'=b, 'BetaJ'=bJ, 'NOTE'=indip_coloc  ) %>% 
+  select(-c(pan.locus, sub_locus) )
+colnames(loci) <- toupper(colnames(loci))
+
+head(loci)
+
+#save
+fwrite(loci,'outputs/rev_1/Supplementary_tables/4_Supplementary_table_conditional_loci_withv2g_factors.csv', sep = ',', col.names = T, quote = F)
+
+
+```
+
+
+## Supplementary table S5, colocalization results
+
+```{r message=TRUE, paged.print=FALSE}
+
+posterior <- fread('outputs/rev_1/coloc_eqtl_mr/loci_definitions/colocalization.table.all.tsv', data.table = F)
+regions <- fread('outputs/rev_1/06_genomic_regions_all_traits_munged/loci_all_traits.txt')
+
+posterior$genomic_region <- '-'
+
+for(i in 1:nrow(posterior)){
+  
+  posterior[i,]$genomic_region <- unique(regions[which(regions$pan_locus== posterior[i,]$locus), ]$pan_locus_name)
+
+  }
+
+
+final_post <- posterior %>% select(-c('locus')) %>% rename('genomic_region(CHR_START_END)'=genomic_region, 'trait_1'=t1, 'trait_2'=t2, 'leadSNP_locus_trait_1'=hit1, 'leadSNP_locus_trait_2'=hit2)
+
+final_post$trait_1[which(final_post$trait_1=='f1')] <- 'Fgut'
+final_post$trait_2[which(final_post$trait_2=='f1')] <- 'Fgut'
+
+final_post$trait_1[which(final_post$trait_1=='f2')] <- 'Faid'
+final_post$trait_2[which(final_post$trait_2=='f2')] <- 'Faid'
+
+final_post$trait_1[which(final_post$trait_1=='f3')] <- 'Falrg'
+final_post$trait_2[which(final_post$trait_2=='f3')] <- 'Falrg'
+
+final_post$trait_1[which(final_post$trait_1=='derma')] <- 'eczema'
+final_post$trait_2[which(final_post$trait_2=='derma')] <- 'eczema'
+
+
+fwrite(final_post,'outputs/rev_1/Supplementary_tables/5_Supplementary_table_coloc_all_loci_results.csv', sep = ',', col.names = T, quote = F)
+
+head(final_post)
+
+
+
+
+
+
+```
+
+
+## Supplementary table S6, genomic regions all traits and factors
+
+```{r paged.print=FALSE}
+loci_factors <- fread('outputs/rev_1/06_genomic_regions_all_traits_munged/loci_all_traits.txt', data.table = F) 
+head(loci_factors)
+
+#change name to the factor name
+loci_factors$trait[which(loci_factors$trait=='f1')] <- 'Fgut'
+loci_factors$trait[which(loci_factors$trait=='f2')] <- 'Faid'
+loci_factors$trait[which(loci_factors$trait=='f3')] <- 'Falrg'
+loci_factors$trait[which(loci_factors$trait=='derma')] <- 'eczema'
+
+#rename the columns (here the effect allele is A2)
+gen_reg <- loci_factors %>% rename('p-value'=P , Factor ='trait',  'genomic_region(chr_start_end)'= pan_locus_name, 'lead_SNP'=SNP, 'OTHA'=A2, 'REFA'=A1) %>% select(-c( pan_locus)) 
+colnames(gen_reg) <- toupper(colnames(gen_reg))
+
+head(gen_reg)
+#save
+fwrite(gen_reg, 'outputs/rev_1/Supplementary_tables/6_Supplementary_table_genomic_regions_all_traits.csv', sep = ',', col.names = T, quote = F)
+
+```
+
+## Supplementary table S7, genomic regions all traits and factors
+
+```{r}
+
+```
+
+## Supplementary table S8, KEGG pathways
+
+```{r}
+
+```
+
+## Supplementary table S9, GO terms
+
+```{r}
+
+```
+
+## Supplementary table S10,top 10 GO terms
+
+```{r}
+
+```
+
+## Supplementary table S11, eQTL colocalization results
+```{r}
+
+```
+
+## Supplementary table S12 MR supplementary table
+
+```{r paged.print=FALSE}
+
+#mr table
+mr_list <- list.files('outputs/rev_1/coloc_eqtl_mr/sc_eqtl/')[which(str_ends(list.files('/project/aid_sharing/sc_eqtl/'), 'MR.tsv'))]
+
+mr_l <- list()
+mr_ok <- list()
+
+#load the files that were split by chr, and cell type
+for(i in mr_list){
+  
+  mr_l[[i]] <- try(fread(paste0('outputs/rev_1/coloc_eqtl_mr/sc_eqtl/',i)))
+  
+  if(!is(mr_l[[i]], 'try-error')){
+    mr_ok[[i]] <- mr_l[[i]]
+  }
+  
+}
+
+
+mr_res <- Reduce(rbind, mr_ok)
+mr_res <- mr_res[mr_res$trait %in% c('f1', 'f2', 'f3'),]
+
+head(mr_res)
+
+#add the locus name
+#add the locus name to the table
+loci <- fread('outputs/rev_1/coloc_eqtl_mr/loci_definitions/final_locus_table.tsv', data.table = F)
+loci$final.locus=paste0(loci$Chr,":",loci$start,"-",loci$end,"_",loci$sub_locus)
+loci$tmp <- paste0(loci$pan.locus, '_',loci$sub_locus)
+head(loci)
+
+#add the locus name in this loop 
+mr_res$locus_name <- rep('', nrow(mr_res))
+for(i in 1:nrow(mr_res)){
+  mr_res[i, ]$locus_name <- loci[which(loci$tmp==mr_res[i, ]$locus),]$final.locus[1]
+  
+}
+
+mr_final <- mr_res %>% rename( 'locus_name_(chr:start_end)'=locus_name, 'cell_type'=cell.type) %>% select(-c('locus'))
+
+#rename factors 
+mr_final$trait[which(mr_final$trait=='f1')] <- 'Fgut'
+mr_final$trait[which(mr_final$trait=='f2')] <- 'Faid'
+mr_final$trait[which(mr_final$trait=='f3')] <- 'Falrg'
+
+names(mr_final) <- toupper(names(mr_final))
+
+#remove duplicated rows for multiple locus associated with the same eQTL
+mr_final <- mr_final[!is.na(mr_final$B),]
+
+head(mr_final)
+dim(mr_final)
+
+#save
+fwrite(mr_final,'outputs/rev_1/Supplementary_tables/Supplementary_table_MR_results.csv', sep = ',', col.names = T, quote = F)
+
+
+```
+
