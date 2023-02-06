@@ -88,7 +88,8 @@ dim(mat)
 
 ### Plot 5A
 ```{r fig.height=20, fig.width=8}
-
+#in alfabetical order
+mat <- mat[order(row.names(mat)),]
 Heatmap(mat, 
         #column_title = "Genes and pathways KEGG",
         rect_gp = gpar(col = brewer.pal(5, 'Greys')[2], lwd = 0.25), 
