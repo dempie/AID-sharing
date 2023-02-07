@@ -295,7 +295,7 @@ qtl_ok <- list()
 
 for(i in qtl_names){
   
-  qtl_l[[i]] <- try(fread(paste0('outputs/rev_1/coloc_eqtl_mr/sc_eqtl/', i)))
+  qtl_l[[i]] <- try(fread(paste0('outputs/rev_1/coloc_eqtl_mr/sc_eqtl/', i), data.table=F))
   
   if(c(!is(qtl_l[[i]], 'try-error') & !ncol(qtl_l[[i]])==1)){
     qtl_ok[[i]] <- qtl_l[[i]]
@@ -343,7 +343,7 @@ mr_ok <- list()
 #load the files that were split by chr, and cell type
 for(i in mr_list){
   
-  mr_l[[i]] <- try(fread(paste0('outputs/rev_1/coloc_eqtl_mr/sc_eqtl/',i)))
+  mr_l[[i]] <- try(fread(paste0('outputs/rev_1/coloc_eqtl_mr/sc_eqtl/',i), data.table=F))
   
   if(!is(mr_l[[i]], 'try-error')){
     mr_ok[[i]] <- mr_l[[i]]
@@ -353,7 +353,7 @@ for(i in mr_list){
 
 
 mr_res <- Reduce(rbind, mr_ok)
-mr_res <- mr_res[mr_res$trait %in% c('f1', 'f2', 'f3'),]
+mr_res <- mr_res[which(mr_res$trait %in% c('f1', 'f2', 'f3')),]
 
 head(mr_res)
 
@@ -371,7 +371,7 @@ for(i in 1:nrow(mr_res)){
   
 }
 
-mr_final <- mr_res %>% rename( 'locus_name_(chr:start_end)'=locus_name, 'cell_type'=cell.type) %>% select(-c('locus'))
+mr_final <- mr_res %>% rename( 'locus_name_(chr:start_end)'=locus_name, 'cell_type'=cell.type) %>% dplyr::select(-c('locus'))
 
 #rename factors 
 mr_final$trait[which(mr_final$trait=='f1')] <- 'Fgut'
@@ -381,13 +381,13 @@ mr_final$trait[which(mr_final$trait=='f3')] <- 'Falrg'
 names(mr_final) <- toupper(names(mr_final))
 
 #remove duplicated rows for multiple locus associated with the same eQTL
-mr_final <- mr_final[!is.na(mr_final$B),]
+mr_final <- mr_final[which(!is.na(mr_final$B)),]
 
 head(mr_final)
 dim(mr_final)
 
 #save
-fwrite(mr_final,'outputs/rev_1/Supplementary_tables/Supplementary_table_MR_results.csv', sep = ',', col.names = T, quote = F)
+fwrite(mr_final,'outputs/rev_1/Supplementary_tables/12_Supplementary_table_MR_results.csv', sep = ',', col.names = T, quote = F)
 
 
 ```
