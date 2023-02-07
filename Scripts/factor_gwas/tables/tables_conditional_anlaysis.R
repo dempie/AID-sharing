@@ -88,7 +88,7 @@ dim(all_loci_noNA)
 all_loci_miss <- rbind(all_loci_noNA, qq)
 dim(all_loci_miss)
 
-fwrite(all_loci_miss , 'outputs/rev_1/Supplementary_tables/8_Supplementary_all_conditional_loci.csv', sep = ',', col.names = T, quote = F)
+fwrite(all_loci_miss , 'outputs/rev_1/Supplementary_tables/7_Supplementary_all_conditional_loci.csv', sep = ',', col.names = T, quote = F)
 
 
 
