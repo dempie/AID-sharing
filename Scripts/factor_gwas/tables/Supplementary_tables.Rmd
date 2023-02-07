@@ -20,7 +20,7 @@ library(stringr)
 library(dplyr)
 ```
 
-## Supplementary table S1, EFA models
+## Supplementary table S1, EFA ?
 
 ```{r}
 
@@ -116,7 +116,7 @@ fwrite(loci,'outputs/rev_1/Supplementary_tables/4_Supplementary_table_conditiona
 ```
 
 
-## Supplementary table S5, colocalization results
+## Supplementary table S5, colocalization results traits
 
 ```{r message=TRUE, paged.print=FALSE}
 
@@ -181,31 +181,151 @@ fwrite(gen_reg, 'outputs/rev_1/Supplementary_tables/6_Supplementary_table_genomi
 
 ```
 
-## Supplementary table S7, genomic regions all traits and factors
+## Supplementary table S7, conditional loci traits and factors
 
-```{r}
+```{r paged.print=FALSE}
+ all_loci <- fread('outputs/rev_1/Supplementary_tables/7_Supplementary_all_conditional_loci.csv', data.table = F)
 
+all_loci[which(all_loci$TRAIT=='derma'),]$TRAIT <- 'eczema'
+head(all_loci)
+dim(all_loci)
 ```
 
 ## Supplementary table S8, KEGG pathways
 
+### load mart
+
 ```{r}
+library(biomaRt)
+mart <- useMart("ensembl")
+mart <- useDataset("hsapiens_gene_ensembl", mart)
+```
+
+
+```{r paged.print=FALSE}
+kegg <-  readRDS('outputs/rev_1/10_pathways/kegg.RDS')
+
+head(kegg)
+
+#--------- kegg table complete -------------------------------------------------
+kg <- kegg$result[, c('query','p_value', 'term_name', 'intersection')] 
+
+#retrieve the genbe symbols
+he <- kegg$result
+genes <- unique(strsplit(paste0(he$intersection, collapse = ','), split = ',')[[1]])
+genes_symbol <- getBM(filters= "ensembl_gene_id", attributes= c('ensembl_gene_id', 'hgnc_symbol'),values=  genes,mart=mart )
+
+head(genes_symbol)
+
+#add a gene symbol column
+kg$hgnc <- rep('NA', nrow(kg))
+for(i in 1:nrow(kg)){
+  kg$hgnc[i] <- paste0(genes_symbol[ which(genes_symbol$ensembl_gene_id %in% strsplit( kg$intersection[i], split = ',')[[1]]) ,]$hgnc_symbol, collapse = ', ')
+}
+
+head(kg)
+
+
+#format for exporting with the rigth names
+colnames(kg) <- c('Trait', 'P-value (adjusted)', 'Pathway', 'ENSEMBL', 'Gene symbols')
+kg$Trait <- toupper(kg$Trait)
+kegg.table <- kg[,c(3,1,2, 5)]
+
+
+#renmae the factors
+kegg.table[which(kegg.table$Trait=='F1'),]$Trait <- 'Fgut'
+kegg.table[which(kegg.table$Trait=='F2'),]$Trait <- 'Faid'
+kegg.table[which(kegg.table$Trait=='F3'),]$Trait <- 'Falrg'
+
+#round the pvalues
+kegg.table$`P-value (adjusted)` <- signif(kegg.table$`P-value (adjusted)`,4)
+
+#save the csv
+write.table(kegg.table, sep = ',', file = 'outputs/rev_1/Supplementary_tables/8_Supplementary_kegg.table.csv', row.names = F)
 
 ```
 
 ## Supplementary table S9, GO terms
 
-```{r}
+```{r paged.print=FALSE}
+
+#go table complete, (all the results)
+go <-  readRDS('outputs/rev_1/10_pathways/go.RDS')
+gg <-  go$result[, c('query','p_value', 'term_name', 'intersection')] 
+
+genes <- unique(strsplit(paste0(gg$intersection, collapse = ','), split = ',')[[1]])
+genes_symbol <- getBM(filters= "ensembl_gene_id", attributes= c("entrezgene_id","ensembl_gene_id", 'hgnc_symbol'),values=  genes,mart=mart )
+gg$hgnc <- rep('NA', nrow(gg))
+
+for(i in 1:nrow(gg)){
+  gg$hgnc[i] <- paste0(genes_symbol[ which(genes_symbol$ensembl_gene_id %in% strsplit( gg$intersection[i], split = ',')[[1]]) ,]$hgnc_symbol, collapse = ',  ')
+}
+#add the names
+colnames(gg) <- c('Trait', 'P-value (adjusted)', 'GO term', 'ENSEMBL', 'Gene symbols')
+gg$Trait <- toupper(gg$Trait)
+go.table <- gg[,c(3,1,2, 5,4)]
+
+head(go.table)
+
+
+
+#renmae the factors
+go.table[which(go.table$Trait=='F1'),]$Trait <- 'Fgut'
+go.table[which(go.table$Trait=='F2'),]$Trait <- 'Faid'
+go.table[which(go.table$Trait=='F3'),]$Trait <- 'Falrg'
+
+#round the pvalues
+go.table$`P-value (adjusted)` <- signif(go.table$`P-value (adjusted)`,4)
+
+
+#save the table ascsv
+write.table(go.table, sep = ',', file = 'outputs/rev_1/Supplementary_tables/9_Supplementary_go.table.csv', row.names = F)
+
 
 ```
 
-## Supplementary table S10,top 10 GO terms
+## Supplementary table S10, eQTL colocalization results
 
-```{r}
+```{r paged.print=FALSE}
+qtl_names <- list.files('outputs/rev_1/coloc_eqtl_mr/sc_eqtl/')[which(str_ends(list.files('outputs/rev_1/coloc_eqtl_mr/sc_eqtl/'), 'coloc.tsv'))]
+
+
+qtl_l <- list()
+qtl_ok <- list()
+
+for(i in qtl_names){
+  
+  qtl_l[[i]] <- try(fread(paste0('outputs/rev_1/coloc_eqtl_mr/sc_eqtl/', i)))
+  
+  if(c(!is(qtl_l[[i]], 'try-error') & !ncol(qtl_l[[i]])==1)){
+    qtl_ok[[i]] <- qtl_l[[i]]
+  }
+  
+}
+
+
+qtl_res<- Reduce(rbind, qtl_ok)
+qtl_factors <- qtl_res[which(qtl_res$t1 %in% c('f1', 'f2', 'f3')),]
+
+
+qtl_final <- qtl_factors %>% rename('hit_trait_1'=hit1, 'hit_trait_2'=hit2, 'cell_type'=cell_type, 'trait_1'= t1, 'trait_2'=t2  )
+
+qtl_final$trait_1[which(qtl_final$trait_1=='f1')] <- 'Fgut'
+qtl_final$trait_1[which(qtl_final$trait_1=='f2')] <- 'Faid'
+qtl_final$trait_1[which(qtl_final$trait_1=='f3')] <- 'Falrg'
+
+colnames(qtl_final) <- toupper(colnames(qtl_final))
+
+head(qtl_final)
+dim(qtl_final)
+
+#save
+fwrite(qtl_final,'outputs/rev_1/Supplementary_tables/10_Supplementary_table_eQTL_results.csv', sep = ',', col.names = T, quote = F)
+
 
 ```
 
-## Supplementary table S11, eQTL colocalization results
+## Supplementary table S11, pQTL colocalization results
 ```{r}
 
 ```
