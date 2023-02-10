@@ -31,7 +31,7 @@ library(RColorBrewer)
 ### load and assemble the table of MR results
 
 ```{r load and assemble MR results, paged.print=FALSE}
-mr_new <- fread('outputs/rev_1/Supplementary_tables/Supplementary_table_MR_results.csv', data.table = F)
+mr_new <- fread('outputs/rev_1/Supplementary_tables/13_Supplementary_table_eQTL_MR_results.csv', data.table = F)
 head(mr_new)
 ```
 
