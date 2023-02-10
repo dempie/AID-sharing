@@ -184,13 +184,13 @@ fwrite(gen_reg, 'outputs/rev_1/Supplementary_tables/6_Supplementary_table_genomi
 ## Supplementary table S7, conditional loci traits and factors
 
 ```{r paged.print=FALSE}
-all_loci <- fread('outputs/rev_1/Supplementary_tables/7_Supplementary_all_conditional_loci.csv', data.table = F)
-
-all_loci[which(all_loci$TRAIT=='derma'),]$TRAIT <- 'eczema'
-head(all_loci)
-dim(all_loci)
-
-fwrite(gen_reg, 'outputs/rev_1/Supplementary_tables/7_Supplementary_all_conditional_loci.csv', sep = ',', col.names = T, quote = F)
+# all_loci <- fread('outputs/rev_1/Supplementary_tables/7_Supplementary_all_conditional_loci.csv', data.table = F)
+# 
+# all_loci[which(all_loci$TRAIT=='derma'),]$TRAIT <- 'eczema'
+# head(all_loci)
+# dim(all_loci)
+# 
+# fwrite(gen_reg, 'outputs/rev_1/Supplementary_tables/7_Supplementary_all_conditional_loci.csv', sep = ',', col.names = T, quote = F)
 ```
 
 ## Supplementary table S8, KEGG pathways
@@ -388,7 +388,7 @@ pqtl_final$t1[which(pqtl_final$t1=='f2')] <- 'Faid'
 pqtl_final$t1[which(pqtl_final$t1=='f3')] <- 'Falrg'
 
 names(pqtl_final) <- toupper(names(pqtl_final))
-pqtl_final <- pqtl_final[which(!is.na(pqtl_final$B)),]
+
 
 head(pqtl_final)
 dim(pqtl_final)
