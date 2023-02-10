@@ -55,6 +55,27 @@ LDSCoutput <- readRDS('outputs/rev_1/02_munge_ldsc_sumstats/ldsc_output_rev1.RDS
 	write.csv(signif(SE,3),file = 'outputs/rev_1/Supplementary_tables/2_Supplementary_table_se_ldsc.csv', row.names = T, col.names = T, quote = F)
 
 ```
+
+
+```{r}
+#load the output of ldsc 
+
+LDSCoutput <- readRDS('outputs/rev_1/02_munge_ldsc_sumstats/ldsc_output_rev1.RDS')
+
+
+	#add rownames
+	row.names(LDSCoutput$S) <- colnames(LDSCoutput$S)
+	#print pvalues
+	varcov <- signif(LDSCoutput$S,3)
+	#print SE
+	
+	
+	write.csv(varcov,file = 'outputs/rev_1/Supplementary_tables/2_Supplementary_table_varcovar_ldsc.csv', row.names = T, col.names = T, quote = F)
+	
+
+```
+
+
 ## Supplementary table S3, genomic regions Factors
 
 ```{r paged.print=FALSE}
