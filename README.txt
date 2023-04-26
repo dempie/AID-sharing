@@ -1,6 +1,8 @@
 AID_sharing project
 
 contributors: Pietro Demela, Nicola Pirastu, Blagoje Soskic
+The final version of the code (February 2023) that was used to generate the figures and analsyses for the Nat Com paper is in the revision_1 branch, in the factor_gwas folder. 
+
 
 The aim of the project is to use structural equation modelling to model the polygenic structure of autoimmune diseases.
 The package that will be used is GenomicSEM, https://github.com/GenomicSEM/GenomicSEM, that allows this.
@@ -14,5 +16,5 @@ This is the home directory of the project and here is a description of what is c
    e) Sripts/ contains the code that I wrote, and here the anlysis is conducted. 
    f) SNP/ contains a reference file of the rsID needed by the package, info in the github of genomicSEM. Used by me also to add rsID to summary stats. 
    g) Summary_Stats/ contains the the raw summary_stats downloaded from the papers, (mostly by GWAScatalog)
-   h) loci_definitions are different verisons that Nicola generated. The final version is the one that is the last used. 
+
    
