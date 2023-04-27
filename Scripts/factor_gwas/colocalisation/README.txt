@@ -1,0 +1,1 @@
+This scripts were used by Nicola for the MR, colo part. These are the ones with the allele in the wrong directions for pQTLs. 
