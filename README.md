@@ -1,5 +1,5 @@
-AID_sharing project
-
+# AID_sharing project
+Repository for the paper : https://www.nature.com/articles/s41467-023-38389-6
 contributors: Pietro Demela, Nicola Pirastu, Blagoje Soskic
 The final version of the code (February 2023) that was used to generate the figures and analsyses for the Nat Com paper is in the revision_1 branch, in the factor_gwas folder. 
 
